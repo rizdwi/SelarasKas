@@ -7,6 +7,7 @@
 header('Content-Type: application/json; charset=utf-8');
 
 $host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? 'localhost');
+$port = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '3306');
 $user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'root');
 $pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : ($_ENV['DB_PASS'] ?? '');
 $dbname = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'finflow_db');
@@ -14,13 +15,13 @@ $dbname = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'finflow_db');
 try {
     // Connect directly to the database if it is a cloud service where DB is pre-created
     try {
-        $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass, [
+        $pdo = new PDO("mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4", $user, $pass, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         ]);
         echo json_encode(['step' => 'Connected to existing database']) . "\n";
     } catch (PDOException $e) {
         // Fallback: connect to host and try creating database (for local localhost/development)
-        $pdo = new PDO("mysql:host=$host;charset=utf8mb4", $user, $pass, [
+        $pdo = new PDO("mysql:host=$host;port=$port;charset=utf8mb4", $user, $pass, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         ]);
         $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
