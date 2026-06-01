@@ -1,7 +1,7 @@
 {
-  "name": "FinFlow - Personal Finance",
-  "short_name": "FinFlow",
-  "description": "Kelola keuangan pribadi dengan mudah",
+  "name": "SelarasKas - Personal Finance",
+  "short_name": "SelarasKas",
+  "description": "Kelola keuangan pribadi dengan mudah dan seimbang",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0a0e1a",
