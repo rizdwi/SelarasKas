@@ -28,32 +28,31 @@ try {
             throw new Exception("Hanya file JPG, PNG, atau WEBP yang diperbolehkan");
         }
         
-        if ($file['size'] > 5 * 1024 * 1024) {
-            throw new Exception("Ukuran file maksimal 5MB");
+        if ($file['size'] > 1.5 * 1024 * 1024) {
+            throw new Exception("Ukuran file maksimal 1.5MB untuk penyimpanan cloud");
         }
 
-        $uploadDir = __DIR__ . '/../uploads/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
-
-        // Delete old avatar if exists
+        // Safe delete old avatar from disk if it was a legacy upload
         $stmt = $db->prepare("SELECT avatar_url FROM users WHERE id = ?");
         $stmt->execute([$userId]);
         $oldAvatar = $stmt->fetchColumn();
         if ($oldAvatar && strpos($oldAvatar, 'uploads/') !== false) {
             $oldFile = __DIR__ . '/../' . $oldAvatar;
-            if (file_exists($oldFile)) unlink($oldFile);
+            if (file_exists($oldFile) && is_writable($oldFile)) {
+                @unlink($oldFile);
+            }
         }
 
-        $filename = 'avatar_' . $userId . '_' . time() . '.' . $ext;
-        $dest = $uploadDir . $filename;
-
-        if (!move_uploaded_file($file['tmp_name'], $dest)) {
-            throw new Exception("Gagal menyimpan file");
+        // Convert the image to Base64 Data URL
+        $imageData = file_get_contents($file['tmp_name']);
+        if ($imageData === false) {
+            throw new Exception("Gagal membaca file gambar");
         }
 
-        $avatarUrl = 'uploads/' . $filename;
+        $base64 = base64_encode($imageData);
+        $mimeType = 'image/' . ($ext === 'jpg' ? 'jpeg' : $ext);
+        $avatarUrl = 'data:' . $mimeType . ';base64,' . $base64;
+
         $stmt = $db->prepare("UPDATE users SET avatar_url = ? WHERE id = ?");
         $stmt->execute([$avatarUrl, $userId]);
 

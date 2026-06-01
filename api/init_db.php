@@ -46,7 +46,7 @@ try {
         `email` VARCHAR(150) UNIQUE NOT NULL,
         `password` VARCHAR(255) NOT NULL,
         `avatar_initial` CHAR(2),
-        `avatar_url` VARCHAR(255) DEFAULT NULL,
+        `avatar_url` MEDIUMTEXT DEFAULT NULL,
         `google_id` VARCHAR(100) DEFAULT NULL,
         `facebook_id` VARCHAR(100) DEFAULT NULL,
         `theme` VARCHAR(5) DEFAULT 'dark',
@@ -55,8 +55,13 @@ try {
 
     // Alter if table exists to add columns safely (for updates)
     try {
-        $pdo->exec("ALTER TABLE `users` ADD COLUMN `avatar_url` VARCHAR(255) DEFAULT NULL, ADD COLUMN `google_id` VARCHAR(100) DEFAULT NULL, ADD COLUMN `facebook_id` VARCHAR(100) DEFAULT NULL");
+        $pdo->exec("ALTER TABLE `users` ADD COLUMN `google_id` VARCHAR(100) DEFAULT NULL, ADD COLUMN `facebook_id` VARCHAR(100) DEFAULT NULL");
     } catch(PDOException $e) { /* Ignore if already exists */ }
+
+    // Modify avatar_url to MEDIUMTEXT if table already exists (supporting Base64 avatars)
+    try {
+        $pdo->exec("ALTER TABLE `users` MODIFY COLUMN `avatar_url` MEDIUMTEXT DEFAULT NULL");
+    } catch(PDOException $e) { /* Ignore */ }
 
     echo json_encode(['step' => 'Table users created']) . "\n";
 
