@@ -56,8 +56,7 @@ function getTransactions($userId) {
         $params[] = $type;
     }
 
-    $sql .= " ORDER BY t.transaction_date DESC, t.created_at DESC LIMIT ?";
-    $params[] = $limit;
+    $sql .= " ORDER BY t.transaction_date DESC, t.created_at DESC LIMIT " . $limit;
 
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
