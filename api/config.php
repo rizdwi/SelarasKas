@@ -1,10 +1,4 @@
 <?php
-// ============================================
-// FinFlow — Database Configuration
-// ============================================
-
-session_start();
-
 // CORS Headers
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -59,6 +53,54 @@ function getDB() {
     }
     return $pdo;
 }
+
+// Database-backed Session Handler (for Stateless Serverless Environments like Vercel)
+if (DB_HOST !== 'localhost' && DB_HOST !== '127.0.0.1') {
+    session_set_save_handler(
+        function ($savePath, $sessionName) { return true; },
+        function () { return true; },
+        function ($id) {
+            try {
+                $pdo = getDB();
+                $stmt = $pdo->prepare("SELECT data FROM sessions WHERE id = ? AND timestamp > ?");
+                $stmt->execute([$id, time() - (86400 * 30)]); // 30 days session
+                return $stmt->fetchColumn() ?: '';
+            } catch (Exception $e) {
+                return '';
+            }
+        },
+        function ($id, $data) {
+            try {
+                $pdo = getDB();
+                $stmt = $pdo->prepare("INSERT INTO sessions (id, data, timestamp) VALUES (?, ?, ?)
+                    ON DUPLICATE KEY UPDATE data = ?, timestamp = ?");
+                return $stmt->execute([$id, $data, time(), $data, time()]);
+            } catch (Exception $e) {
+                return false;
+            }
+        },
+        function ($id) {
+            try {
+                $pdo = getDB();
+                $stmt = $pdo->prepare("DELETE FROM sessions WHERE id = ?");
+                return $stmt->execute([$id]);
+            } catch (Exception $e) {
+                return false;
+            }
+        },
+        function ($maxlifetime) {
+            try {
+                $pdo = getDB();
+                $stmt = $pdo->prepare("DELETE FROM sessions WHERE timestamp < ?");
+                return $stmt->execute([time() - $maxlifetime]);
+            } catch (Exception $e) {
+                return false;
+            }
+        }
+    );
+}
+
+session_start();
 
 function requireAuth() {
     if (!isset($_SESSION['user_id'])) {

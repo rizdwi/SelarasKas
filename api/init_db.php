@@ -122,6 +122,16 @@ try {
 
     echo json_encode(['step' => 'Table budgets created']) . "\n";
 
+    // Sessions (for stateless cloud environments)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `sessions` (
+        `id` VARCHAR(128) PRIMARY KEY,
+        `data` TEXT NOT NULL,
+        `timestamp` INT UNSIGNED NOT NULL,
+        INDEX (`timestamp`)
+    ) ENGINE=InnoDB");
+
+    echo json_encode(['step' => 'Table sessions created']) . "\n";
+
     // ===== SEED CATEGORIES =====
     // Check if already seeded
     $count = $pdo->query("SELECT COUNT(*) FROM categories")->fetchColumn();
