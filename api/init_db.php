@@ -13,17 +13,25 @@ $pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : ($_ENV['DB_PASS'] ?? '
 $dbname = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'finflow_db');
 
 try {
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    ];
+
+    // Enable SSL for cloud databases (like TiDB Serverless)
+    if (defined('PDO::MYSQL_ATTR_SSL_CA') && $host !== 'localhost' && $host !== '127.0.0.1') {
+        $options[PDO::MYSQL_ATTR_SSL_CA] = true;
+        if (defined('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')) {
+            $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+        }
+    }
+
     // Connect directly to the database if it is a cloud service where DB is pre-created
     try {
-        $pdo = new PDO("mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4", $user, $pass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        ]);
+        $pdo = new PDO("mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4", $user, $pass, $options);
         echo json_encode(['step' => 'Connected to existing database']) . "\n";
     } catch (PDOException $e) {
         // Fallback: connect to host and try creating database (for local localhost/development)
-        $pdo = new PDO("mysql:host=$host;port=$port;charset=utf8mb4", $user, $pass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        ]);
+        $pdo = new PDO("mysql:host=$host;port=$port;charset=utf8mb4", $user, $pass, $options);
         $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
         $pdo->exec("USE `$dbname`");
         echo json_encode(['step' => 'Database created and selected']) . "\n";
