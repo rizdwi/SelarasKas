@@ -14,6 +14,8 @@ switch ($method) {
             getSummary($userId);
         } elseif ($action === 'chart') {
             getChartData($userId);
+        } elseif ($action === 'dashboard') {
+            getDashboardData($userId);
         } elseif ($action === 'weekly') {
             getWeeklyData($userId);
         } elseif ($action === 'cashflow') {
@@ -296,4 +298,90 @@ function getTrendsData($userId) {
     foreach ($rows as &$r) $r['expense'] = (float)$r['expense'];
 
     jsonResponse(['trends' => $rows]);
+}
+
+function getDashboardData($userId) {
+    $db = getDB();
+    $month = $_GET['month'] ?? date('Y-m');
+    $limit = (int)($_GET['limit'] ?? 20);
+
+    // 1. Get Summary (Income & Expense)
+    $stmt = $db->prepare("
+        SELECT type, COALESCE(SUM(amount), 0) as total
+        FROM transactions
+        WHERE user_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
+        GROUP BY type
+    ");
+    $stmt->execute([$userId, $month]);
+    $summaryRows = $stmt->fetchAll();
+    
+    $income = 0;
+    $expense = 0;
+    foreach ($summaryRows as $row) {
+        if ($row['type'] === 'income') $income = (float)$row['total'];
+        if ($row['type'] === 'expense') $expense = (float)$row['total'];
+    }
+
+    // Get last month summary for change calculation
+    $lastMonth = date('Y-m', strtotime($month . '-01 -1 month'));
+    $stmt = $db->prepare("
+        SELECT type, COALESCE(SUM(amount), 0) as total
+        FROM transactions
+        WHERE user_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
+        GROUP BY type
+    ");
+    $stmt->execute([$userId, $lastMonth]);
+    $lastRows = $stmt->fetchAll();
+    
+    $lastIncome = 0;
+    $lastExpense = 0;
+    foreach ($lastRows as $row) {
+        if ($row['type'] === 'income') $lastIncome = (float)$row['total'];
+        if ($row['type'] === 'expense') $lastExpense = (float)$row['total'];
+    }
+
+    // 2. Get Chart Data
+    $stmt = $db->prepare("
+        SELECT c.name, COALESCE(SUM(t.amount), 0) as total, c.color, c.emoji
+        FROM transactions t
+        JOIN categories c ON t.category_id = c.id
+        WHERE t.user_id = ? 
+        AND t.type = 'expense'
+        AND (CASE WHEN DAY(t.transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(t.transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(t.transaction_date, '%Y-%m') END) = ?
+        GROUP BY c.id, c.name, c.color, c.emoji
+        ORDER BY total DESC
+    ");
+    $stmt->execute([$userId, $month]);
+    $chartRows = $stmt->fetchAll();
+    foreach ($chartRows as &$r) {
+        $r['total'] = (float)$r['total'];
+    }
+
+    // 3. Get Transactions List
+    $sql = "SELECT t.*, c.name as category_name, c.emoji, c.color,
+                   pc.name as parent_category_name, pc.emoji as parent_emoji
+            FROM transactions t
+            JOIN categories c ON t.category_id = c.id
+            LEFT JOIN categories pc ON c.parent_id = pc.id
+            WHERE t.user_id = ?
+            AND (CASE WHEN DAY(t.transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(t.transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(t.transaction_date, '%Y-%m') END) = ?
+            ORDER BY t.transaction_date DESC, t.created_at DESC LIMIT " . $limit;
+    $stmt = $db->prepare($sql);
+    $stmt->execute([$userId, $month]);
+    $transactions = $stmt->fetchAll();
+    foreach ($transactions as &$t) {
+        $t['amount'] = (float)$t['amount'];
+    }
+
+    jsonResponse([
+        'summary' => [
+            'income' => $income,
+            'expense' => $expense,
+            'balance' => $income - $expense,
+            'last_income' => $lastIncome,
+            'last_expense' => $lastExpense
+        ],
+        'chart' => $chartRows,
+        'transactions' => $transactions
+    ]);
 }

@@ -307,15 +307,11 @@
             renderSkeletonTransactions(document.getElementById('transactionsList'));
             renderSkeletonChart(document.getElementById('spendingCategories'));
             
-            const [summaryData, chartData, txData] = await Promise.all([
-                api(`transactions.php?action=summary&month=${currentMonth}`),
-                api(`transactions.php?action=chart&month=${currentMonth}`),
-                api(`transactions.php?month=${currentMonth}&limit=20`)
-            ]);
+            const data = await api(`transactions.php?action=dashboard&month=${currentMonth}&limit=20`);
 
-            renderBalance(summaryData);
-            renderSpendingChart(chartData.chart);
-            renderTransactions(document.getElementById('transactionsList'), txData.transactions);
+            renderBalance(data.summary);
+            renderSpendingChart(data.chart);
+            renderTransactions(document.getElementById('transactionsList'), data.transactions);
         } catch (err) {
             console.error('Dashboard error:', err);
         }
