@@ -1,4 +1,4 @@
-const CACHE_NAME = 'selaraskas-v18';
+const CACHE_NAME = 'selaraskas-v19';
 const STATIC_ASSETS = [
     './',
     './index.html',
