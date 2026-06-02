@@ -82,6 +82,19 @@
         return name;
     }
 
+    // Render either an emoji character or a Lucide icon depending on the value
+    function renderEmojiOrIcon(emojiOrIcon, size = '16px', color = '', extraStyles = '') {
+        if (!emojiOrIcon) {
+            return `<i data-lucide="box" style="width:${size}; height:${size}; color:${color}; ${extraStyles}"></i>`;
+        }
+        // If it looks like a Lucide icon (3+ chars, lowercase, numbers, hyphens only)
+        if (/^[a-z0-9\-]{3,}$/.test(emojiOrIcon)) {
+            return `<i data-lucide="${emojiOrIcon}" style="width:${size}; height:${size}; color:${color}; ${extraStyles}"></i>`;
+        }
+        // Otherwise treat it as a raw emoji character
+        return `<span class="icon-emoji" style="font-size:${size}; line-height:1; display:inline-flex; align-items:center; justify-content:center; width:${size}; height:${size}; ${extraStyles}">${emojiOrIcon}</span>`;
+    }
+
     function getGreeting() {
         const h = new Date().getHours();
         if (h < 11) return 'Selamat Pagi';
@@ -563,7 +576,7 @@
                 <div class="category-item">
                     <div class="category-dot" style="background:${item.color || '#94a3b8'}"></div>
                     <div class="category-info">
-                        <span class="category-name" style="display:flex;align-items:center;gap:8px;"><i data-lucide="${safeIcon(item.emoji)}" style="width:16px; height:16px; vertical-align:middle; display:inline-block;"></i> ${item.category_name}</span>
+                        <span class="category-name" style="display:flex;align-items:center;gap:8px;">${renderEmojiOrIcon(item.emoji, '16px')} ${item.category_name}</span>
                         <span class="category-amount">${formatRp(item.total, true)} · ${((parseFloat(item.total) / total) * 100).toFixed(0)}%</span>
                     </div>
                 </div>
@@ -626,7 +639,7 @@
             html += `
                 <div class="transaction-item fade-in-up" data-id="${tx.id}">
                     <div class="transaction-content">
-                        <div class="transaction-icon" style="background:${bg}; display:flex; align-items:center; justify-content:center;"><i data-lucide="${iconName}" style="width:20px; height:20px; color:${iconColor}"></i></div>
+                        <div class="transaction-icon" style="background:${bg}; display:flex; align-items:center; justify-content:center;">${renderEmojiOrIcon(iconName, '20px', iconColor)}</div>
                         <div class="transaction-details">
                             <span class="transaction-name">${tx.description || tx.category_name}</span>
                             <span class="transaction-category">${catName}</span>
@@ -743,7 +756,7 @@
                     <div class="top-spending-rank ${rankClass}" ${i >= 3 ? 'style="background:var(--bg-card);color:var(--text-muted);"' : ''}>
                         ${i + 1}
                     </div>
-                    <div class="top-spending-icon" style="background:${item.color}18; display:flex; align-items:center; justify-content:center;"><i data-lucide="${safeIcon(item.emoji)}" style="width:20px; height:20px; color:${item.color}"></i></div>
+                    <div class="top-spending-icon" style="background:${item.color}18; display:flex; align-items:center; justify-content:center;">${renderEmojiOrIcon(item.emoji, '20px', item.color)}</div>
                     <div class="top-spending-info">
                         <span class="top-spending-name">${item.category_name}</span>
                         <div class="top-spending-bar">
@@ -786,7 +799,7 @@
                 <div class="savings-goal-card">
                     <div class="savings-goal-top">
                         <div class="savings-goal-emoji" style="background:${g.color}18; display:flex; align-items:center; justify-content:center;">
-                            <i data-lucide="${safeIcon(g.emoji)}" style="width:24px; height:24px; color:${g.color}"></i>
+                            ${renderEmojiOrIcon(g.emoji, '24px', g.color)}
                         </div>
                         <div class="savings-goal-info">
                             <span class="savings-goal-title">${g.title}</span>
@@ -851,16 +864,16 @@
             if (hasChildren) {
                 childrenHTML = `<div class="category-children" data-parent="${cat.id}">
                     ${cat.children.map(ch => `
-                        <div class="category-child" data-id="${ch.id}" data-name="${ch.name}">
-                            <span class="category-child-emoji" style="display:flex;"><i data-lucide="${safeIcon(ch.emoji)}" style="width:18px; height:18px; vertical-align:middle; display:inline-block;"></i></span>
+                        <div class="category-child" data-id="${ch.id}" data-name="${ch.name}" data-emoji="${ch.emoji || ''}">
+                            <span class="category-child-emoji" style="display:flex; align-items:center;">${renderEmojiOrIcon(ch.emoji, '18px')}</span>
                             <span class="category-child-name">${ch.name}</span>
                         </div>
                     `).join('')}
                 </div>`;
             }
             return `
-                <div class="category-parent" data-id="${cat.id}" data-name="${cat.name}" data-has-children="${hasChildren}">
-                    <span class="category-parent-emoji" style="display:flex;"><i data-lucide="${safeIcon(cat.emoji)}" style="width:18px; height:18px; vertical-align:middle; display:inline-block;"></i></span>
+                <div class="category-parent" data-id="${cat.id}" data-name="${cat.name}" data-emoji="${cat.emoji || ''}" data-has-children="${hasChildren}">
+                    <span class="category-parent-emoji" style="display:flex; align-items:center;">${renderEmojiOrIcon(cat.emoji, '18px')}</span>
                     <span class="category-parent-name">${cat.name}</span>
                     <svg class="category-parent-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
                 </div>
@@ -915,26 +928,26 @@
                         }
                     } else {
                         // Select parent directly
-                        selectCategory(parent.dataset.id, parent.dataset.name, parent.querySelector('.category-parent-emoji').textContent);
+                        selectCategory(parent.dataset.id, parent.dataset.name, parent.dataset.emoji);
                     }
                 });
             });
 
             document.querySelectorAll('.category-child').forEach(child => {
                 child.addEventListener('click', () => {
-                    const emoji = child.querySelector('.category-child-emoji').textContent;
-                    selectCategory(child.dataset.id, child.dataset.name, emoji);
+                    selectCategory(child.dataset.id, child.dataset.name, child.dataset.emoji);
                 });
             });
 
-            function selectCategory(id, name, emoji) {
+            function selectCategory(id, name, emojiOrIcon) {
                 document.getElementById('txCategoryId').value = id;
-                document.getElementById('selectedCategory').innerHTML = `${emoji} ${name}`;
+                document.getElementById('selectedCategory').innerHTML = `${renderEmojiOrIcon(emojiOrIcon, '16px')} ${name}`;
                 document.getElementById('selectedCategory').style.color = 'var(--text-primary)';
                 document.getElementById('categoryPicker').style.display = 'none';
                 document.querySelectorAll('.category-child').forEach(c => c.classList.remove('selected'));
                 const sel = document.querySelector(`.category-child[data-id="${id}"]`);
                 if (sel) sel.classList.add('selected');
+                setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 10);
             }
 
             // Submit
@@ -1664,7 +1677,7 @@
             return `
             <div class="budget-item fade-in-up" onclick="window.Selaraskas.showBudgetForm(${b.category_id}, ${b.amount})" style="cursor:pointer">
                 <div class="budget-item-top">
-                    <div class="budget-item-icon" style="background:${b.category_color}18; display:flex; align-items:center; justify-content:center;"><i data-lucide="${safeIcon(b.category_emoji)}" style="width:20px; height:20px; color:${b.category_color}"></i></div>
+                    <div class="budget-item-icon" style="background:${b.category_color}18; display:flex; align-items:center; justify-content:center;">${renderEmojiOrIcon(b.category_emoji, '20px', b.category_color)}</div>
                     <div class="budget-item-info">
                         <span class="budget-item-title">${b.category_name}</span>
                         <span class="budget-item-amounts">${formatRp(b.spent, true)} / ${formatRp(b.amount, true)}</span>
@@ -1693,16 +1706,16 @@
             if (hasChildren) {
                 childrenHTML = `<div class="category-children" data-parent="${cat.id}">
                     ${cat.children.map(ch => `
-                        <div class="category-child" data-id="${ch.id}" data-name="${ch.name}">
-                            <span class="category-child-emoji" style="display:flex;"><i data-lucide="${safeIcon(ch.emoji)}" style="width:18px; height:18px; vertical-align:middle; display:inline-block;"></i></span>
+                        <div class="category-child" data-id="${ch.id}" data-name="${ch.name}" data-emoji="${ch.emoji || ''}">
+                            <span class="category-child-emoji" style="display:flex; align-items:center;">${renderEmojiOrIcon(ch.emoji, '18px')}</span>
                             <span class="category-child-name">${ch.name}</span>
                         </div>
                     `).join('')}
                 </div>`;
             }
             return `
-                <div class="category-parent" data-id="${cat.id}" data-name="${cat.name}" data-has-children="${hasChildren}">
-                    <span class="category-parent-emoji" style="display:flex;"><i data-lucide="${safeIcon(cat.emoji)}" style="width:18px; height:18px; vertical-align:middle; display:inline-block;"></i></span>
+                <div class="category-parent" data-id="${cat.id}" data-name="${cat.name}" data-emoji="${cat.emoji || ''}" data-has-children="${hasChildren}">
+                    <span class="category-parent-emoji" style="display:flex; align-items:center;">${renderEmojiOrIcon(cat.emoji, '18px')}</span>
                     <span class="category-parent-name">${cat.name}</span>
                     <svg class="category-parent-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
                 </div>
@@ -1757,8 +1770,9 @@
                         }
                     } else {
                         document.getElementById('budgetCategoryId').value = parent.dataset.id;
-                        document.getElementById('budgetSelectedCategory').innerHTML = parent.innerHTML;
+                        document.getElementById('budgetSelectedCategory').innerHTML = `${renderEmojiOrIcon(parent.dataset.emoji, '16px')} ${parent.dataset.name}`;
                         document.getElementById('budgetCategoryPicker').style.display = 'none';
+                        setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 10);
                     }
                 });
             });
@@ -1766,8 +1780,9 @@
             document.querySelectorAll('#budgetCategoryPicker .category-child').forEach(child => {
                 child.addEventListener('click', () => {
                     document.getElementById('budgetCategoryId').value = child.dataset.id;
-                    document.getElementById('budgetSelectedCategory').innerHTML = child.innerHTML;
+                    document.getElementById('budgetSelectedCategory').innerHTML = `${renderEmojiOrIcon(child.dataset.emoji, '16px')} ${child.dataset.name}`;
                     document.getElementById('budgetCategoryPicker').style.display = 'none';
+                    setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 10);
                 });
             });
 
