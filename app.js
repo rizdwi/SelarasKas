@@ -399,13 +399,23 @@
             authError.textContent = '';
             const btn = document.getElementById('registerSubmitBtn');
             btn.disabled = true;
+
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerPasswordConfirm').value;
+
+            if (password !== confirmPassword) {
+                authError.textContent = 'Password dan konfirmasi password tidak cocok';
+                btn.disabled = false;
+                return;
+            }
+
             try {
                 const data = await api('auth.php?action=register', {
                     method: 'POST',
                     body: JSON.stringify({
                         name: document.getElementById('registerName').value,
                         email: document.getElementById('registerEmail').value,
-                        password: document.getElementById('registerPassword').value,
+                        password: password,
                     }),
                 });
                 if (data.needs_verification) {
@@ -423,6 +433,22 @@
                     authError.textContent = err.message;
                 }
             } finally { btn.disabled = false; }
+        });
+
+        // Toggle password visibility
+        document.querySelectorAll('.password-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = btn.dataset.toggle;
+                const input = document.getElementById(targetId);
+                const icon = btn.querySelector('i');
+                if (input && icon) {
+                    const isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+                    icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+                    if (window.lucide) lucide.createIcons();
+                }
+            });
         });
 
         document.getElementById('logoutBtn').addEventListener('click', async () => {

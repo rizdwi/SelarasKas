@@ -116,6 +116,9 @@ function requireAuth() {
 }
 
 function jsonResponse($data, $code = 200) {
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
     http_response_code($code);
     echo json_encode($data);
     exit;

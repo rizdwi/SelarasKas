@@ -222,6 +222,34 @@ input, select, textarea { font-family: inherit; }
 .auth-switch { text-align: center; font-size: 14px; color: var(--text-muted); margin-top: 8px; }
 .auth-switch button { color: var(--accent-coral); font-weight: 600; text-decoration: underline; font-size: 14px; }
 
+.password-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+.password-input-container input {
+    padding-right: 48px !important;
+}
+.password-toggle-btn {
+    position: absolute;
+    right: 14px;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+    height: 100%;
+    z-index: 5;
+}
+.password-toggle-btn:hover {
+    color: var(--text-primary);
+}
+
 /* Social Login */
 .auth-divider {
     display: flex;

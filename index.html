@@ -53,7 +53,12 @@
                     </div>
                     <div class="form-group">
                         <label for="loginPassword">Password</label>
-                        <input type="password" id="loginPassword" placeholder="Minimal 6 karakter" required autocomplete="current-password">
+                        <div class="password-input-container">
+                            <input type="password" id="loginPassword" placeholder="Minimal 6 karakter" required autocomplete="current-password">
+                            <button type="button" class="password-toggle-btn" data-toggle="loginPassword">
+                                <i data-lucide="eye" style="width:20px; height:20px; pointer-events:none;"></i>
+                            </button>
+                        </div>
                     </div>
                     <button type="submit" class="auth-submit-btn" id="loginSubmitBtn">
                         <span>Masuk</span>
@@ -86,7 +91,21 @@
                     </div>
                     <div class="form-group">
                         <label for="registerPassword">Password</label>
-                        <input type="password" id="registerPassword" placeholder="Minimal 6 karakter" required autocomplete="new-password">
+                        <div class="password-input-container">
+                            <input type="password" id="registerPassword" placeholder="Minimal 6 karakter" required autocomplete="new-password">
+                            <button type="button" class="password-toggle-btn" data-toggle="registerPassword">
+                                <i data-lucide="eye" style="width:20px; height:20px; pointer-events:none;"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPasswordConfirm">Konfirmasi Password</label>
+                        <div class="password-input-container">
+                            <input type="password" id="registerPasswordConfirm" placeholder="Ketik ulang password" required autocomplete="new-password">
+                            <button type="button" class="password-toggle-btn" data-toggle="registerPasswordConfirm">
+                                <i data-lucide="eye" style="width:20px; height:20px; pointer-events:none;"></i>
+                            </button>
+                        </div>
                     </div>
                     <button type="submit" class="auth-submit-btn" id="registerSubmitBtn">
                         <span>Daftar</span>
