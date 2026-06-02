@@ -145,10 +145,7 @@
         
         updateUserUI();
         
-        if (user.theme === 'light') {
-            document.body.classList.add('light-mode');
-            document.getElementById('themeLabel').textContent = 'Light Mode';
-        }
+        applyTheme(user.theme || 'dark');
 
         loadDashboard();
         setTimeout(() => lucide.createIcons(), 50);
@@ -169,7 +166,11 @@
         const homeAvatarEl = document.getElementById('avatar');
         if (homeAvatarEl) {
             if (currentUser.avatar_url) {
-                homeAvatarEl.style.backgroundImage = `url(${API}/../${currentUser.avatar_url})`;
+                let imgUrl = currentUser.avatar_url;
+                if (!imgUrl.startsWith('data:')) {
+                    imgUrl = `${API}/../${imgUrl}`;
+                }
+                homeAvatarEl.style.backgroundImage = `url("${imgUrl}")`;
                 homeAvatarEl.style.backgroundSize = 'cover';
                 homeAvatarEl.style.backgroundPosition = 'center';
                 if (homeAvatarInitial) homeAvatarInitial.style.display = 'none';
@@ -189,7 +190,11 @@
         const profileInitialEl = document.getElementById('profileInitial');
         if (profileAvatarEl) {
             if (currentUser.avatar_url) {
-                profileAvatarEl.style.backgroundImage = `url(${API}/../${currentUser.avatar_url})`;
+                let imgUrl = currentUser.avatar_url;
+                if (!imgUrl.startsWith('data:')) {
+                    imgUrl = `${API}/../${imgUrl}`;
+                }
+                profileAvatarEl.style.backgroundImage = `url("${imgUrl}")`;
                 profileAvatarEl.style.backgroundSize = 'cover';
                 profileAvatarEl.style.backgroundPosition = 'center';
                 if (profileInitialEl) profileInitialEl.style.display = 'none';

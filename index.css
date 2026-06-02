@@ -361,25 +361,137 @@ input, select, textarea { font-family: inherit; }
 .icon-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); }
 .icon-btn:active { transform: scale(0.93); }
 
-/* Theme Toggle */
-.theme-toggle-btn { position: relative; overflow: hidden; }
-[data-theme="dark"] .icon-sun { display: block; }
-[data-theme="dark"] .icon-moon { display: none; }
-[data-theme="light"] .icon-sun { display: none; }
-[data-theme="light"] .icon-moon { display: block; }
+/* Custom Day/Night Toggle Switch */
+.day-night-toggle {
+    position: relative;
+    width: 74px;
+    height: 34px;
+    border-radius: 17px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(to bottom, #0b0f19, #1a233d); /* dark background */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
 
-/* Theme Switch (profile) */
-.theme-switch {
-    width: 44px; height: 26px; border-radius: 13px; padding: 3px;
-    background: var(--bg-input); border: 1px solid var(--border-light);
-    cursor: pointer; transition: background 0.2s ease; flex-shrink: 0;
+/* Light mode override for background */
+[data-theme="light"] .day-night-toggle {
+    background: linear-gradient(to bottom, #4facfe, #81c7f5);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgba(114, 198, 255, 0.3);
 }
-.theme-switch-knob {
-    width: 20px; height: 20px; border-radius: 50%;
-    background: var(--text-muted); transition: all 0.25s ease;
+
+/* Toggle background stars (for dark mode) */
+.toggle-stars {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 1;
+    transition: opacity 0.4s ease, transform 0.4s ease;
 }
-[data-theme="light"] .theme-switch { background: var(--accent-coral); border-color: var(--accent-coral); }
-[data-theme="light"] .theme-switch .theme-switch-knob { transform: translateX(18px); background: white; }
+
+[data-theme="light"] .toggle-stars {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+/* Star styles - creating small sparkles */
+.star {
+    position: absolute;
+    background: #ffd8a8;
+    border-radius: 50%;
+    transition: all 0.4s ease;
+}
+/* Star positions and sizes */
+.star-1 { width: 3px; height: 3px; top: 8px; left: 18px; }
+.star-2 { width: 2px; height: 2px; top: 18px; left: 12px; }
+.star-3 { width: 4px; height: 4px; top: 22px; left: 24px; opacity: 0.8; }
+.star-4 { width: 2px; height: 2px; top: 10px; left: 32px; }
+
+/* Star twinkle effect */
+@keyframes twinkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+.star-1 { animation: twinkle 3s infinite ease-in-out; }
+.star-3 { animation: twinkle 2s infinite ease-in-out 0.5s; }
+
+/* Toggle background clouds (for light mode) */
+.toggle-clouds {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+[data-theme="light"] .toggle-clouds {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Cloud styles - using overlapping white rounded divs like in the image */
+.cloud {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50%;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+    transition: all 0.4s ease;
+}
+.cloud-1 { width: 22px; height: 22px; bottom: -6px; right: 20px; background: rgba(255, 255, 255, 0.8); }
+.cloud-2 { width: 26px; height: 26px; bottom: -8px; right: 6px; }
+.cloud-3 { width: 16px; height: 16px; bottom: -2px; right: -2px; background: rgba(255, 255, 255, 0.85); }
+
+/* The knob representing the Sun/Moon */
+.toggle-knob {
+    position: absolute;
+    top: 3px;
+    left: 43px; /* Moon at the right in dark mode */
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: linear-gradient(135deg, #e2e8f0, #94a3b8); /* Moon color */
+    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Sun knob state in Light mode */
+[data-theme="light"] .toggle-knob {
+    left: 5px; /* Sun at the left in light mode */
+    background: linear-gradient(135deg, #ffcf33, #ff9500); /* Sun color */
+    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.1), 0 3px 8px rgba(255,149,0,0.4);
+}
+
+/* Craters for the moon knob */
+.toggle-knob .crater {
+    position: absolute;
+    background: #cbd5e1;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1);
+    opacity: 1;
+    transition: opacity 0.4s ease;
+}
+
+.crater-1 { width: 6px; height: 6px; top: 5px; left: 6px; }
+.crater-2 { width: 7px; height: 7px; top: 12px; left: 13px; }
+.crater-3 { width: 4px; height: 4px; bottom: 4px; left: 6px; }
+
+[data-theme="light"] .toggle-knob .crater {
+    opacity: 0;
+}
 
 /* ===== BALANCE CARD ===== */
 .balance-card {
@@ -818,12 +930,15 @@ input, select, textarea { font-family: inherit; }
     position: relative;
     overflow: hidden;
     padding: 0; /* Reset padding for swipe */
+    display: block; /* Override display: flex */
 }
 .transaction-content {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 12px;
+    width: 100%;
+    box-sizing: border-box;
     background: var(--bg-primary); /* Hide red background when not swiped */
     border-radius: 12px;
     position: relative;
