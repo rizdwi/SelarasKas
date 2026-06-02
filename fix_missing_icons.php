@@ -1,5 +1,5 @@
 <?php
-require 'api/config.php';
+require_once 'api/config.php';
 $db = getDB();
 
 $map = [
