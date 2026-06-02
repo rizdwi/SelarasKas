@@ -21,6 +21,9 @@ define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : ($_ENV['DB_P
 define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: '261568703120-i2p77mrsoo9o5iore6l6jqhraer48hpt.apps.googleusercontent.com');
 define('FACEBOOK_APP_ID', getenv('FACEBOOK_APP_ID') ?: '1348574213882211');
 
+// Email Service (Resend API)
+define('RESEND_API_KEY', getenv('RESEND_API_KEY') ?: ($_ENV['RESEND_API_KEY'] ?? ''));
+
 function getDB() {
     static $pdo = null;
     if ($pdo === null) {

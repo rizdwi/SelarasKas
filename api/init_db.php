@@ -49,6 +49,9 @@ try {
         `avatar_url` MEDIUMTEXT DEFAULT NULL,
         `google_id` VARCHAR(100) DEFAULT NULL,
         `facebook_id` VARCHAR(100) DEFAULT NULL,
+        `email_verified` TINYINT(1) DEFAULT 0,
+        `verification_code` VARCHAR(6) DEFAULT NULL,
+        `verification_expires` TIMESTAMP NULL DEFAULT NULL,
         `theme` VARCHAR(5) DEFAULT 'dark',
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB");
@@ -62,6 +65,17 @@ try {
     try {
         $pdo->exec("ALTER TABLE `users` MODIFY COLUMN `avatar_url` MEDIUMTEXT DEFAULT NULL");
     } catch(PDOException $e) { /* Ignore */ }
+
+    // Add email verification columns (migration for existing databases)
+    try {
+        $pdo->exec("ALTER TABLE `users` ADD COLUMN `email_verified` TINYINT(1) DEFAULT 0");
+    } catch(PDOException $e) { /* Ignore if already exists */ }
+    try {
+        $pdo->exec("ALTER TABLE `users` ADD COLUMN `verification_code` VARCHAR(6) DEFAULT NULL");
+    } catch(PDOException $e) { /* Ignore if already exists */ }
+    try {
+        $pdo->exec("ALTER TABLE `users` ADD COLUMN `verification_expires` TIMESTAMP NULL DEFAULT NULL");
+    } catch(PDOException $e) { /* Ignore if already exists */ }
 
     echo json_encode(['step' => 'Table users created']) . "\n";
 

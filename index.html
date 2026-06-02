@@ -11,8 +11,19 @@
      <link rel="stylesheet" href="index.css?v=7">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a0e1a">
+    <!-- iOS PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SelarasKas">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    <link rel="icon" type="image/png" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-192x192.png">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-192x192.png">
+    <!-- Android Chrome -->
+    <meta name="mobile-web-app-capable" content="yes">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -95,6 +106,44 @@
                     </div>
                     <p class="auth-switch">Sudah punya akun? <button type="button" id="showLogin">Masuk</button></p>
                 </form>
+
+                <!-- OTP Verification Form -->
+                <div id="otpScreen" class="auth-form otp-form">
+                    <div class="otp-header">
+                        <button type="button" class="otp-back-btn" id="otpBackBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                        </button>
+                        <div class="otp-icon-wrapper">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg>
+                        </div>
+                    </div>
+                    <h2 class="otp-title">Verifikasi Email</h2>
+                    <p class="otp-subtitle">Masukkan kode 6 digit yang telah dikirim ke</p>
+                    <p class="otp-email" id="otpEmailDisplay">email@contoh.com</p>
+                    
+                    <div class="otp-inputs" id="otpInputs">
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="0" autocomplete="one-time-code">
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="1">
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="2">
+                        <div class="otp-separator">–</div>
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="3">
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="4">
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="5">
+                    </div>
+
+                    <div class="otp-error" id="otpError"></div>
+
+                    <button type="button" class="auth-submit-btn otp-verify-btn" id="otpVerifyBtn">
+                        <span>Verifikasi</span>
+                    </button>
+
+                    <div class="otp-resend">
+                        <p id="otpResendText">Tidak menerima kode?</p>
+                        <button type="button" class="otp-resend-btn" id="otpResendBtn" disabled>
+                            Kirim Ulang Kode <span id="otpCountdown">(60s)</span>
+                        </button>
+                    </div>
+                </div>
 
                 <div class="auth-error" id="authError"></div>
             </div>

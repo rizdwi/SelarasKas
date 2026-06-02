@@ -24,10 +24,20 @@
                 ...options,
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Request failed');
+            if (!res.ok) {
+                const err = new Error(data.error || 'Request failed');
+                // Pass through verification data for OTP flow
+                if (data.needs_verification) {
+                    err.needs_verification = true;
+                    err.email = data.email;
+                    err.message = data.message || data.error;
+                }
+                if (data.wait) err.wait = data.wait;
+                throw err;
+            }
             return data;
         } catch (err) {
-            if (err.message.includes('Unauthorized')) {
+            if (err.message && err.message.includes('Unauthorized')) {
                 showAuth();
             }
             throw err;
@@ -105,6 +115,13 @@
     function showAuth() {
         document.getElementById('authScreen').classList.add('active');
         document.getElementById('mainApp').classList.remove('active');
+        // Reset to login form, hide OTP
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const otpScreen = document.getElementById('otpScreen');
+        if (loginForm) loginForm.classList.add('active');
+        if (registerForm) registerForm.classList.remove('active');
+        if (otpScreen) otpScreen.classList.remove('active');
         currentUser = null;
     }
 
@@ -176,16 +193,160 @@
     function initAuth() {
         const loginForm = document.getElementById('loginForm');
         const registerForm = document.getElementById('registerForm');
+        const otpScreen = document.getElementById('otpScreen');
         const authError = document.getElementById('authError');
+        let pendingEmail = '';
+        let resendCountdown = null;
+
+        function showOtpScreen(email) {
+            pendingEmail = email;
+            loginForm.classList.remove('active');
+            registerForm.classList.remove('active');
+            otpScreen.classList.add('active');
+            authError.textContent = '';
+            document.getElementById('otpEmailDisplay').textContent = email;
+            document.getElementById('otpError').textContent = '';
+            // Clear OTP inputs
+            document.querySelectorAll('.otp-digit').forEach(inp => {
+                inp.value = '';
+                inp.classList.remove('filled', 'error');
+            });
+            document.querySelector('.otp-digit[data-index="0"]').focus();
+            startResendCountdown(60);
+        }
+
+        function startResendCountdown(seconds) {
+            const btn = document.getElementById('otpResendBtn');
+            const countdown = document.getElementById('otpCountdown');
+            btn.disabled = true;
+            let remaining = seconds;
+            countdown.textContent = `(${remaining}s)`;
+            if (resendCountdown) clearInterval(resendCountdown);
+            resendCountdown = setInterval(() => {
+                remaining--;
+                countdown.textContent = `(${remaining}s)`;
+                if (remaining <= 0) {
+                    clearInterval(resendCountdown);
+                    btn.disabled = false;
+                    countdown.textContent = '';
+                }
+            }, 1000);
+        }
+
+        // OTP input logic
+        const otpInputs = document.querySelectorAll('.otp-digit');
+        otpInputs.forEach((input, idx) => {
+            input.addEventListener('input', (e) => {
+                const val = e.target.value.replace(/[^0-9]/g, '');
+                e.target.value = val ? val[val.length - 1] : '';
+                if (val) {
+                    e.target.classList.add('filled');
+                    e.target.classList.remove('error');
+                    if (idx < 5) otpInputs[idx + 1].focus();
+                } else {
+                    e.target.classList.remove('filled');
+                }
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+                    otpInputs[idx - 1].focus();
+                    otpInputs[idx - 1].value = '';
+                    otpInputs[idx - 1].classList.remove('filled');
+                }
+                if (e.key === 'Enter') {
+                    document.getElementById('otpVerifyBtn').click();
+                }
+            });
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+                if (pasted.length === 6) {
+                    pasted.split('').forEach((d, i) => {
+                        otpInputs[i].value = d;
+                        otpInputs[i].classList.add('filled');
+                    });
+                    otpInputs[5].focus();
+                }
+            });
+        });
+
+        // Verify OTP
+        document.getElementById('otpVerifyBtn').addEventListener('click', async () => {
+            const code = Array.from(otpInputs).map(i => i.value).join('');
+            const otpError = document.getElementById('otpError');
+            otpError.textContent = '';
+
+            if (code.length !== 6) {
+                otpError.textContent = 'Masukkan 6 digit kode verifikasi';
+                otpInputs.forEach(i => i.classList.add('error'));
+                return;
+            }
+
+            const btn = document.getElementById('otpVerifyBtn');
+            btn.disabled = true;
+            btn.querySelector('span').textContent = 'Memverifikasi...';
+
+            try {
+                const data = await api('auth.php?action=verify_email', {
+                    method: 'POST',
+                    body: JSON.stringify({ email: pendingEmail, code }),
+                });
+                showApp(data.user);
+                showToast('Email berhasil diverifikasi! 🎉');
+            } catch (err) {
+                otpError.textContent = err.message;
+                otpInputs.forEach(i => i.classList.add('error'));
+                // Clear inputs for retry
+                setTimeout(() => {
+                    otpInputs.forEach(i => { i.value = ''; i.classList.remove('filled', 'error'); });
+                    otpInputs[0].focus();
+                }, 1500);
+            } finally {
+                btn.disabled = false;
+                btn.querySelector('span').textContent = 'Verifikasi';
+            }
+        });
+
+        // Resend code
+        document.getElementById('otpResendBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('otpResendBtn');
+            const otpError = document.getElementById('otpError');
+            btn.disabled = true;
+            try {
+                const data = await api('auth.php?action=resend_code', {
+                    method: 'POST',
+                    body: JSON.stringify({ email: pendingEmail }),
+                });
+                otpError.textContent = '';
+                showToast(data.message || 'Kode verifikasi baru telah dikirim! 📧');
+                startResendCountdown(60);
+                // Clear inputs
+                otpInputs.forEach(i => { i.value = ''; i.classList.remove('filled', 'error'); });
+                otpInputs[0].focus();
+            } catch (err) {
+                otpError.textContent = err.message;
+                if (err.wait) startResendCountdown(err.wait);
+                else btn.disabled = false;
+            }
+        });
+
+        // Back from OTP
+        document.getElementById('otpBackBtn').addEventListener('click', () => {
+            otpScreen.classList.remove('active');
+            registerForm.classList.add('active');
+            if (resendCountdown) clearInterval(resendCountdown);
+        });
 
         document.getElementById('showRegister').addEventListener('click', () => {
             loginForm.classList.remove('active');
+            otpScreen.classList.remove('active');
             registerForm.classList.add('active');
             authError.textContent = '';
         });
 
         document.getElementById('showLogin').addEventListener('click', () => {
             registerForm.classList.remove('active');
+            otpScreen.classList.remove('active');
             loginForm.classList.add('active');
             authError.textContent = '';
         });
@@ -203,9 +364,20 @@
                         password: document.getElementById('loginPassword').value,
                     }),
                 });
-                showApp(data.user);
+                if (data.needs_verification) {
+                    showOtpScreen(data.email);
+                    showToast(data.message || 'Cek email untuk kode verifikasi 📧');
+                } else {
+                    showApp(data.user);
+                }
             } catch (err) {
-                authError.textContent = err.message;
+                // Check if server says needs verification (403)
+                if (err.needs_verification && err.email) {
+                    showOtpScreen(err.email);
+                    showToast(err.message || 'Cek email untuk kode verifikasi 📧');
+                } else {
+                    authError.textContent = err.message;
+                }
             } finally { btn.disabled = false; }
         });
 
@@ -223,10 +395,20 @@
                         password: document.getElementById('registerPassword').value,
                     }),
                 });
-                showApp(data.user);
-                showToast('Akun berhasil dibuat! 🎉');
+                if (data.needs_verification) {
+                    showOtpScreen(data.email);
+                    showToast(data.message || 'Kode verifikasi telah dikirim! 📧');
+                } else if (data.user) {
+                    showApp(data.user);
+                    showToast('Akun berhasil dibuat! 🎉');
+                }
             } catch (err) {
-                authError.textContent = err.message;
+                if (err.needs_verification && err.email) {
+                    showOtpScreen(err.email);
+                    showToast(err.message || 'Kode verifikasi telah dikirim! 📧');
+                } else {
+                    authError.textContent = err.message;
+                }
             } finally { btn.disabled = false; }
         });
 
