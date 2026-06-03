@@ -190,7 +190,7 @@ try {
             // Transport
             ['Transport', 'expense', null, 'car', '#38bdf8', 4],
             ['Bensin/BBM', 'expense', 'Transport', 'fuel', '#38bdf8', 1],
-            ['Parkir/Tol', 'expense', 'Transport', 'parking-circle', '#38bdf8', 2],
+            ['Parkir/Tol', 'expense', 'Transport', 'circle-parking', '#38bdf8', 2],
             ['Ojol/Taksi', 'expense', 'Transport', 'navigation', '#38bdf8', 3],
             ['Servis Kendaraan', 'expense', 'Transport', 'wrench', '#38bdf8', 4],
             ['Angkutan Umum', 'expense', 'Transport', 'bus', '#38bdf8', 5],
