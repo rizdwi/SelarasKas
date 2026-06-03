@@ -226,6 +226,27 @@
     LUCIDE_SVGs['🎓'] = LUCIDE_SVGs['book-open'];
     LUCIDE_SVGs['💼'] = LUCIDE_SVGs['wallet'];
 
+    // Additional category emojis mapped to corresponding SVGs
+    LUCIDE_SVGs['👔'] = LUCIDE_SVGs['shirt'];
+    LUCIDE_SVGs['🧹'] = LUCIDE_SVGs['trash-2'];
+    LUCIDE_SVGs['📡'] = LUCIDE_SVGs['wifi'];
+    LUCIDE_SVGs['⚡'] = LUCIDE_SVGs['zap'];
+    LUCIDE_SVGs['✏️'] = LUCIDE_SVGs['pen-tool'];
+    LUCIDE_SVGs['🍩'] = LUCIDE_SVGs['cookie'];
+    LUCIDE_SVGs['🍿'] = LUCIDE_SVGs['pizza'];
+    LUCIDE_SVGs['🥩'] = LUCIDE_SVGs['drumstick'];
+    LUCIDE_SVGs['🌶️'] = LUCIDE_SVGs['flame'];
+    LUCIDE_SVGs['🍚'] = LUCIDE_SVGs['wheat'];
+    LUCIDE_SVGs['🧃'] = LUCIDE_SVGs['cup-soda'];
+    LUCIDE_SVGs['🪣'] = LUCIDE_SVGs['hammer'];
+    LUCIDE_SVGs['🥬'] = LUCIDE_SVGs['carrot'];
+    LUCIDE_SVGs['🍼'] = LUCIDE_SVGs['baby'];
+    LUCIDE_SVGs['🧸'] = LUCIDE_SVGs['toy-brick'];
+    LUCIDE_SVGs['🧋'] = LUCIDE_SVGs['glass-water'];
+    LUCIDE_SVGs['💪'] = LUCIDE_SVGs['activity'];
+    LUCIDE_SVGs['🛵'] = LUCIDE_SVGs['navigation'];
+    LUCIDE_SVGs['👟'] = LUCIDE_SVGs['footprints'];
+
     LUCIDE_SVGs['Listrik'] = LUCIDE_SVGs['zap'];
     LUCIDE_SVGs['Air (PDAM)'] = LUCIDE_SVGs['droplets'];
     LUCIDE_SVGs['Internet'] = LUCIDE_SVGs['wifi'];
