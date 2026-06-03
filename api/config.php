@@ -1,4 +1,9 @@
 <?php
+// Load local secrets if available (gitignored)
+if (file_exists(__DIR__ . '/.env.local.php')) {
+    require_once __DIR__ . '/.env.local.php';
+}
+
 // CORS Headers
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -23,6 +28,9 @@ define('FACEBOOK_APP_ID', getenv('FACEBOOK_APP_ID') ?: '1348574213882211');
 
 // Email Service (Resend API)
 define('RESEND_API_KEY', getenv('RESEND_API_KEY') ?: ($_ENV['RESEND_API_KEY'] ?? ''));
+
+// Gemini AI Vision API (for Receipt OCR)
+define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: ($_ENV['GEMINI_API_KEY'] ?? ''));
 
 function getDB() {
     static $pdo = null;

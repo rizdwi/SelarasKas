@@ -1,6 +1,11 @@
 # User Uploads
 /uploads/
 
+# Local Secrets (API keys)
+api/.env.local.php
+.env
+.env.local
+
 # OS/System files
 .DS_Store
 Thumbs.db

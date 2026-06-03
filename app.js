@@ -2274,12 +2274,12 @@
                 
                 <div class="ocr-loading" id="ocrLoading" style="margin-top: 14px;">
                     <div class="ocr-loading-spinner" style="margin: 0 auto;"></div>
-                    <span class="ocr-loading-text" style="display:block;margin-top:8px;">Membaca data struk...</span>
-                    <span class="ocr-loading-subtext">Menggunakan OCR sisi klien (privasi aman)</span>
+                    <span class="ocr-loading-text" style="display:block;margin-top:8px;">AI sedang membaca struk...</span>
+                    <span class="ocr-loading-subtext">Menggunakan Gemini AI Vision untuk akurasi maksimal</span>
                 </div>
                 
                 <button class="modal-submit-btn success-btn" id="startOcrBtn" style="display:none; margin-top: 14px;">
-                    ⚡ Proses OCR
+                    🤖 Scan dengan AI
                 </button>
             </div>
             
@@ -2354,13 +2354,46 @@
         ocrLoading.style.display = 'flex';
         startOcrBtn.style.display = 'none';
         
+        // Update loading text for AI processing
+        const loadingText = ocrLoading.querySelector('.ocr-loading-text');
+        const loadingSubtext = ocrLoading.querySelector('.ocr-loading-subtext');
+        if (loadingText) loadingText.textContent = 'AI sedang membaca struk...';
+        if (loadingSubtext) loadingSubtext.textContent = 'Menggunakan Gemini AI Vision untuk akurasi maksimal';
+        
         try {
-            if (typeof Tesseract === 'undefined') {
-                throw new Error('Pustaka OCR gagal dimuat. Harap periksa koneksi internet Anda.');
+            // Convert image file to base64
+            const base64Data = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    // Remove the data:image/xxx;base64, prefix
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = () => reject(new Error('Gagal membaca file gambar'));
+                reader.readAsDataURL(file);
+            });
+            
+            const mimeType = file.type || 'image/jpeg';
+            
+            // Send to server-side Gemini Vision proxy
+            const response = await api('ocr.php', {
+                method: 'POST',
+                body: JSON.stringify({ image: base64Data, mime_type: mimeType })
+            });
+            
+            if (!response.success || !response.items) {
+                throw new Error(response.error || 'AI tidak mengembalikan data item');
             }
             
-            const result = await Tesseract.recognize(file, 'ind+eng');
-            const parsedData = parseReceiptText(result.data.text);
+            // Convert Gemini response to parsedData format expected by renderScanResults
+            const parsedData = {
+                items: response.items.map(item => ({
+                    description: item.name,
+                    amount: item.price
+                })),
+                total: response.total || 0,
+                storeName: response.store_name || ''
+            };
             
             ocrLoading.style.display = 'none';
             uploadStep.style.display = 'none';
@@ -2368,11 +2401,20 @@
             
             renderScanResults(parsedData, categories);
             
+            // Show store name if detected
+            if (parsedData.storeName) {
+                showToast(`Struk dari: ${parsedData.storeName}`);
+            }
+            
         } catch (err) {
-            console.error('OCR Error:', err);
-            showToast(err.message || 'Gagal membaca struk');
+            console.error('Gemini OCR Error:', err);
+            showToast(err.message || 'Gagal membaca struk. Pastikan foto jelas.');
             ocrLoading.style.display = 'none';
             startOcrBtn.style.display = 'block';
+            
+            // Reset loading text
+            if (loadingText) loadingText.textContent = 'AI sedang membaca struk...';
+            if (loadingSubtext) loadingSubtext.textContent = 'Menggunakan Gemini AI Vision untuk akurasi maksimal';
         }
     }
     
