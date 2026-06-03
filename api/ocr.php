@@ -99,8 +99,9 @@ Jika tidak ada item terdeteksi atau bukan struk:
 {"items":[],"total":0,"store_name":"","error":"Tidak dapat membaca struk"}
 PROMPT;
 
-// Build Gemini API request
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
+// Build Gemini API request — use gemini-1.5-flash (reliable free tier: 15 RPM)
+$model = 'gemini-1.5-flash';
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/' . $model . ':generateContent?key=' . urlencode($apiKey);
 
 $requestBody = [
     'contents' => [
@@ -119,7 +120,6 @@ $requestBody = [
     'generationConfig' => [
         'temperature' => 0.1,
         'maxOutputTokens' => 2048,
-        'responseMimeType' => 'application/json'
     ]
 ];
 
