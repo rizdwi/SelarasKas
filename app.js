@@ -6,6 +6,11 @@
 (function () {
     'use strict';
 
+    // Stub for lucide.createIcons to prevent errors when external CDN script is removed
+    window.lucide = {
+        createIcons: () => {}
+    };
+
     // ===== CONFIG =====
     const API = 'api';
     let currentUser = null;
@@ -149,12 +154,78 @@
         'flag': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flag"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>`,
         'plus-circle': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus-circle"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>`,
         'eye': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>`,
-        'eye-off': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`
+        'eye-off': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`,
+        'piggy-bank': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-piggy-bank"><path d="M19 5c-1.5 0-2.8 1.4-3 2-1-.6-2.5-.5-3-1l-1.5 1.5c.5.5.4 2 .9 3-.6.2-2 1.5-2 3"/><path d="M9 19c-.5 0-1-.5-1-1v-2c0-.5.5-1 1-1h2v3Z"/><path d="M15 19c-.5 0-1-.5-1-1v-2c0-.5.5-1 1-1h2v3Z"/><path d="M20 9v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4Z"/><path d="M6 10h.01"/></svg>`
     };
 
     // Aliases
     LUCIDE_SVGs['home'] = LUCIDE_SVGs['house'];
     LUCIDE_SVGs['Rumah Tangga'] = LUCIDE_SVGs['house'];
+
+    // Emoji Fallback Mappings for Maximum DB Compatibility
+    LUCIDE_SVGs['🏠'] = LUCIDE_SVGs['house'];
+    LUCIDE_SVGs['💡'] = LUCIDE_SVGs['zap'];
+    LUCIDE_SVGs['💧'] = LUCIDE_SVGs['droplets'];
+    LUCIDE_SVGs['📶'] = LUCIDE_SVGs['wifi'];
+    LUCIDE_SVGs['🔑'] = LUCIDE_SVGs['key'];
+    LUCIDE_SVGs['🗑️'] = LUCIDE_SVGs['trash-2'];
+    LUCIDE_SVGs['🔧'] = LUCIDE_SVGs['wrench'];
+    LUCIDE_SVGs['🔨'] = LUCIDE_SVGs['hammer'];
+    LUCIDE_SVGs['👶'] = LUCIDE_SVGs['baby'];
+    LUCIDE_SVGs['📖'] = LUCIDE_SVGs['book-open'];
+    LUCIDE_SVGs['🖊️'] = LUCIDE_SVGs['pen-tool'];
+    LUCIDE_SVGs['📚'] = LUCIDE_SVGs['book'];
+    LUCIDE_SVGs['👕'] = LUCIDE_SVGs['shirt'];
+    LUCIDE_SVGs['🧩'] = LUCIDE_SVGs['toy-brick'];
+    LUCIDE_SVGs['🩺'] = LUCIDE_SVGs['stethoscope'];
+    LUCIDE_SVGs['🍳'] = LUCIDE_SVGs['utensils-crossed'];
+    LUCIDE_SVGs['🥕'] = LUCIDE_SVGs['carrot'];
+    LUCIDE_SVGs['🍗'] = LUCIDE_SVGs['drumstick'];
+    LUCIDE_SVGs['🔥'] = LUCIDE_SVGs['flame'];
+    LUCIDE_SVGs['🌾'] = LUCIDE_SVGs['wheat'];
+    LUCIDE_SVGs['🥤'] = LUCIDE_SVGs['cup-soda'];
+    LUCIDE_SVGs['🚗'] = LUCIDE_SVGs['car'];
+    LUCIDE_SVGs['⛽'] = LUCIDE_SVGs['fuel'];
+    LUCIDE_SVGs['🅿️'] = LUCIDE_SVGs['circle-parking'];
+    LUCIDE_SVGs['🧭'] = LUCIDE_SVGs['navigation'];
+    LUCIDE_SVGs['🚌'] = LUCIDE_SVGs['bus'];
+    LUCIDE_SVGs['🍕'] = LUCIDE_SVGs['pizza'];
+    LUCIDE_SVGs['☕'] = LUCIDE_SVGs['coffee'];
+    LUCIDE_SVGs['🍜'] = LUCIDE_SVGs['soup'];
+    LUCIDE_SVGs['🍽️'] = LUCIDE_SVGs['utensils'];
+    LUCIDE_SVGs['🥛'] = LUCIDE_SVGs['glass-water'];
+    LUCIDE_SVGs['🍪'] = LUCIDE_SVGs['cookie'];
+    LUCIDE_SVGs['🔬'] = LUCIDE_SVGs['activity'];
+    LUCIDE_SVGs['🩺'] = LUCIDE_SVGs['stethoscope'];
+    LUCIDE_SVGs['🩺'] = LUCIDE_SVGs['stethoscope'];
+    LUCIDE_SVGs['🏥'] = LUCIDE_SVGs['hospital'];
+    LUCIDE_SVGs['💊'] = LUCIDE_SVGs['pill'];
+    LUCIDE_SVGs['💖'] = LUCIDE_SVGs['heart-pulse'];
+    LUCIDE_SVGs['🏛️'] = LUCIDE_SVGs['landmark'];
+    LUCIDE_SVGs['🏋️'] = LUCIDE_SVGs['dumbbell'];
+    LUCIDE_SVGs['🎉'] = LUCIDE_SVGs['party-popper'];
+    LUCIDE_SVGs['🎬'] = LUCIDE_SVGs['film'];
+    LUCIDE_SVGs['📺'] = LUCIDE_SVGs['tv'];
+    LUCIDE_SVGs['🎮'] = LUCIDE_SVGs['gamepad-2'];
+    LUCIDE_SVGs['✈️'] = LUCIDE_SVGs['plane'];
+    LUCIDE_SVGs['🎨'] = LUCIDE_SVGs['palette'];
+    LUCIDE_SVGs['👣'] = LUCIDE_SVGs['footprints'];
+    LUCIDE_SVGs['⌚'] = LUCIDE_SVGs['watch'];
+    LUCIDE_SVGs['🧺'] = LUCIDE_SVGs['washing-machine'];
+    LUCIDE_SVGs['📦'] = LUCIDE_SVGs['box'];
+    LUCIDE_SVGs['🤲'] = LUCIDE_SVGs['heart-handshake'];
+    LUCIDE_SVGs['🎁'] = LUCIDE_SVGs['gift'];
+    LUCIDE_SVGs['❓'] = LUCIDE_SVGs['help-circle'];
+    LUCIDE_SVGs['💵'] = LUCIDE_SVGs['coins'];
+    LUCIDE_SVGs['💰'] = LUCIDE_SVGs['wallet'];
+    LUCIDE_SVGs['🕌'] = LUCIDE_SVGs['coins'];
+    LUCIDE_SVGs['💻'] = LUCIDE_SVGs['laptop'];
+    LUCIDE_SVGs['📈'] = LUCIDE_SVGs['trending-up'];
+    LUCIDE_SVGs['🍔'] = LUCIDE_SVGs['utensils'];
+    LUCIDE_SVGs['🛍️'] = LUCIDE_SVGs['box'];
+    LUCIDE_SVGs['🎓'] = LUCIDE_SVGs['book-open'];
+    LUCIDE_SVGs['💼'] = LUCIDE_SVGs['wallet'];
+
     LUCIDE_SVGs['Listrik'] = LUCIDE_SVGs['zap'];
     LUCIDE_SVGs['Air (PDAM)'] = LUCIDE_SVGs['droplets'];
     LUCIDE_SVGs['Internet'] = LUCIDE_SVGs['wifi'];
@@ -1685,7 +1756,9 @@
         initProfileFeatures();
 
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(e => console.error('SW init failed:', e));
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                reg.update();
+            }).catch(e => console.error('SW init failed:', e));
         }
 
         // Button handlers
