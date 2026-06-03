@@ -1,4 +1,4 @@
-const CACHE_NAME = 'selaraskas-v23';
+const CACHE_NAME = 'selaraskas-v24';
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -6,8 +6,7 @@ const STATIC_ASSETS = [
     './app.js',
     './manifest.json',
     'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap',
-    'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf',
-    'https://cdn.jsdelivr.net/npm/@flaticon/flaticon-uicons/css/all/all.min.css'
+    'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf'
 ];
 
 self.addEventListener('install', event => {

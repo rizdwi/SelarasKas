@@ -1,11 +1,3 @@
-@import url("https://cdn.jsdelivr.net/npm/@flaticon/flaticon-uicons/css/all/all.min.css");
-@import "~@flaticon/flaticon-uicons/css/all/all";
-
-/* ============================================
-   FinFlow — Personal Finance App Styles
-   Dark + Light Theme
-   ============================================ */
-
 /* ===== DARK THEME (DEFAULT) ===== */
 :root, [data-theme="dark"] {
     --bg-primary: #0a0e1a;
@@ -212,14 +204,6 @@ input, select, textarea { font-family: inherit; }
 }
 .form-group input::placeholder { color: var(--text-muted); }
 .form-group textarea { resize: none; min-height: 60px; }
-
-/* Unified Flaticon alignment */
-.fi {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    line-height: 1 !important;
-}
 
 /* Input Icons & Premium Select Category triggers */
 .input-with-icon {
