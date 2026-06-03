@@ -173,15 +173,15 @@ try {
             ['Sekolah/SPP', 'expense', 'Anak', 'book-open', '#f472b6', 1],
             ['Les/Kursus', 'expense', 'Anak', 'pen-tool', '#f472b6', 2],
             ['Buku/Alat Tulis', 'expense', 'Anak', 'book', '#f472b6', 3],
-            ['Susu/Makanan Bayi', 'expense', 'Anak', 'coffee', '#f472b6', 4],
+            ['Susu/Makanan Bayi', 'expense', 'Anak', 'baby', '#f472b6', 4],
             ['Pakaian Anak', 'expense', 'Anak', 'shirt', '#f472b6', 5],
-            ['Mainan', 'expense', 'Anak', 'smile', '#f472b6', 6],
+            ['Mainan', 'expense', 'Anak', 'toy-brick', '#f472b6', 6],
             ['Kesehatan Anak', 'expense', 'Anak', 'stethoscope', '#f472b6', 7],
 
             // Dapur
             ['Dapur', 'expense', null, 'utensils-crossed', '#fbbf24', 3],
             ['Belanja Sayur/Buah', 'expense', 'Dapur', 'carrot', '#fbbf24', 1],
-            ['Daging/Ikan', 'expense', 'Dapur', 'beef', '#fbbf24', 2],
+            ['Daging/Ikan', 'expense', 'Dapur', 'drumstick', '#fbbf24', 2],
             ['Bumbu/Rempah', 'expense', 'Dapur', 'flame', '#fbbf24', 3],
             ['Beras/Minyak', 'expense', 'Dapur', 'wheat', '#fbbf24', 4],
             ['Snack/Minuman', 'expense', 'Dapur', 'cup-soda', '#fbbf24', 5],
@@ -190,8 +190,8 @@ try {
             // Transport
             ['Transport', 'expense', null, 'car', '#38bdf8', 4],
             ['Bensin/BBM', 'expense', 'Transport', 'fuel', '#38bdf8', 1],
-            ['Parkir/Tol', 'expense', 'Transport', 'circle-parking', '#38bdf8', 2],
-            ['Ojol/Taksi', 'expense', 'Transport', 'bike', '#38bdf8', 3],
+            ['Parkir/Tol', 'expense', 'Transport', 'parking-circle', '#38bdf8', 2],
+            ['Ojol/Taksi', 'expense', 'Transport', 'navigation', '#38bdf8', 3],
             ['Servis Kendaraan', 'expense', 'Transport', 'wrench', '#38bdf8', 4],
             ['Angkutan Umum', 'expense', 'Transport', 'bus', '#38bdf8', 5],
 
@@ -224,7 +224,7 @@ try {
             ['Baju', 'expense', 'Pakaian', 'shirt', '#fb923c', 1],
             ['Sepatu', 'expense', 'Pakaian', 'footprints', '#fb923c', 2],
             ['Aksesoris', 'expense', 'Pakaian', 'watch', '#fb923c', 3],
-            ['Laundry', 'expense', 'Pakaian', 'shirt', '#fb923c', 4],
+            ['Laundry', 'expense', 'Pakaian', 'washing-machine', '#fb923c', 4],
 
             // Lainnya (Expense)
             ['Lainnya', 'expense', null, 'box', '#94a3b8', 9],
@@ -233,12 +233,12 @@ try {
             ['Tak Terduga', 'expense', 'Lainnya', 'help-circle', '#94a3b8', 3],
 
             // === INCOME CATEGORIES ===
-            ['Gaji', 'income', null, 'banknote', '#10b981', 1],
+            ['Gaji', 'income', null, 'wallet', '#10b981', 1],
             ['Bonus', 'income', null, 'gift', '#34d399', 2],
-            ['THR', 'income', null, 'landmark', '#059669', 3],
+            ['THR', 'income', null, 'coins', '#059669', 3],
             ['Freelance', 'income', null, 'laptop', '#6ee7b7', 4],
             ['Investasi', 'income', null, 'trending-up', '#a7f3d0', 5],
-            ['Lainnya', 'income', null, 'banknote', '#d1fae5', 6],
+            ['Lainnya', 'income', null, 'coins', '#d1fae5', 6],
         ];
 
         // First pass: insert parent categories (parent_id = null)

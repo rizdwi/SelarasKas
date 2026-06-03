@@ -13,7 +13,7 @@
     let currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
     const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-    const SAVINGS_ICONS = ['target','plane','laptop','home','car','smartphone','gem','graduation-cap','umbrella','landmark','gift','building'];
+    const SAVINGS_ICONS = ['target','piggy-bank','wallet','coins','trophy','plane','home','car','laptop','smartphone','gift','heart'];
     const SAVINGS_COLORS = ['#818cf8','#34d399','#fbbf24','#ff6b6b','#f472b6','#38bdf8','#a78bfa','#fb923c'];
 
     // ===== API CLIENT =====
@@ -914,13 +914,19 @@
         const formHTML = `
             <div class="form-group">
                 <label>Jumlah (Rp)</label>
-                <input type="text" id="txAmount" placeholder="Rp 0" required inputmode="numeric">
+                <div class="input-with-icon">
+                    <i data-lucide="banknote" class="input-icon"></i>
+                    <input type="text" id="txAmount" placeholder="Rp 0" required inputmode="numeric">
+                </div>
             </div>
             <div class="form-group">
                 <label>Kategori</label>
                 <input type="hidden" id="txCategoryId" value="">
-                <div id="selectedCategory" style="padding:10px 12px;background:var(--bg-card);border-radius:10px;font-size:14px;color:var(--text-muted);border:1px solid var(--border-light);cursor:pointer;" onclick="document.getElementById('categoryPicker').style.display=document.getElementById('categoryPicker').style.display==='none'?'flex':'none'">
-                    Pilih kategori...
+                <div id="selectedCategory" class="select-category-trigger" onclick="document.getElementById('categoryPicker').style.display=document.getElementById('categoryPicker').style.display==='none'?'flex':'none'">
+                    <span class="select-category-icon-wrapper">
+                        <i data-lucide="tag" class="input-icon"></i>
+                    </span>
+                    <span class="select-category-text">Pilih kategori...</span>
                 </div>
                 <div class="category-picker" id="categoryPicker" style="display:none;margin-top:8px;max-height:200px;overflow-y:auto;">
                     ${catPickerHTML}
@@ -928,11 +934,17 @@
             </div>
             <div class="form-group">
                 <label>Keterangan (opsional)</label>
-                <input type="text" id="txDescription" placeholder="Contoh: Beli sayur di pasar">
+                <div class="input-with-icon">
+                    <i data-lucide="file-text" class="input-icon"></i>
+                    <input type="text" id="txDescription" placeholder="Contoh: Beli sayur di pasar">
+                </div>
             </div>
             <div class="form-group">
                 <label>Tanggal</label>
-                <input type="date" id="txDate" value="${new Date().toISOString().slice(0, 10)}" onclick="this.showPicker()">
+                <div class="input-with-icon">
+                    <i data-lucide="calendar" class="input-icon"></i>
+                    <input type="date" id="txDate" value="${new Date().toISOString().slice(0, 10)}" onclick="this.showPicker()">
+                </div>
             </div>
             <button class="modal-submit-btn ${type === 'income' ? 'success-btn' : ''}" id="txSubmitBtn">
                 ${type === 'income' ? '💰 Simpan Pemasukan' : '💸 Simpan Pengeluaran'}
@@ -972,8 +984,11 @@
 
             function selectCategory(id, name, emojiOrIcon) {
                 document.getElementById('txCategoryId').value = id;
-                document.getElementById('selectedCategory').innerHTML = `${renderEmojiOrIcon(emojiOrIcon, '16px')} ${name}`;
-                document.getElementById('selectedCategory').style.color = 'var(--text-primary)';
+                const wrapper = document.querySelector('#selectedCategory .select-category-icon-wrapper');
+                if (wrapper) wrapper.innerHTML = renderEmojiOrIcon(emojiOrIcon, '18px');
+                const text = document.querySelector('#selectedCategory .select-category-text');
+                if (text) text.textContent = name;
+                document.getElementById('selectedCategory').classList.add('has-value');
                 document.getElementById('categoryPicker').style.display = 'none';
                 document.querySelectorAll('.category-child').forEach(c => c.classList.remove('selected'));
                 const sel = document.querySelector(`.category-child[data-id="${id}"]`);
@@ -1015,25 +1030,36 @@
         const formHTML = `
             <div class="form-group">
                 <label>Nama Target</label>
-                <input type="text" id="savingTitle" placeholder="Contoh: Dana Liburan" required>
+                <div class="input-with-icon">
+                    <i data-lucide="flag" class="input-icon"></i>
+                    <input type="text" id="savingTitle" placeholder="Contoh: Dana Liburan" required>
+                </div>
             </div>
             <div class="form-group">
                 <label>Target (Rp)</label>
-                <input type="text" id="savingTarget" placeholder="Rp 0" required inputmode="numeric">
+                <div class="input-with-icon">
+                    <i data-lucide="banknote" class="input-icon"></i>
+                    <input type="text" id="savingTarget" placeholder="Rp 0" required inputmode="numeric">
+                </div>
             </div>
             <div class="form-group">
                 <label>Sudah Terkumpul (Rp)</label>
-                <input type="text" id="savingCurrent" placeholder="Rp 0" value="Rp 0" inputmode="numeric">
+                <div class="input-with-icon">
+                    <i data-lucide="piggy-bank" class="input-icon"></i>
+                    <input type="text" id="savingCurrent" placeholder="Rp 0" value="Rp 0" inputmode="numeric">
+                </div>
             </div>
             <div class="form-group">
                 <label>Deadline (opsional)</label>
-                <input type="date" id="savingDeadline" onclick="this.showPicker()">
+                <div class="input-with-icon">
+                    <i data-lucide="calendar" class="input-icon"></i>
+                    <input type="date" id="savingDeadline" onclick="this.showPicker()">
+                </div>
             </div>
             <div class="form-group">
-                <label>Ikon</label>
+                <label>Ikon Target</label>
                 <div class="emoji-grid">
                     ${SAVINGS_ICONS.map(i => `<div class="icon-option ${i === selectedIcon ? 'selected' : ''}" data-icon="${i}"><i data-lucide="${i}"></i></div>`).join('')}
-                </div>
                 </div>
             </div>
             <button class="modal-submit-btn success-btn" id="savingSubmitBtn"><i data-lucide="plus-circle" style="width:18px;height:18px;margin-right:6px;vertical-align:-4px"></i> Buat Target</button>`;
@@ -1076,14 +1102,18 @@
 
     function showAddToSaving(id, title) {
         const formHTML = `
-            <p style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;">Menambah ke: <strong>${title}</strong></p>
+            <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">Menambah ke: <strong>${title}</strong></p>
             <div class="form-group">
                 <label>Jumlah Tambah (Rp)</label>
-                <input type="text" id="addSavingAmount" placeholder="Rp 0" required inputmode="numeric">
+                <div class="input-with-icon">
+                    <i data-lucide="banknote" class="input-icon"></i>
+                    <input type="text" id="addSavingAmount" placeholder="Rp 0" required inputmode="numeric">
+                </div>
             </div>
             <button class="modal-submit-btn success-btn" id="addSavingSubmitBtn">💰 Tambah Tabungan</button>`;
 
         openModal('Tambah Tabungan', formHTML);
+        setTimeout(() => lucide.createIcons(), 50);
         setTimeout(() => initRupiahFormatter('addSavingAmount'), 100);
 
         setTimeout(() => {
@@ -1760,8 +1790,11 @@
             <div class="form-group">
                 <label>Kategori</label>
                 <input type="hidden" id="budgetCategoryId" value="${existingCatId ? existingCatId : ''}">
-                <div id="budgetSelectedCategory" style="padding:10px 12px;background:var(--bg-card);border-radius:10px;font-size:14px;color:var(--text-primary);border:1px solid var(--border-light);cursor:pointer;" onclick="document.getElementById('budgetCategoryPicker').style.display=document.getElementById('budgetCategoryPicker').style.display==='none'?'flex':'none'">
-                    Pilih kategori...
+                <div id="budgetSelectedCategory" class="select-category-trigger" onclick="document.getElementById('budgetCategoryPicker').style.display=document.getElementById('budgetCategoryPicker').style.display==='none'?'flex':'none'">
+                    <span class="select-category-icon-wrapper">
+                        <i data-lucide="tag" class="input-icon"></i>
+                    </span>
+                    <span class="select-category-text">Pilih kategori...</span>
                 </div>
                 <div class="category-picker" id="budgetCategoryPicker" style="display:none;margin-top:8px;max-height:200px;overflow-y:auto;">
                     ${catPickerHTML}
@@ -1769,7 +1802,10 @@
             </div>
             <div class="form-group">
                 <label>Jumlah Anggaran (Rp)</label>
-                <input type="text" id="budgetAmount" placeholder="Rp 0" value="${existingAmount ? 'Rp ' + parseInt(existingAmount).toLocaleString('id-ID') : ''}" required inputmode="numeric">
+                <div class="input-with-icon">
+                    <i data-lucide="wallet" class="input-icon"></i>
+                    <input type="text" id="budgetAmount" placeholder="Rp 0" value="${existingAmount ? 'Rp ' + parseInt(existingAmount).toLocaleString('id-ID') : ''}" required inputmode="numeric">
+                </div>
             </div>
             <button class="modal-submit-btn success-btn" id="budgetSubmitBtn">Simpan Anggaran</button>
         `;
@@ -1780,13 +1816,18 @@
         // Setup existing category name if any
         if (existingCatId) {
             let catName = 'Pilih kategori...';
+            let catEmoji = 'tag';
             categories.forEach(c => {
-                if (c.id == existingCatId) catName = c.name;
+                if (c.id == existingCatId) { catName = c.name; catEmoji = c.emoji; }
                 if (c.children) {
-                    c.children.forEach(ch => { if (ch.id == existingCatId) catName = ch.name; });
+                    c.children.forEach(ch => { if (ch.id == existingCatId) { catName = ch.name; catEmoji = ch.emoji; } });
                 }
             });
-            document.getElementById('budgetSelectedCategory').innerHTML = catName;
+            const wrapper = document.querySelector('#budgetSelectedCategory .select-category-icon-wrapper');
+            if (wrapper) wrapper.innerHTML = renderEmojiOrIcon(catEmoji, '18px');
+            const text = document.querySelector('#budgetSelectedCategory .select-category-text');
+            if (text) text.textContent = catName;
+            document.getElementById('budgetSelectedCategory').classList.add('has-value');
         }
 
         setTimeout(() => {
@@ -1804,7 +1845,11 @@
                         }
                     } else {
                         document.getElementById('budgetCategoryId').value = parent.dataset.id;
-                        document.getElementById('budgetSelectedCategory').innerHTML = `${renderEmojiOrIcon(parent.dataset.emoji, '16px')} ${parent.dataset.name}`;
+                        const wrapper = document.querySelector('#budgetSelectedCategory .select-category-icon-wrapper');
+                        if (wrapper) wrapper.innerHTML = renderEmojiOrIcon(parent.dataset.emoji, '18px');
+                        const text = document.querySelector('#budgetSelectedCategory .select-category-text');
+                        if (text) text.textContent = parent.dataset.name;
+                        document.getElementById('budgetSelectedCategory').classList.add('has-value');
                         document.getElementById('budgetCategoryPicker').style.display = 'none';
                         setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 10);
                     }
@@ -1814,7 +1859,11 @@
             document.querySelectorAll('#budgetCategoryPicker .category-child').forEach(child => {
                 child.addEventListener('click', () => {
                     document.getElementById('budgetCategoryId').value = child.dataset.id;
-                    document.getElementById('budgetSelectedCategory').innerHTML = `${renderEmojiOrIcon(child.dataset.emoji, '16px')} ${child.dataset.name}`;
+                    const wrapper = document.querySelector('#budgetSelectedCategory .select-category-icon-wrapper');
+                    if (wrapper) wrapper.innerHTML = renderEmojiOrIcon(child.dataset.emoji, '18px');
+                    const text = document.querySelector('#budgetSelectedCategory .select-category-text');
+                    if (text) text.textContent = child.dataset.name;
+                    document.getElementById('budgetSelectedCategory').classList.add('has-value');
                     document.getElementById('budgetCategoryPicker').style.display = 'none';
                     setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 10);
                 });

@@ -210,6 +210,89 @@ input, select, textarea { font-family: inherit; }
 .form-group input::placeholder { color: var(--text-muted); }
 .form-group textarea { resize: none; min-height: 60px; }
 
+/* Input Icons & Premium Select Category triggers */
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+.input-with-icon input {
+    padding-left: 46px !important;
+}
+.input-with-icon .input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    transition: all 0.2s ease;
+}
+.input-with-icon input:focus ~ .input-icon {
+    color: var(--accent-coral);
+    transform: translateY(-50%) scale(1.05);
+}
+.input-with-icon input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    right: 12px;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+}
+
+.select-category-trigger {
+    width: 100%;
+    padding: 14px 16px 14px 46px !important;
+    font-size: 15px;
+    font-weight: 500;
+    background: var(--bg-input);
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+}
+.select-category-trigger:hover {
+    border-color: var(--text-muted);
+}
+.select-category-trigger .select-category-icon-wrapper {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+.select-category-trigger .select-category-icon-wrapper i,
+.select-category-trigger .select-category-icon-wrapper svg {
+    color: var(--text-muted) !important;
+    stroke: var(--text-muted) !important;
+    width: 18px !important;
+    height: 18px !important;
+    stroke-width: 2.2px !important;
+    transition: all 0.2s ease;
+}
+.select-category-trigger.has-value {
+    color: var(--text-primary) !important;
+}
+.select-category-trigger.has-value .select-category-icon-wrapper i,
+.select-category-trigger.has-value .select-category-icon-wrapper svg {
+    color: var(--text-primary) !important;
+    stroke: var(--text-primary) !important;
+}
+
 .auth-submit-btn {
     width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
     background: var(--accent-gradient); color: white; border-radius: 14px;
