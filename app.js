@@ -2687,6 +2687,23 @@
             return lainnya ? lainnya.id : '';
         }
         
+        // Build grouped category options (optgroup for parents with children)
+        function buildCategoryOptions(guessedCatId) {
+            let html = '<option value="">Kategori...</option>';
+            categories.filter(c => c.type === 'expense' || !c.type).forEach(cat => {
+                if (cat.children && cat.children.length > 0) {
+                    html += `<optgroup label="${cat.name}">`;
+                    cat.children.forEach(ch => {
+                        html += `<option value="${ch.id}" ${ch.id == guessedCatId ? 'selected' : ''}>${ch.name}</option>`;
+                    });
+                    html += '</optgroup>';
+                } else {
+                    html += `<option value="${cat.id}" ${cat.id == guessedCatId ? 'selected' : ''}>${cat.name}</option>`;
+                }
+            });
+            return html;
+        }
+        
         let itemsHTML = '';
         if (parsedData.items.length === 0) {
             itemsHTML = `<div class="empty-state-small">Tidak ada item terdeteksi, silakan ketik manual atau ulangi scan.</div>`;
@@ -2699,10 +2716,7 @@
                         <input type="text" class="ocr-item-desc" value="${item.description}" placeholder="Nama barang" id="desc_${idx}">
                         <input type="text" class="ocr-item-amount" value="Rp ${item.amount.toLocaleString('id-ID')}" placeholder="Rp 0" id="amount_${idx}">
                         <select class="ocr-item-cat" id="cat_${idx}">
-                            <option value="">Kategori...</option>
-                            ${flatCategories.map(c => 
-                                `<option value="${c.id}" ${c.id == guessedCatId ? 'selected' : ''}>${c.name}</option>`
-                            ).join('')}
+                            ${buildCategoryOptions(guessedCatId)}
                         </select>
                     </div>
                 `;
