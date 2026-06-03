@@ -2381,46 +2381,133 @@
         const items = [];
         let detectedTotal = 0;
         
-        const priceRegex = /(?:rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?|\d+)\s*$/i;
-        const totalKeywords = ['total', 'jumlah', 'grand total', 'subtotal', 'sub total', 'net', 'bayar', 'due', 'cash', 'tunai', 'kembali'];
-        const excludeRegex = /\b(pajak|tax|ppn|service\s*charge|service\s*chg|svc\s*chg|tas\s*belanja|shopping\s*bag|paper\s*bag|kantong|plastik|paperbag|tote\s*bag|carrier\s*bag|tas)\b/i;
+        // Price regex: matches prices at end of line - requires either "Rp" prefix or 4+ digit number
+        // Avoids matching phone numbers, dates, receipt numbers
+        const priceWithRpRegex = /rp\.?\s*(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)\s*$/i;
+        const priceNumberRegex = /(\d{1,3}(?:[.,]\d{3})+)\s*$/;
+        const pricePlainRegex = /(\d{4,})\s*$/;
+        
+        // Quantity × Price pattern: "2 x 15.000", "3x15000", "2 @ 5.000"
+        const qtyPriceRegex = /(\d+)\s*[x×@]\s*(?:rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})*|\d+)/i;
+        
+        // Total/summary keywords - lines containing these are treated as total, not items
+        const totalKeywords = [
+            'total', 'jumlah', 'grand total', 'subtotal', 'sub total', 'sub-total',
+            'net', 'bayar', 'due', 'cash', 'tunai', 'kembali', 'kembalian', 'change',
+            'amount', 'pembayaran', 'debit', 'kredit', 'debet', 'transfer', 'qris',
+            'gopay', 'ovo', 'dana', 'shopeepay', 'linkaja'
+        ];
+        
+        // Exclude lines that match any of these — tax, bags, service charges, store metadata
+        const excludeRegex = /\b(pajak|tax|ppn|pph|service\s*charge|service\s*chg|svc\s*ch(?:g|arge)|tas\s*belanja|shopping\s*bag|paper\s*bag|kantong|plastik|paperbag|tote\s*bag|carrier\s*bag|tas\s*kresek|tas\s*plastik|diskon|discount|disc|potongan|voucher|promo|member|point|poin|rounding|pembulatan)\b/i;
+        
+        // Skip lines that look like receipt header/footer/metadata
+        const metadataRegex = /\b(kasir|cashier|struk|nota|receipt|print|trx|tanggal|tgl|date|waktu|jam|time|no\.?\s*(?:antrian|meja|order|faktur|ref|trx)|outlet|store|toko|alamat|address|telp|telepon|phone|fax|npwp|kode|code|terima\s*kasih|thank|thanks|selamat\s*datang|welcome|www\.|http|\.com|\.id|ig\s*:|fb\s*:)\b/i;
+        
+        // Price thresholds — filter out unrealistic values
+        const MIN_PRICE = 100;       // Minimum Rp 100
+        const MAX_PRICE = 50000000;  // Maximum Rp 50,000,000
+        
+        // Track seen items for duplicate detection
+        const seenItems = new Set();
         
         lines.forEach(line => {
             line = line.trim();
             if (!line) return;
-            if (/^[-=_*+]{3,}$/.test(line)) return;
             
-            const match = line.match(priceRegex);
-            if (match) {
-                const priceStr = match[1];
-                const priceVal = parseRupiah(priceStr);
-                if (priceVal <= 0) return;
-                
-                let desc = line.replace(match[0], '').trim()
-                    .replace(/^[\d\s.\-)]+/, '')
-                    .trim();
-                
-                if (desc.length < 2) return;
-                
-                const lowerDesc = desc.toLowerCase();
-                
-                // Exclude tax and bags
-                if (excludeRegex.test(lowerDesc)) return;
-                
-                const isTotalLine = totalKeywords.some(keyword => lowerDesc.includes(keyword));
-                
-                if (isTotalLine) {
-                    if (priceVal > detectedTotal && !lowerDesc.includes('kembali')) {
-                        detectedTotal = priceVal;
-                    }
-                } else {
-                    items.push({
-                        description: desc,
-                        amount: priceVal
-                    });
+            // Skip separator lines (----, ====, ****, etc.)
+            if (/^[-=_*+~#]{3,}$/.test(line)) return;
+            
+            // Skip very short lines (likely OCR noise)
+            if (line.length < 4) return;
+            
+            // Skip lines that are mostly numbers/special chars (OCR garbage)
+            const alphaCount = (line.match(/[a-zA-Z]/g) || []).length;
+            const totalChars = line.replace(/\s/g, '').length;
+            if (totalChars > 5 && alphaCount < totalChars * 0.15) return;
+            
+            // Skip metadata lines (kasir, tanggal, alamat, etc.)
+            if (metadataRegex.test(line)) return;
+            
+            // Try to extract price from line
+            let priceVal = 0;
+            let priceMatch = null;
+            let usedQtyPattern = false;
+            
+            // First check for quantity × price pattern
+            const qtyMatch = line.match(qtyPriceRegex);
+            if (qtyMatch) {
+                const qty = parseInt(qtyMatch[1]) || 1;
+                const unitPrice = parseRupiah(qtyMatch[2]);
+                if (qty > 0 && qty <= 999 && unitPrice > 0) {
+                    priceVal = qty * unitPrice;
+                    usedQtyPattern = true;
+                    priceMatch = qtyMatch;
                 }
             }
+            
+            // If no qty pattern, try price-at-end-of-line patterns
+            if (!usedQtyPattern) {
+                priceMatch = line.match(priceWithRpRegex) || line.match(priceNumberRegex) || line.match(pricePlainRegex);
+                if (priceMatch) {
+                    priceVal = parseRupiah(priceMatch[1]);
+                }
+            }
+            
+            if (!priceMatch || priceVal <= 0) return;
+            
+            // Apply price threshold
+            if (priceVal < MIN_PRICE || priceVal > MAX_PRICE) return;
+            
+            // Extract description: remove the price part from the line
+            let desc;
+            if (usedQtyPattern) {
+                // For qty patterns, take everything before the qty×price
+                desc = line.substring(0, line.indexOf(priceMatch[0])).trim();
+                if (!desc) {
+                    desc = line.replace(priceMatch[0], '').trim();
+                }
+            } else {
+                desc = line.replace(priceMatch[0], '').trim();
+            }
+            
+            // Clean up leading item numbers, dots, dashes
+            desc = desc.replace(/^[\d\s.\-\)#:]+/, '').trim();
+            
+            // Remove trailing 'x', '@' or quantity indicators
+            desc = desc.replace(/\s+\d+\s*[x×@]\s*$/, '').trim();
+            
+            if (desc.length < 2) return;
+            
+            const lowerDesc = desc.toLowerCase();
+            
+            // Exclude tax, bags, discounts, service charges
+            if (excludeRegex.test(lowerDesc)) return;
+            
+            // Check if this is a total/summary line
+            const isTotalLine = totalKeywords.some(keyword => lowerDesc.includes(keyword));
+            
+            if (isTotalLine) {
+                if (priceVal > detectedTotal && !lowerDesc.includes('kembali') && !lowerDesc.includes('kembalian') && !lowerDesc.includes('change')) {
+                    detectedTotal = priceVal;
+                }
+            } else {
+                // Duplicate detection: skip if we've seen this exact item+price
+                const itemKey = `${desc.toLowerCase()}|${priceVal}`;
+                if (seenItems.has(itemKey)) return;
+                seenItems.add(itemKey);
+                
+                items.push({
+                    description: desc,
+                    amount: priceVal
+                });
+            }
         });
+        
+        // If no explicit total was found, compute from items
+        if (detectedTotal === 0 && items.length > 0) {
+            detectedTotal = items.reduce((sum, item) => sum + item.amount, 0);
+        }
         
         return { items, total: detectedTotal };
     }
@@ -2440,19 +2527,84 @@
         });
         
         function guessCategoryId(desc) {
-            const descLower = desc.toLowerCase();
-            if (['kopi', 'boba', 'roti', 'snack', 'cafe', 'makan', 'minum', 'soda', 'teh', 'biskuit', 'donat', 'cokelat', 'jajan', 'mie'].some(k => descLower.includes(k))) {
-                const found = flatCategories.find(c => c.name.toLowerCase().includes('jajan'));
-                if (found) return found.id;
+            const d = desc.toLowerCase();
+            
+            // Define keyword → target category name mappings (checked in order of specificity)
+            const rules = [
+                // Kopi/Cafe
+                { keywords: ['kopi', 'coffee', 'latte', 'cappuccino', 'americano', 'espresso', 'mocha', 'macchiato', 'cafe', 'starbucks', 'kafe'], target: 'kopi/cafe' },
+                // Boba/Minuman
+                { keywords: ['boba', 'chatime', 'haus', 'gulu', 'xing fu tang', 'tiger sugar', 'kokumi', 'esteh', 'teh', 'jus', 'juice', 'milkshake', 'smoothie', 'shake'], target: 'boba/minuman' },
+                // Street Food
+                { keywords: ['nasi goreng', 'mie goreng', 'bakso', 'soto', 'sate', 'siomay', 'batagor', 'gorengan', 'martabak', 'pempek', 'ketoprak', 'gado', 'pecel', 'rawon', 'rendang', 'nasi padang', 'nasi uduk', 'nasi kuning', 'bubur', 'rujak', 'cilok', 'cireng', 'sempol', 'tahu', 'tempe', 'lontong'], target: 'street food' },
+                // Restaurant
+                { keywords: ['restaurant', 'resto', 'restoran', 'warung', 'makan siang', 'makan malam', 'dining', 'dine'], target: 'restaurant' },
+                // Jajan (general snack/food)
+                { keywords: ['snack', 'jajan', 'roti', 'biskuit', 'donat', 'cokelat', 'chocolate', 'permen', 'keripik', 'chips', 'mie instan', 'indomie', 'wafer', 'kue', 'ice cream', 'es krim', 'gelato', 'pizza', 'burger', 'ayam', 'chicken', 'mie', 'makan', 'minum', 'soda', 'fanta', 'coca cola', 'sprite', 'pepsi', 'pocari'], target: 'jajan' },
+                // Belanja Sayur/Buah
+                { keywords: ['sayur', 'sayuran', 'buah', 'apel', 'jeruk', 'pisang', 'mangga', 'tomat', 'wortel', 'kentang', 'bayam', 'kangkung', 'brokoli', 'selada', 'timun', 'terong', 'cabai', 'cabe', 'jagung', 'pepaya', 'semangka', 'melon', 'anggur', 'alpukat', 'bawang'], target: 'belanja sayur/buah' },
+                // Daging/Ikan
+                { keywords: ['daging', 'ikan', 'ayam', 'sapi', 'kambing', 'udang', 'cumi', 'tuna', 'salmon', 'lele', 'nila', 'patin', 'gurame', 'bandeng', 'tongkol', 'seafood'], target: 'daging/ikan' },
+                // Bumbu/Rempah
+                { keywords: ['bumbu', 'rempah', 'lada', 'merica', 'kunyit', 'jahe', 'lengkuas', 'sereh', 'daun salam', 'ketumbar', 'pala', 'cengkeh', 'kayu manis', 'kecap', 'saus', 'sambal', 'terasi'], target: 'bumbu/rempah' },
+                // Beras/Minyak
+                { keywords: ['beras', 'minyak goreng', 'minyak', 'gula', 'garam', 'tepung', 'mentega', 'margarin', 'santan'], target: 'beras/minyak' },
+                // Snack/Minuman (Dapur)
+                { keywords: ['air mineral', 'aqua', 'galon', 'le minerale'], target: 'snack/minuman' },
+                // Dapur (general groceries)
+                { keywords: ['telur', 'susu', 'keju', 'yoghurt', 'roti tawar', 'selai', 'sereal', 'oat', 'pasta', 'spaghetti', 'macaroni'], target: 'dapur' },
+                // Gas/LPG
+                { keywords: ['gas', 'lpg', 'elpiji', 'tabung gas'], target: 'gas/lpg' },
+                // Bensin/BBM
+                { keywords: ['bensin', 'bbm', 'pertamax', 'pertalite', 'solar', 'dexlite', 'fuel', 'shell', 'pertamina'], target: 'bensin/bbm' },
+                // Parkir/Tol
+                { keywords: ['parkir', 'tol', 'e-toll', 'etoll'], target: 'parkir/tol' },
+                // Ojol/Taksi
+                { keywords: ['gojek', 'grab', 'ojek', 'ojol', 'taksi', 'taxi', 'uber', 'maxim', 'gocar', 'grabcar', 'goride', 'grabbike'], target: 'ojol/taksi' },
+                // Transport (general)
+                { keywords: ['angkot', 'bus', 'kereta', 'krl', 'mrt', 'lrt', 'transjakarta', 'busway', 'commuter', 'tiket'], target: 'angkutan umum' },
+                // Obat-obatan
+                { keywords: ['obat', 'paracetamol', 'ibuprofen', 'amoxicillin', 'antangin', 'bodrex', 'paramex', 'apotek', 'pharmacy', 'farmasi'], target: 'obat-obatan' },
+                // Dokter/RS
+                { keywords: ['dokter', 'rumah sakit', 'rs ', 'klinik', 'lab', 'laboratorium', 'cek darah', 'rontgen', 'usg'], target: 'dokter/rs' },
+                // Vitamin/Suplemen
+                { keywords: ['vitamin', 'suplemen', 'supplement', 'multivitamin', 'omega', 'kalsium', 'zinc'], target: 'vitamin/suplemen' },
+                // Laundry
+                { keywords: ['laundry', 'cuci', 'dry clean', 'setrika'], target: 'laundry' },
+                // Listrik
+                { keywords: ['listrik', 'pln', 'token listrik', 'pulsa listrik', 'kwh'], target: 'listrik' },
+                // Internet/WiFi
+                { keywords: ['internet', 'wifi', 'indihome', 'firstmedia', 'biznet', 'myrepublic', 'cbn'], target: 'internet' },
+                // Air PDAM
+                { keywords: ['pdam', 'air pam'], target: 'air (pdam)' },
+                // Pulsa/Paket Data
+                { keywords: ['pulsa', 'paket data', 'kuota', 'telkomsel', 'indosat', 'xl', 'axis', 'tri', 'smartfren'], target: 'internet' },
+                // Household cleaning
+                { keywords: ['sabun', 'shampoo', 'sampo', 'odol', 'pasta gigi', 'sikat gigi', 'deterjen', 'pewangi', 'pembersih', 'tissue', 'tisu', 'kapas', 'pembalut', 'popok', 'diapers', 'pampers'], target: 'kebersihan' },
+                // Pakaian
+                { keywords: ['baju', 'celana', 'jaket', 'kaos', 'kemeja', 'dress', 'rok', 'jeans', 'sweater', 'hoodie'], target: 'baju' },
+                // Sepatu
+                { keywords: ['sepatu', 'sandal', 'sendal', 'sneakers', 'boots'], target: 'sepatu' },
+                // Sekolah
+                { keywords: ['spp', 'sekolah', 'uang sekolah', 'bimbel', 'les', 'kursus', 'tuition'], target: 'sekolah/spp' },
+                // Film/Bioskop
+                { keywords: ['bioskop', 'cinema', 'cgv', 'xxi', 'cinepolis', 'film', 'movie', 'nonton'], target: 'film/bioskop' },
+                // Game
+                { keywords: ['game', 'gaming', 'steam', 'playstation', 'ps4', 'ps5', 'xbox', 'nintendo', 'top up', 'topup'], target: 'game' },
+                // Streaming
+                { keywords: ['netflix', 'spotify', 'disney', 'youtube premium', 'hbo', 'viu', 'vidio', 'iqiyi', 'wetv'], target: 'streaming' },
+            ];
+            
+            for (const rule of rules) {
+                if (rule.keywords.some(k => d.includes(k))) {
+                    const found = flatCategories.find(c => c.name.toLowerCase() === rule.target);
+                    if (found) return found.id;
+                    // Partial match fallback
+                    const partial = flatCategories.find(c => c.name.toLowerCase().includes(rule.target) || rule.target.includes(c.name.toLowerCase()));
+                    if (partial) return partial.id;
+                }
             }
-            if (['sayur', 'daging', 'bumbu', 'beras', 'minyak', 'sabun', 'shampoo', 'odol', 'telur', 'susu', 'bawang'].some(k => descLower.includes(k))) {
-                const found = flatCategories.find(c => c.name.toLowerCase().includes('dapur') || c.name.toLowerCase().includes('belanja'));
-                if (found) return found.id;
-            }
-            if (['bensin', 'bbm', 'parkir', 'tol', 'gojek', 'grab', 'ojek', 'fuel', 'bensin'].some(k => descLower.includes(k))) {
-                const found = flatCategories.find(c => c.name.toLowerCase().includes('transport'));
-                if (found) return found.id;
-            }
+            
             const lainnya = flatCategories.find(c => c.name.toLowerCase().includes('lainnya'));
             return lainnya ? lainnya.id : '';
         }
