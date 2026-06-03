@@ -5,6 +5,11 @@
 // ============================================
 require_once __DIR__ . '/config.php';
 
+// Allow larger POST bodies for base64 images
+ini_set('post_max_size', '20M');
+ini_set('upload_max_filesize', '20M');
+ini_set('memory_limit', '256M');
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'OPTIONS') {
@@ -18,7 +23,17 @@ if ($method !== 'POST') {
 
 requireAuth();
 
-$input = getInput();
+// Read raw input (handles larger payloads than getInput)
+$rawInput = file_get_contents('php://input');
+if (!$rawInput) {
+    jsonResponse(['error' => 'Request body kosong'], 400);
+}
+
+$input = json_decode($rawInput, true);
+if (!$input) {
+    jsonResponse(['error' => 'Invalid JSON: ' . json_last_error_msg()], 400);
+}
+
 $imageBase64 = $input['image'] ?? '';
 $mimeType = $input['mime_type'] ?? 'image/jpeg';
 
@@ -33,37 +48,29 @@ if (!$apiKey) {
 
 // Build the Gemini API prompt — optimized for Indonesian receipts
 $prompt = <<<'PROMPT'
-Kamu adalah asisten AI yang ahli membaca struk belanja Indonesia.
+Analisis gambar struk/receipt belanja ini. Ekstrak setiap item yang DIBELI beserta harganya.
 
-Analisis gambar struk belanja ini dan ekstrak SEMUA item pembelian beserta harganya.
-
-ATURAN PENTING:
-1. Ekstrak HANYA item barang/produk yang dibeli beserta harganya
-2. ABAIKAN dan JANGAN masukkan:
-   - Pajak (PPN, PPh, tax)
-   - Tas belanja / kantong plastik / paper bag
-   - Diskon / potongan harga (tapi harga setelah diskon boleh)
+ATURAN:
+1. HANYA ekstrak item produk/barang/makanan/minuman yang dibeli.
+2. Untuk setiap item, berikan "name" (nama produk) dan "price" (harga total item dalam angka Rupiah, tanpa titik/koma).
+3. Jika ada qty > 1 (misal "2 x 15.000"), maka "price" = qty × harga satuan = 30000, dan "qty" = 2.
+4. WAJIB ABAIKAN baris-baris berikut (JANGAN masukkan ke items):
+   - Pajak / PPN / PPh / Tax
+   - Tas belanja / kantong plastik / paper bag / tas spunbond
+   - Diskon / discount / voucher / potongan
    - Service charge
-   - Kembalian / change
-   - Subtotal / total / grand total (masukkan di field "total" saja)
-   - Info toko (nama toko, alamat, telepon, kasir, tanggal, no struk)
-   - Pembulatan / rounding
-3. Jika ada format "qty x harga" (misal "2 x 15.000"), hitung total = qty × harga
-4. Semua harga dalam Rupiah (tanpa "Rp" prefix)
-5. Deteksi total belanja jika ada
+   - Subtotal / Total / Grand Total
+   - Kembalian / Change / Pembulatan / Rounding
+   - Info toko / alamat / kasir / tanggal / no nota / telepon
+   - Metode pembayaran (Transfer, QRIS, GoPay, OVO, dll)
+5. "total" = total pembayaran akhir yang tertera di struk (biasanya baris "Total" atau "Total Bayar").
+6. "store_name" = nama toko/restoran jika terlihat.
 
-Balas dalam format JSON SAJA tanpa markdown, tanpa backtick, tanpa penjelasan:
-{
-  "items": [
-    {"name": "Nama Item", "qty": 1, "price": 15000},
-    {"name": "Nama Item Lain", "qty": 2, "price": 30000}
-  ],
-  "total": 45000,
-  "store_name": "Nama Toko (jika terdeteksi)"
-}
+FORMAT RESPONS — JSON saja, tanpa backtick, tanpa markdown:
+{"items":[{"name":"Nama Produk","qty":1,"price":15000}],"total":42000,"store_name":"Nama Toko"}
 
-Jika struk tidak terbaca atau bukan struk belanja, balas:
-{"items": [], "total": 0, "error": "Gambar tidak terbaca sebagai struk belanja"}
+Jika tidak ada item terdeteksi atau bukan struk:
+{"items":[],"total":0,"store_name":"","error":"Tidak dapat membaca struk"}
 PROMPT;
 
 // Build Gemini API request
@@ -91,6 +98,9 @@ $requestBody = [
 ];
 
 $jsonPayload = json_encode($requestBody);
+if (!$jsonPayload) {
+    jsonResponse(['error' => 'Gagal memproses gambar (terlalu besar?). Error: ' . json_last_error_msg()], 500);
+}
 
 // Send request to Gemini API via cURL
 $ch = curl_init();
@@ -100,10 +110,9 @@ curl_setopt_array($ch, [
     CURLOPT_POSTFIELDS => $jsonPayload,
     CURLOPT_HTTPHEADER => [
         'Content-Type: application/json',
-        'Content-Length: ' . strlen($jsonPayload)
     ],
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT => 30,
+    CURLOPT_TIMEOUT => 45,
     CURLOPT_SSL_VERIFYPEER => true,
 ]);
 
@@ -118,7 +127,7 @@ if ($curlError) {
 
 if ($httpCode !== 200) {
     $errorData = json_decode($response, true);
-    $errorMsg = $errorData['error']['message'] ?? 'HTTP ' . $httpCode;
+    $errorMsg = $errorData['error']['message'] ?? ('HTTP ' . $httpCode);
     jsonResponse(['error' => 'Gemini API error: ' . $errorMsg], 500);
 }
 
@@ -127,9 +136,11 @@ $geminiResponse = json_decode($response, true);
 // Extract the text content from Gemini response
 $candidates = $geminiResponse['candidates'] ?? [];
 if (empty($candidates)) {
-    jsonResponse(['error' => 'Gemini tidak mengembalikan respons. Coba foto ulang dengan pencahayaan lebih baik.'], 500);
+    $blockReason = $geminiResponse['promptFeedback']['blockReason'] ?? 'unknown';
+    jsonResponse(['error' => "Gemini tidak mengembalikan respons (reason: $blockReason). Coba foto ulang."], 500);
 }
 
+$finishReason = $candidates[0]['finishReason'] ?? '';
 $textContent = $candidates[0]['content']['parts'][0]['text'] ?? '';
 
 if (!$textContent) {
@@ -138,33 +149,53 @@ if (!$textContent) {
 
 // Parse the JSON response from Gemini
 // Strip any markdown code fences if present
-$textContent = preg_replace('/^```(?:json)?\s*/', '', $textContent);
-$textContent = preg_replace('/\s*```$/', '', $textContent);
+$textContent = preg_replace('/^```(?:json)?\s*/s', '', $textContent);
+$textContent = preg_replace('/\s*```\s*$/s', '', $textContent);
 $textContent = trim($textContent);
 
 $parsed = json_decode($textContent, true);
 
 if (!$parsed || !isset($parsed['items'])) {
-    // Try to salvage — maybe Gemini returned wrapped text
-    // Attempt to find JSON object in the response
-    if (preg_match('/\{[\s\S]*"items"[\s\S]*\}/', $textContent, $matches)) {
+    // Try to find JSON object in the response
+    if (preg_match('/\{[\s\S]*"items"\s*:\s*\[[\s\S]*\][\s\S]*\}/U', $textContent, $matches)) {
         $parsed = json_decode($matches[0], true);
     }
     
     if (!$parsed || !isset($parsed['items'])) {
-        jsonResponse(['error' => 'Gagal memproses respons AI. Coba foto ulang.', 'raw' => $textContent], 500);
+        jsonResponse([
+            'error' => 'Gagal memproses respons AI. Coba foto ulang dengan pencahayaan lebih baik.',
+            'debug_raw' => substr($textContent, 0, 500)
+        ], 500);
     }
 }
 
 // Sanitize and validate items
 $items = [];
+// List of keywords to exclude (in case AI doesn't follow instructions perfectly)
+$excludeKeywords = ['pajak', 'tax', 'ppn', 'pph', 'tas ', 'kantong', 'plastik', 'paper bag',
+    'spunbond', 'spun bond', 'diskon', 'discount', 'voucher', 'potongan', 'service charge',
+    'subtotal', 'sub total', 'total', 'kembalian', 'change', 'pembulatan', 'rounding',
+    'transfer', 'tunai', 'cash', 'debit', 'kredit', 'qris', 'gopay', 'ovo', 'dana',
+    'shopeepay', 'linkaja', 'bsi pay', 'bca', 'bri', 'mandiri', 'bni'];
+
 foreach ($parsed['items'] as $item) {
     $name = trim($item['name'] ?? $item['description'] ?? '');
     $price = floatval($item['price'] ?? $item['amount'] ?? 0);
     $qty = intval($item['qty'] ?? $item['quantity'] ?? 1);
     
     if (!$name || $price <= 0) continue;
-    if ($price < 100 || $price > 50000000) continue; // Price threshold
+    if ($price < 100 || $price > 50000000) continue;
+    
+    // Double-check: exclude tax/bag/discount items that AI might have included
+    $nameLower = mb_strtolower($name);
+    $excluded = false;
+    foreach ($excludeKeywords as $kw) {
+        if (strpos($nameLower, $kw) !== false) {
+            $excluded = true;
+            break;
+        }
+    }
+    if ($excluded) continue;
     
     $items[] = [
         'name' => $name,

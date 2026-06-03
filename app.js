@@ -2345,6 +2345,41 @@
         }
     }
     
+    // Compress image using Canvas API before sending to Gemini
+    function compressImage(file, maxWidth = 1600, quality = 0.85) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let { width, height } = img;
+                
+                // Scale down if larger than maxWidth
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                // White background (helps with transparency)
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Convert to JPEG base64
+                const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                const base64 = dataUrl.split(',')[1];
+                
+                console.log(`[OCR] Image compressed: ${file.size} bytes → ~${Math.round(base64.length * 0.75)} bytes (${width}x${height})`);
+                resolve({ base64, mimeType: 'image/jpeg' });
+            };
+            img.onerror = () => reject(new Error('Gagal memuat gambar untuk kompresi'));
+            img.src = URL.createObjectURL(file);
+        });
+    }
+
     async function runReceiptOcr(file, categories) {
         const ocrLoading = document.getElementById('ocrLoading');
         const startOcrBtn = document.getElementById('startOcrBtn');
@@ -2358,31 +2393,30 @@
         const loadingText = ocrLoading.querySelector('.ocr-loading-text');
         const loadingSubtext = ocrLoading.querySelector('.ocr-loading-subtext');
         if (loadingText) loadingText.textContent = 'AI sedang membaca struk...';
-        if (loadingSubtext) loadingSubtext.textContent = 'Menggunakan Gemini AI Vision untuk akurasi maksimal';
+        if (loadingSubtext) loadingSubtext.textContent = 'Mengompres gambar & mengirim ke Gemini AI';
         
         try {
-            // Convert image file to base64
-            const base64Data = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    // Remove the data:image/xxx;base64, prefix
-                    const base64 = reader.result.split(',')[1];
-                    resolve(base64);
-                };
-                reader.onerror = () => reject(new Error('Gagal membaca file gambar'));
-                reader.readAsDataURL(file);
-            });
+            // Compress image before sending (phone cameras produce 3-12MB photos)
+            if (loadingSubtext) loadingSubtext.textContent = 'Mengompres gambar...';
+            const { base64, mimeType } = await compressImage(file, 1600, 0.85);
             
-            const mimeType = file.type || 'image/jpeg';
+            console.log(`[OCR] Sending to Gemini API... (base64 length: ${base64.length})`);
+            if (loadingSubtext) loadingSubtext.textContent = 'Gemini AI sedang menganalisis struk...';
             
             // Send to server-side Gemini Vision proxy
             const response = await api('ocr.php', {
                 method: 'POST',
-                body: JSON.stringify({ image: base64Data, mime_type: mimeType })
+                body: JSON.stringify({ image: base64, mime_type: mimeType })
             });
+            
+            console.log('[OCR] Gemini response:', response);
             
             if (!response.success || !response.items) {
                 throw new Error(response.error || 'AI tidak mengembalikan data item');
+            }
+            
+            if (response.items.length === 0) {
+                throw new Error('AI tidak menemukan item pada struk. Pastikan foto jelas dan tidak terpotong.');
             }
             
             // Convert Gemini response to parsedData format expected by renderScanResults
@@ -2394,6 +2428,8 @@
                 total: response.total || 0,
                 storeName: response.store_name || ''
             };
+            
+            console.log(`[OCR] Parsed ${parsedData.items.length} items, total: Rp ${parsedData.total}`);
             
             ocrLoading.style.display = 'none';
             uploadStep.style.display = 'none';
@@ -2414,7 +2450,7 @@
             
             // Reset loading text
             if (loadingText) loadingText.textContent = 'AI sedang membaca struk...';
-            if (loadingSubtext) loadingSubtext.textContent = 'Menggunakan Gemini AI Vision untuk akurasi maksimal';
+            if (loadingSubtext) loadingSubtext.textContent = 'Menggunakan Gemini AI Vision';
         }
     }
     
