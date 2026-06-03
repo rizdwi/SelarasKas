@@ -41,21 +41,34 @@ if (!$imageBase64) {
     jsonResponse(['error' => 'Gambar tidak ditemukan. Silakan upload ulang.'], 400);
 }
 
-// Load Gemini API key — simple file read (most reliable method)
-$keyFile = __DIR__ . DIRECTORY_SEPARATOR . '.gemini_key';
+// Load Gemini API key — multiple fallback methods
 $apiKey = '';
+
+// Method 1: Local file (for XAMPP/local development)
+$keyFile = __DIR__ . DIRECTORY_SEPARATOR . '.gemini_key';
 if (file_exists($keyFile)) {
     $apiKey = trim(file_get_contents($keyFile));
 }
-// Fallback to config.php constant
+
+// Method 2: Environment variable (for Vercel/cloud deployment)
+if (!$apiKey) {
+    $apiKey = getenv('GEMINI_API_KEY') ?: '';
+}
+if (!$apiKey && isset($_ENV['GEMINI_API_KEY'])) {
+    $apiKey = $_ENV['GEMINI_API_KEY'];
+}
+if (!$apiKey && isset($_SERVER['GEMINI_API_KEY'])) {
+    $apiKey = $_SERVER['GEMINI_API_KEY'];
+}
+
+// Method 3: config.php constant
 if (!$apiKey && defined('GEMINI_API_KEY') && GEMINI_API_KEY) {
     $apiKey = GEMINI_API_KEY;
 }
+
 if (!$apiKey) {
     jsonResponse([
-        'error' => 'Gemini API Key belum dikonfigurasi. Buat file api/.gemini_key berisi API key.',
-        'key_file' => $keyFile,
-        'key_file_exists' => file_exists($keyFile),
+        'error' => 'Gemini API Key belum dikonfigurasi. Tambahkan GEMINI_API_KEY di Vercel Environment Variables.',
     ], 500);
 }
 
