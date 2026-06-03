@@ -1507,6 +1507,9 @@
         document.getElementById('addExpenseBtn').addEventListener('click', () => showTransactionForm('expense'));
         document.getElementById('addSavingBtn').addEventListener('click', showSavingsForm);
         
+        const scanReceiptBtn = document.getElementById('scanReceiptBtn');
+        if (scanReceiptBtn) scanReceiptBtn.addEventListener('click', showScanReceiptForm);
+        
         const addBudgetBtn = document.getElementById('addBudgetBtn');
         if (addBudgetBtn) addBudgetBtn.addEventListener('click', showBudgetForm);
         
@@ -1524,7 +1527,7 @@
 
         // Expose for inline onclick
         window.Selaraskas = {
-        showBudgetForm, deleteTransaction, deleteSaving, deleteBudget, showAddToSaving };
+        showBudgetForm, deleteTransaction, deleteSaving, deleteBudget, showAddToSaving, showScanReceiptForm };
 
         // Check session
         checkSession();
@@ -1948,6 +1951,351 @@
         
         el.innerHTML = makeCard('income', 'Pemasukan', data.current_income, data.prev_income, 'income') + 
                        makeCard('expense', 'Pengeluaran', data.current_expense, data.prev_expense, 'expense');
+    }
+
+    // ===== CAMERA OCR SCANNER FUNCTIONS =====
+    async function showScanReceiptForm() {
+        const categories = await loadCategories('expense');
+        
+        const html = `
+            <div class="ocr-upload-step" id="ocrUploadStep">
+                <div class="scanner-container" id="ocrDropzone">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <p style="font-weight: 700; font-size: 15px; margin: 4px 0 0;">Ambil Foto / Pilih Berkas Struk</p>
+                    <span class="scan-instructions">Mendukung kamera langsung atau unggahan PNG/JPG</span>
+                    <input type="file" id="ocrFileInput" accept="image/*" capture="environment" style="display:none;">
+                </div>
+                
+                <div class="scan-preview-wrapper" id="scanPreviewWrapper" style="margin-top: 14px;">
+                    <button type="button" class="remove-preview-btn" id="removePreviewBtn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                    <img src="" class="scan-preview" id="scanPreviewImg">
+                </div>
+                
+                <div class="ocr-loading" id="ocrLoading" style="margin-top: 14px;">
+                    <div class="ocr-loading-spinner" style="margin: 0 auto;"></div>
+                    <span class="ocr-loading-text" style="display:block;margin-top:8px;">Membaca data struk...</span>
+                    <span class="ocr-loading-subtext">Menggunakan OCR sisi klien (privasi aman)</span>
+                </div>
+                
+                <button class="modal-submit-btn success-btn" id="startOcrBtn" style="display:none; margin-top: 14px;">
+                    ⚡ Proses OCR
+                </button>
+            </div>
+            
+            <div class="ocr-results-container" id="ocrResultsContainer">
+                <!-- Diisi otomatis setelah parsing -->
+            </div>
+        `;
+        
+        openModal('Scan Struk Belanja', html);
+        setTimeout(() => lucide.createIcons(), 50);
+        
+        const dropzone = document.getElementById('ocrDropzone');
+        const fileInput = document.getElementById('ocrFileInput');
+        const previewWrapper = document.getElementById('scanPreviewWrapper');
+        const previewImg = document.getElementById('scanPreviewImg');
+        const removePreviewBtn = document.getElementById('removePreviewBtn');
+        const startOcrBtn = document.getElementById('startOcrBtn');
+        const ocrLoading = document.getElementById('ocrLoading');
+        
+        let selectedFile = null;
+        
+        // Hide loading initially
+        ocrLoading.style.display = 'none';
+        
+        dropzone.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+        
+        removePreviewBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetUploader();
+        });
+        
+        startOcrBtn.addEventListener('click', () => {
+            if (selectedFile) {
+                runReceiptOcr(selectedFile, categories);
+            }
+        });
+        
+        function handleFileSelect(file) {
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                previewWrapper.style.display = 'block';
+                startOcrBtn.style.display = 'block';
+                dropzone.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function resetUploader() {
+            selectedFile = null;
+            fileInput.value = '';
+            previewImg.src = '';
+            previewWrapper.style.display = 'none';
+            startOcrBtn.style.display = 'none';
+            dropzone.style.display = 'flex';
+        }
+    }
+    
+    async function runReceiptOcr(file, categories) {
+        const ocrLoading = document.getElementById('ocrLoading');
+        const startOcrBtn = document.getElementById('startOcrBtn');
+        const resultsContainer = document.getElementById('ocrResultsContainer');
+        const uploadStep = document.getElementById('ocrUploadStep');
+        
+        ocrLoading.style.display = 'flex';
+        startOcrBtn.style.display = 'none';
+        
+        try {
+            if (typeof Tesseract === 'undefined') {
+                throw new Error('Pustaka OCR gagal dimuat. Harap periksa koneksi internet Anda.');
+            }
+            
+            const result = await Tesseract.recognize(file, 'ind+eng');
+            const parsedData = parseReceiptText(result.data.text);
+            
+            ocrLoading.style.display = 'none';
+            uploadStep.style.display = 'none';
+            resultsContainer.style.display = 'flex';
+            
+            renderScanResults(parsedData, categories);
+            
+        } catch (err) {
+            console.error('OCR Error:', err);
+            showToast(err.message || 'Gagal membaca struk');
+            ocrLoading.style.display = 'none';
+            startOcrBtn.style.display = 'block';
+        }
+    }
+    
+    function parseReceiptText(text) {
+        const lines = text.split('\n');
+        const items = [];
+        let detectedTotal = 0;
+        
+        const priceRegex = /(?:rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?|\d+)\s*$/i;
+        const totalKeywords = ['total', 'jumlah', 'grand total', 'subtotal', 'sub total', 'net', 'bayar', 'due', 'cash', 'tunai', 'kembali'];
+        
+        lines.forEach(line => {
+            line = line.trim();
+            if (!line) return;
+            if (/^[-=_*+]{3,}$/.test(line)) return;
+            
+            const match = line.match(priceRegex);
+            if (match) {
+                const priceStr = match[1];
+                const priceVal = parseRupiah(priceStr);
+                if (priceVal <= 0) return;
+                
+                let desc = line.replace(match[0], '').trim()
+                    .replace(/^[\d\s.\-)]+/, '')
+                    .trim();
+                
+                if (desc.length < 2) return;
+                
+                const lowerDesc = desc.toLowerCase();
+                const isTotalLine = totalKeywords.some(keyword => lowerDesc.includes(keyword));
+                
+                if (isTotalLine) {
+                    if (priceVal > detectedTotal && !lowerDesc.includes('kembali')) {
+                        detectedTotal = priceVal;
+                    }
+                } else {
+                    items.push({
+                        description: desc,
+                        amount: priceVal
+                    });
+                }
+            }
+        });
+        
+        return { items, total: detectedTotal };
+    }
+    
+    function renderScanResults(parsedData, categories) {
+        const container = document.getElementById('ocrResultsContainer');
+        
+        const flatCategories = [];
+        categories.forEach(cat => {
+            if (cat.children && cat.children.length > 0) {
+                cat.children.forEach(ch => {
+                    flatCategories.push({ id: ch.id, name: ch.name, parentName: cat.name });
+                });
+            } else {
+                flatCategories.push({ id: cat.id, name: cat.name, parentName: '' });
+            }
+        });
+        
+        function guessCategoryId(desc) {
+            const descLower = desc.toLowerCase();
+            if (['kopi', 'boba', 'roti', 'snack', 'cafe', 'makan', 'minum', 'soda', 'teh', 'biskuit', 'donat', 'cokelat', 'jajan', 'mie'].some(k => descLower.includes(k))) {
+                const found = flatCategories.find(c => c.name.toLowerCase().includes('jajan'));
+                if (found) return found.id;
+            }
+            if (['sayur', 'daging', 'bumbu', 'beras', 'minyak', 'sabun', 'shampoo', 'odol', 'telur', 'susu', 'bawang'].some(k => descLower.includes(k))) {
+                const found = flatCategories.find(c => c.name.toLowerCase().includes('dapur') || c.name.toLowerCase().includes('belanja'));
+                if (found) return found.id;
+            }
+            if (['bensin', 'bbm', 'parkir', 'tol', 'gojek', 'grab', 'ojek', 'fuel', 'bensin'].some(k => descLower.includes(k))) {
+                const found = flatCategories.find(c => c.name.toLowerCase().includes('transport'));
+                if (found) return found.id;
+            }
+            const lainnya = flatCategories.find(c => c.name.toLowerCase().includes('lainnya'));
+            return lainnya ? lainnya.id : '';
+        }
+        
+        let itemsHTML = '';
+        if (parsedData.items.length === 0) {
+            itemsHTML = `<div class="empty-state-small">Tidak ada item terdeteksi, silakan ketik manual atau ulangi scan.</div>`;
+        } else {
+            itemsHTML = parsedData.items.map((item, idx) => {
+                const guessedCatId = guessCategoryId(item.description);
+                return `
+                    <div class="ocr-item-row" data-index="${idx}">
+                        <input type="checkbox" class="ocr-item-check" checked id="check_${idx}">
+                        <input type="text" class="ocr-item-desc" value="${item.description}" placeholder="Nama barang" id="desc_${idx}">
+                        <input type="text" class="ocr-item-amount" value="Rp ${item.amount.toLocaleString('id-ID')}" placeholder="Rp 0" id="amount_${idx}">
+                        <select class="ocr-item-cat" id="cat_${idx}">
+                            <option value="">Kategori...</option>
+                            ${flatCategories.map(c => 
+                                `<option value="${c.id}" ${c.id == guessedCatId ? 'selected' : ''}>${c.name}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        container.innerHTML = `
+            <div class="ocr-total-header" style="width: 100%;">
+                <span class="ocr-total-label">Total Terdeteksi</span>
+                <span class="ocr-total-value" id="ocrTotalText">Rp ${parsedData.total.toLocaleString('id-ID')}</span>
+            </div>
+            
+            <div class="ocr-items-list-header" style="width: 100%;">Daftar Item Struk</div>
+            <div class="ocr-items-list" style="width: 100%;">
+                ${itemsHTML}
+            </div>
+            
+            <div class="ocr-actions" style="width: 100%;">
+                <button class="modal-submit-btn" id="saveSplitBtn" style="margin-top: 6px;">
+                    🛍️ Simpan sebagai Transaksi Terpisah
+                </button>
+                <button class="modal-submit-btn success-btn" id="saveCombinedBtn">
+                    💸 Simpan sebagai Satu Transaksi Gabungan
+                </button>
+                <button class="modal-submit-btn" style="background:var(--bg-card);color:var(--text-muted);border:1px solid var(--border-light);box-shadow:none;" id="backToUploadBtn">
+                    Kembali
+                </button>
+            </div>
+        `;
+        
+        parsedData.items.forEach((_, idx) => {
+            initRupiahFormatter(`amount_${idx}`);
+        });
+        
+        document.getElementById('backToUploadBtn').addEventListener('click', () => {
+            document.getElementById('ocrResultsContainer').style.display = 'none';
+            const uploadStep = document.getElementById('ocrUploadStep');
+            uploadStep.style.display = 'block';
+            document.getElementById('ocrDropzone').style.display = 'flex';
+            document.getElementById('scanPreviewWrapper').style.display = 'none';
+            document.getElementById('startOcrBtn').style.display = 'none';
+        });
+        
+        document.getElementById('saveSplitBtn').addEventListener('click', () => saveTransactions(true, parsedData.items));
+        document.getElementById('saveCombinedBtn').addEventListener('click', () => saveTransactions(false, parsedData.items, parsedData.total));
+    }
+    
+    async function saveTransactions(split, parsedItems, detectedTotal = 0) {
+        const rows = document.querySelectorAll('.ocr-item-row');
+        const transactionsToSave = [];
+        
+        let combinedAmount = 0;
+        const combinedDescriptions = [];
+        let combinedCategory = '';
+        
+        try {
+            rows.forEach(row => {
+                const idx = row.dataset.index;
+                const isChecked = document.getElementById(`check_${idx}`).checked;
+                if (!isChecked) return;
+                
+                const desc = document.getElementById(`desc_${idx}`).value.trim();
+                const amount = parseRupiah(document.getElementById(`amount_${idx}`).value);
+                const categoryId = document.getElementById(`cat_${idx}`).value;
+                
+                if (!desc) return;
+                if (!amount || amount <= 0) return;
+                
+                if (split) {
+                    if (!categoryId) {
+                        showToast(`Pilih kategori untuk item: "${desc}"`);
+                        throw new Error('Missing Category');
+                    }
+                    transactionsToSave.push({
+                        category_id: categoryId,
+                        amount: amount,
+                        type: 'expense',
+                        description: desc,
+                        transaction_date: new Date().toISOString().slice(0, 10)
+                    });
+                } else {
+                    combinedAmount += amount;
+                    combinedDescriptions.push(desc);
+                    if (!combinedCategory && categoryId) {
+                        combinedCategory = categoryId;
+                    }
+                }
+            });
+            
+            if (!split) {
+                if (combinedAmount === 0) {
+                    showToast('Pilih minimal satu item untuk disimpan');
+                    return;
+                }
+                if (!combinedCategory) {
+                    showToast('Pilih minimal satu kategori pada item terpilih');
+                    return;
+                }
+                transactionsToSave.push({
+                    category_id: combinedCategory,
+                    amount: combinedAmount,
+                    type: 'expense',
+                    description: 'Gabungan Struk: ' + combinedDescriptions.join(', ').slice(0, 200),
+                    transaction_date: new Date().toISOString().slice(0, 10)
+                });
+            }
+            
+            if (transactionsToSave.length === 0) {
+                showToast('Pilih minimal satu item untuk disimpan');
+                return;
+            }
+            
+            showToast('Menyimpan transaksi...');
+            for (let tx of transactionsToSave) {
+                await api('transactions.php', {
+                    method: 'POST',
+                    body: JSON.stringify(tx)
+                });
+            }
+            closeModal();
+            showToast('Semua transaksi berhasil disimpan! 📝');
+            loadDashboard();
+        } catch (err) {
+            if (err.message !== 'Missing Category') {
+                showToast(err.message || 'Gagal menyimpan transaksi');
+            }
+        }
     }
 
     // ===== OFFLINE / PWA =====
