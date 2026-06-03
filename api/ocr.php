@@ -3,6 +3,13 @@
 // SelarasKas — Gemini Vision OCR Proxy
 // Sends receipt image to Gemini AI for parsing
 // ============================================
+
+// Load local secrets FIRST (before config.php)
+$_envFile = __DIR__ . DIRECTORY_SEPARATOR . '.env.local.php';
+if (file_exists($_envFile)) {
+    require_once $_envFile;
+}
+
 require_once __DIR__ . '/config.php';
 
 // Allow larger POST bodies for base64 images
@@ -43,7 +50,13 @@ if (!$imageBase64) {
 
 $apiKey = GEMINI_API_KEY;
 if (!$apiKey) {
-    jsonResponse(['error' => 'Gemini API Key belum dikonfigurasi. Tambahkan GEMINI_API_KEY di environment variables.'], 500);
+    // Provide debug info to help diagnose
+    jsonResponse([
+        'error' => 'Gemini API Key belum dikonfigurasi.',
+        'debug' => 'Buat file api/.env.local.php dengan isi: <?php define(\'GEMINI_API_KEY_LOCAL\', \'YOUR_KEY\');',
+        'env_file_path' => $_envFile,
+        'env_file_exists' => file_exists($_envFile),
+    ], 500);
 }
 
 // Build the Gemini API prompt — optimized for Indonesian receipts
