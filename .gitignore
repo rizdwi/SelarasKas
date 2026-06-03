@@ -3,6 +3,7 @@
 
 # Local Secrets (API keys)
 api/.env.local.php
+api/.gemini_key
 .env
 .env.local
 

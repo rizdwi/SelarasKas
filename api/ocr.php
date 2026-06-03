@@ -3,13 +3,6 @@
 // SelarasKas — Gemini Vision OCR Proxy
 // Sends receipt image to Gemini AI for parsing
 // ============================================
-
-// Load local secrets FIRST (before config.php)
-$_envFile = __DIR__ . DIRECTORY_SEPARATOR . '.env.local.php';
-if (file_exists($_envFile)) {
-    require_once $_envFile;
-}
-
 require_once __DIR__ . '/config.php';
 
 // Allow larger POST bodies for base64 images
@@ -30,7 +23,7 @@ if ($method !== 'POST') {
 
 requireAuth();
 
-// Read raw input (handles larger payloads than getInput)
+// Read raw input
 $rawInput = file_get_contents('php://input');
 if (!$rawInput) {
     jsonResponse(['error' => 'Request body kosong'], 400);
@@ -48,14 +41,21 @@ if (!$imageBase64) {
     jsonResponse(['error' => 'Gambar tidak ditemukan. Silakan upload ulang.'], 400);
 }
 
-$apiKey = GEMINI_API_KEY;
+// Load Gemini API key — simple file read (most reliable method)
+$keyFile = __DIR__ . DIRECTORY_SEPARATOR . '.gemini_key';
+$apiKey = '';
+if (file_exists($keyFile)) {
+    $apiKey = trim(file_get_contents($keyFile));
+}
+// Fallback to config.php constant
+if (!$apiKey && defined('GEMINI_API_KEY') && GEMINI_API_KEY) {
+    $apiKey = GEMINI_API_KEY;
+}
 if (!$apiKey) {
-    // Provide debug info to help diagnose
     jsonResponse([
-        'error' => 'Gemini API Key belum dikonfigurasi.',
-        'debug' => 'Buat file api/.env.local.php dengan isi: <?php define(\'GEMINI_API_KEY_LOCAL\', \'YOUR_KEY\');',
-        'env_file_path' => $_envFile,
-        'env_file_exists' => file_exists($_envFile),
+        'error' => 'Gemini API Key belum dikonfigurasi. Buat file api/.gemini_key berisi API key.',
+        'key_file' => $keyFile,
+        'key_file_exists' => file_exists($keyFile),
     ], 500);
 }
 
