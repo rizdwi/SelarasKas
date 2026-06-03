@@ -82,14 +82,14 @@
         return name;
     }
 
-    // Render either an emoji character or a Lucide icon depending on the value
+    // Render either an emoji character or a Flaticon UIcon depending on the value
     function renderEmojiOrIcon(emojiOrIcon, size = '16px', color = '', extraStyles = '') {
         if (!emojiOrIcon) {
-            return `<i data-lucide="box" style="width:${size}; height:${size}; color:${color}; ${extraStyles}"></i>`;
+            return `<i class="fi fi-rr-box" style="font-size:${size}; color:${color}; ${extraStyles}"></i>`;
         }
-        // If it looks like a Lucide icon (3+ chars, lowercase, numbers, hyphens only)
+        // If it looks like an icon name (3+ chars, lowercase, numbers, hyphens only)
         if (/^[a-z0-9\-]{3,}$/.test(emojiOrIcon)) {
-            return `<i data-lucide="${emojiOrIcon}" style="width:${size}; height:${size}; color:${color}; ${extraStyles}"></i>`;
+            return `<i class="fi fi-rr-${emojiOrIcon}" style="font-size:${size}; color:${color}; ${extraStyles}"></i>`;
         }
         // Otherwise treat it as a raw emoji character
         return `<span class="icon-emoji" style="font-size:${size}; line-height:1; display:inline-flex; align-items:center; justify-content:center; width:${size}; height:${size}; ${extraStyles}">${emojiOrIcon}</span>`;
@@ -450,8 +450,8 @@
                 if (input && icon) {
                     const isPassword = input.type === 'password';
                     input.type = isPassword ? 'text' : 'password';
-                    icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
-                    if (window.lucide) lucide.createIcons();
+                    icon.className = isPassword ? 'fi fi-rr-eye-crossed' : 'fi fi-rr-eye';
+                    icon.style.fontSize = '20px';
                 }
             });
         });
@@ -915,7 +915,7 @@
             <div class="form-group">
                 <label>Jumlah (Rp)</label>
                 <div class="input-with-icon">
-                    <i data-lucide="banknote" class="input-icon"></i>
+                    <i class="fi fi-rr-banknote input-icon"></i>
                     <input type="text" id="txAmount" placeholder="Rp 0" required inputmode="numeric">
                 </div>
             </div>
@@ -924,7 +924,7 @@
                 <input type="hidden" id="txCategoryId" value="">
                 <div id="selectedCategory" class="select-category-trigger" onclick="document.getElementById('categoryPicker').style.display=document.getElementById('categoryPicker').style.display==='none'?'flex':'none'">
                     <span class="select-category-icon-wrapper">
-                        <i data-lucide="tag" class="input-icon"></i>
+                        <i class="fi fi-rr-tag input-icon"></i>
                     </span>
                     <span class="select-category-text">Pilih kategori...</span>
                 </div>
@@ -935,14 +935,14 @@
             <div class="form-group">
                 <label>Keterangan (opsional)</label>
                 <div class="input-with-icon">
-                    <i data-lucide="file-text" class="input-icon"></i>
+                    <i class="fi fi-rr-document input-icon"></i>
                     <input type="text" id="txDescription" placeholder="Contoh: Beli sayur di pasar">
                 </div>
             </div>
             <div class="form-group">
                 <label>Tanggal</label>
                 <div class="input-with-icon">
-                    <i data-lucide="calendar" class="input-icon"></i>
+                    <i class="fi fi-rr-calendar input-icon"></i>
                     <input type="date" id="txDate" value="${new Date().toISOString().slice(0, 10)}" onclick="this.showPicker()">
                 </div>
             </div>
@@ -1031,38 +1031,38 @@
             <div class="form-group">
                 <label>Nama Target</label>
                 <div class="input-with-icon">
-                    <i data-lucide="flag" class="input-icon"></i>
+                    <i class="fi fi-rr-flag input-icon"></i>
                     <input type="text" id="savingTitle" placeholder="Contoh: Dana Liburan" required>
                 </div>
             </div>
             <div class="form-group">
                 <label>Target (Rp)</label>
                 <div class="input-with-icon">
-                    <i data-lucide="banknote" class="input-icon"></i>
+                    <i class="fi fi-rr-banknote input-icon"></i>
                     <input type="text" id="savingTarget" placeholder="Rp 0" required inputmode="numeric">
                 </div>
             </div>
             <div class="form-group">
                 <label>Sudah Terkumpul (Rp)</label>
                 <div class="input-with-icon">
-                    <i data-lucide="piggy-bank" class="input-icon"></i>
+                    <i class="fi fi-rr-piggy-bank input-icon"></i>
                     <input type="text" id="savingCurrent" placeholder="Rp 0" value="Rp 0" inputmode="numeric">
                 </div>
             </div>
             <div class="form-group">
                 <label>Deadline (opsional)</label>
                 <div class="input-with-icon">
-                    <i data-lucide="calendar" class="input-icon"></i>
+                    <i class="fi fi-rr-calendar input-icon"></i>
                     <input type="date" id="savingDeadline" onclick="this.showPicker()">
                 </div>
             </div>
             <div class="form-group">
                 <label>Ikon Target</label>
                 <div class="emoji-grid">
-                    ${SAVINGS_ICONS.map(i => `<div class="icon-option ${i === selectedIcon ? 'selected' : ''}" data-icon="${i}"><i data-lucide="${i}"></i></div>`).join('')}
+                    ${SAVINGS_ICONS.map(i => `<div class="icon-option ${i === selectedIcon ? 'selected' : ''}" data-icon="${i}"><i class="fi fi-rr-${i}"></i></div>`).join('')}
                 </div>
             </div>
-            <button class="modal-submit-btn success-btn" id="savingSubmitBtn"><i data-lucide="plus-circle" style="width:18px;height:18px;margin-right:6px;vertical-align:-4px"></i> Buat Target</button>`;
+            <button class="modal-submit-btn success-btn" id="savingSubmitBtn"><i class="fi fi-rr-plus-circle" style="font-size:18px;margin-right:6px;vertical-align:-4px"></i> Buat Target</button>`;
 
         openModal('Target Nabung Baru', formHTML);
         setTimeout(() => lucide.createIcons(), 50);
@@ -1106,7 +1106,7 @@
             <div class="form-group">
                 <label>Jumlah Tambah (Rp)</label>
                 <div class="input-with-icon">
-                    <i data-lucide="banknote" class="input-icon"></i>
+                    <i class="fi fi-rr-banknote input-icon"></i>
                     <input type="text" id="addSavingAmount" placeholder="Rp 0" required inputmode="numeric">
                 </div>
             </div>
@@ -1792,7 +1792,7 @@
                 <input type="hidden" id="budgetCategoryId" value="${existingCatId ? existingCatId : ''}">
                 <div id="budgetSelectedCategory" class="select-category-trigger" onclick="document.getElementById('budgetCategoryPicker').style.display=document.getElementById('budgetCategoryPicker').style.display==='none'?'flex':'none'">
                     <span class="select-category-icon-wrapper">
-                        <i data-lucide="tag" class="input-icon"></i>
+                        <i class="fi fi-rr-tag input-icon"></i>
                     </span>
                     <span class="select-category-text">Pilih kategori...</span>
                 </div>
@@ -1803,7 +1803,7 @@
             <div class="form-group">
                 <label>Jumlah Anggaran (Rp)</label>
                 <div class="input-with-icon">
-                    <i data-lucide="wallet" class="input-icon"></i>
+                    <i class="fi fi-rr-wallet input-icon"></i>
                     <input type="text" id="budgetAmount" placeholder="Rp 0" value="${existingAmount ? 'Rp ' + parseInt(existingAmount).toLocaleString('id-ID') : ''}" required inputmode="numeric">
                 </div>
             </div>
@@ -2133,6 +2133,7 @@
         
         const priceRegex = /(?:rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?|\d+)\s*$/i;
         const totalKeywords = ['total', 'jumlah', 'grand total', 'subtotal', 'sub total', 'net', 'bayar', 'due', 'cash', 'tunai', 'kembali'];
+        const excludeRegex = /\b(pajak|tax|ppn|service\s*charge|service\s*chg|svc\s*chg|tas\s*belanja|shopping\s*bag|paper\s*bag|kantong|plastik|paperbag|tote\s*bag|carrier\s*bag|tas)\b/i;
         
         lines.forEach(line => {
             line = line.trim();
@@ -2152,6 +2153,10 @@
                 if (desc.length < 2) return;
                 
                 const lowerDesc = desc.toLowerCase();
+                
+                // Exclude tax and bags
+                if (excludeRegex.test(lowerDesc)) return;
+                
                 const isTotalLine = totalKeywords.some(keyword => lowerDesc.includes(keyword));
                 
                 if (isTotalLine) {

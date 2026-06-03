@@ -1,3 +1,7 @@
+/* Flaticon UIcons imports */
+@import url("https://cdn.jsdelivr.net/npm/@flaticon/flaticon-uicons/css/all/all.min.css");
+@import "~@flaticon/flaticon-uicons/css/all/all";
+
 /* ============================================
    FinFlow — Personal Finance App Styles
    Dark + Light Theme
@@ -210,6 +214,14 @@ input, select, textarea { font-family: inherit; }
 .form-group input::placeholder { color: var(--text-muted); }
 .form-group textarea { resize: none; min-height: 60px; }
 
+/* Unified Flaticon alignment */
+.fi {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+}
+
 /* Input Icons & Premium Select Category triggers */
 .input-with-icon {
     position: relative;
@@ -226,8 +238,12 @@ input, select, textarea { font-family: inherit; }
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
+    font-size: 18px !important;
     width: 18px;
     height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     pointer-events: none;
     transition: all 0.2s ease;
 }
@@ -279,8 +295,12 @@ input, select, textarea { font-family: inherit; }
 .select-category-trigger .select-category-icon-wrapper svg {
     color: var(--text-muted) !important;
     stroke: var(--text-muted) !important;
+    font-size: 18px !important;
     width: 18px !important;
     height: 18px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     stroke-width: 2.2px !important;
     transition: all 0.2s ease;
 }
@@ -911,8 +931,12 @@ input, select, textarea { font-family: inherit; }
 .category-child-emoji i, .category-child-emoji svg {
     color: #ffffff !important;
     stroke: #ffffff !important;
+    font-size: 14px !important;
     width: 14px !important;
     height: 14px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     stroke-width: 2.2px !important;
 }
 .category-parent-name { flex:1; font-size:14px; font-weight:600; }
