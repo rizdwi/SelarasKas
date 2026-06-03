@@ -30,7 +30,9 @@ define('FACEBOOK_APP_ID', getenv('FACEBOOK_APP_ID') ?: '1348574213882211');
 define('RESEND_API_KEY', getenv('RESEND_API_KEY') ?: ($_ENV['RESEND_API_KEY'] ?? ''));
 
 // Gemini AI Vision API (for Receipt OCR)
-define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: ($_ENV['GEMINI_API_KEY'] ?? ''));
+// Priority: GEMINI_API_KEY_LOCAL (from .env.local.php) > env var > empty
+$_gemini_key = defined('GEMINI_API_KEY_LOCAL') ? GEMINI_API_KEY_LOCAL : (getenv('GEMINI_API_KEY') ?: ($_ENV['GEMINI_API_KEY'] ?? ''));
+define('GEMINI_API_KEY', $_gemini_key);
 
 function getDB() {
     static $pdo = null;
