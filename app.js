@@ -1823,7 +1823,21 @@
 
         // Expose for inline onclick
         window.Selaraskas = {
-        showBudgetForm, deleteTransaction, deleteSaving, deleteBudget, showAddToSaving, showScanReceiptForm };
+        showBudgetForm, deleteTransaction, deleteSaving, deleteBudget, showAddToSaving, showScanReceiptForm, registerBiometric,
+        deleteBiometricCred: async function(id) {
+            if (!confirm('Hapus sidik jari ini?')) return;
+            try {
+                await api('auth.php?action=webauthn_credentials', {
+                    method: 'DELETE',
+                    body: JSON.stringify({ id })
+                });
+                showToast('Credential dihapus');
+                loadBiometricSettings();
+            } catch (err) {
+                showToast(err.message || 'Gagal menghapus');
+            }
+        }
+        };
 
         // Check session
         checkSession();
@@ -3140,21 +3154,7 @@
     }
     
     // Expose biometric functions globally
-    window.Selaraskas = window.Selaraskas || {};
-    window.Selaraskas.registerBiometric = registerBiometric;
-    window.Selaraskas.deleteBiometricCred = async function(id) {
-        if (!confirm('Hapus sidik jari ini?')) return;
-        try {
-            await api('auth.php?action=webauthn_credentials', {
-                method: 'DELETE',
-                body: JSON.stringify({ id })
-            });
-            showToast('Credential dihapus');
-            loadBiometricSettings();
-        } catch (err) {
-            showToast(err.message || 'Gagal menghapus');
-        }
-    };
+    // Biometric functions exposed via window.Selaraskas in init()
 
     // Biometric login button handler
     document.getElementById('biometricAuthBtn')?.addEventListener('click', performBiometricLogin);
