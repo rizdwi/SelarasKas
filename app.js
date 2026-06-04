@@ -2279,7 +2279,7 @@
                 </div>
                 
                 <button class="modal-submit-btn success-btn" id="startOcrBtn" style="display:none; margin-top: 14px;">
-                    🤖 Scan dengan AI
+                    📷 Mulai Scan
                 </button>
             </div>
             
