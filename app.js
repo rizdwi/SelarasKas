@@ -1761,6 +1761,55 @@
                 }, 100);
             });
         }
+
+        // Biometric Settings Toggle & Buttons
+        const bioItem = document.getElementById('settingBiometric');
+        const bioToggle = document.getElementById('biometricToggleBtn');
+        const bioRegister = document.getElementById('biometricRegisterBtn');
+        
+        async function toggleBiometric() {
+            const toggleBtn = document.getElementById('biometricToggleBtn');
+            if (!toggleBtn) return;
+            const isActive = toggleBtn.classList.contains('active');
+            
+            if (isActive) {
+                if (confirm('Apakah Anda yakin ingin menonaktifkan login Sidik Jari? Semua data sidik jari/Face ID yang terdaftar akan dihapus.')) {
+                    try {
+                        await api('auth.php?action=webauthn_credentials', {
+                            method: 'DELETE',
+                            body: JSON.stringify({ all: true })
+                        });
+                        showToast('Login biometrik dinonaktifkan');
+                        loadBiometricSettings();
+                    } catch (err) {
+                        showToast(err.message || 'Gagal menonaktifkan biometrik');
+                    }
+                }
+            } else {
+                registerBiometric();
+            }
+        }
+        
+        if (bioItem) {
+            bioItem.addEventListener('click', (e) => {
+                if (e.target.closest('.biometric-toggle') || e.target.closest('.biometric-register-btn') || e.target.closest('.biometric-cred-delete')) {
+                    return;
+                }
+                toggleBiometric();
+            });
+        }
+        if (bioToggle) {
+            bioToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleBiometric();
+            });
+        }
+        if (bioRegister) {
+            bioRegister.addEventListener('click', (e) => {
+                e.stopPropagation();
+                registerBiometric();
+            });
+        }
     }
 
     async function loadAuthConfig() {
@@ -3111,43 +3160,65 @@
     }
     
     async function loadBiometricSettings() {
-        const container = document.getElementById('biometricSettingsContainer');
-        if (!container) return;
+        const group = document.getElementById('biometricGroup');
+        if (!group) return;
         
         // Check if WebAuthn is supported
         if (!window.PublicKeyCredential) {
-            container.innerHTML = '<div class="biometric-settings"><div class="biometric-settings-title">🔐 Sidik Jari / Face ID</div><p style="font-size:13px;color:var(--text-muted)">Browser tidak mendukung fitur ini</p></div>';
+            group.style.display = 'none';
             return;
         }
+        
+        // Check platform authenticator availability
+        try {
+            const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+            if (!available) {
+                group.style.display = 'none';
+                return;
+            }
+        } catch {
+            group.style.display = 'none';
+            return;
+        }
+        
+        group.style.display = 'block';
         
         try {
             const data = await api('auth.php?action=webauthn_credentials');
             const creds = data.credentials || [];
             
-            let credsHTML = '';
-            if (creds.length > 0) {
-                credsHTML = creds.map(c => `
-                    <div class="biometric-cred-item">
-                        <div>
-                            <div class="biometric-cred-name">🔑 ${c.device_name}</div>
-                            <div class="biometric-cred-date">${new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-                        </div>
-                        <button class="biometric-cred-delete" onclick="window.Selaraskas.deleteBiometricCred(${c.id})">Hapus</button>
-                    </div>
-                `).join('');
-            } else {
-                credsHTML = '<p style="font-size:13px;color:var(--text-muted);margin:4px 0">Belum ada sidik jari terdaftar</p>';
-            }
+            const label = document.getElementById('biometricLabel');
+            const toggle = document.getElementById('biometricToggleBtn');
+            const section = document.getElementById('biometricCredentialsSection');
+            const list = document.getElementById('biometricCredentialsList');
             
-            container.innerHTML = `
-                <div class="biometric-settings">
-                    <div class="biometric-settings-title">🔐 Sidik Jari / Face ID</div>
-                    ${credsHTML}
-                    <button class="biometric-register-btn" onclick="window.Selaraskas.registerBiometric()">
-                        + Daftarkan Sidik Jari / Face ID
-                    </button>
-                </div>
-            `;
+            if (creds.length > 0) {
+                if (label) label.textContent = `Aktif (${creds.length} Perangkat)`;
+                if (toggle) toggle.classList.add('active');
+                if (list) {
+                    list.innerHTML = creds.map(c => `
+                        <div class="biometric-cred-item">
+                            <div class="biometric-cred-info">
+                                <div class="biometric-cred-name">🔑 ${c.device_name}</div>
+                                <div class="biometric-cred-date">${new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                            </div>
+                            <button class="biometric-cred-delete" onclick="window.Selaraskas.deleteBiometricCred(${c.id})">Hapus</button>
+                        </div>
+                    `).join('');
+                }
+                if (section) {
+                    section.style.maxHeight = section.scrollHeight + 'px';
+                    section.style.opacity = '1';
+                }
+            } else {
+                if (label) label.textContent = 'Tidak Aktif';
+                if (toggle) toggle.classList.remove('active');
+                if (list) list.innerHTML = '';
+                if (section) {
+                    section.style.maxHeight = '0px';
+                    section.style.opacity = '0';
+                }
+            }
         } catch (err) {
             console.error('Error loading biometric settings:', err);
         }

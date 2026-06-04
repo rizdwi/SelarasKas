@@ -443,67 +443,227 @@ input, select, textarea { font-family: inherit; }
 }
 
 /* Biometric Settings in Profile */
-.biometric-settings {
-    background: var(--bg-card);
-    border-radius: 16px;
-    padding: 16px;
-    margin-top: 12px;
-}
-.biometric-settings-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 12px;
+.biometric-credentials-section {
+    max-height: 0px;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease, margin 0.35s ease;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 12px;
+}
+
+.biometric-credentials-list {
+    display: flex;
+    flex-direction: column;
     gap: 8px;
 }
+
 .biometric-cred-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border-light);
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    transition: all 0.2s ease;
 }
-.biometric-cred-item:last-child {
-    border-bottom: none;
+
+.biometric-cred-item:hover {
+    border-color: var(--border-light);
+    transform: translateY(-1px);
 }
+
+.biometric-cred-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
 .biometric-cred-name {
     font-size: 13px;
+    font-weight: 600;
     color: var(--text-primary);
 }
+
 .biometric-cred-date {
     font-size: 11px;
     color: var(--text-muted);
 }
+
 .biometric-cred-delete {
     background: none;
     border: none;
     color: var(--color-danger);
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 6px 12px;
     font-size: 12px;
-    border-radius: 6px;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(239, 68, 68, 0.15);
 }
+
 .biometric-cred-delete:hover {
-    background: rgba(239,68,68,0.1);
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
 }
+
+.biometric-cred-delete:active {
+    transform: scale(0.95);
+}
+
 .biometric-register-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     width: 100%;
     padding: 12px;
-    margin-top: 8px;
+    margin-top: 4px;
     border-radius: 12px;
     background: linear-gradient(135deg, #10b981, #059669);
     color: #fff;
     border: none;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
+
 .biometric-register-btn:hover {
     background: linear-gradient(135deg, #059669, #047857);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+}
+
+.biometric-register-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Biometric Toggle Switch */
+.biometric-toggle {
+    position: relative;
+    width: 74px;
+    height: 34px;
+    border-radius: 17px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.4s ease, box-shadow 0.4s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(to bottom, #1e293b, #0f172a);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.biometric-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.biometric-toggle:active {
+    transform: scale(0.95);
+}
+
+.biometric-toggle.active {
+    background: linear-gradient(135deg, #059669, #10b981);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+}
+
+.biometric-toggle.active:hover {
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.55);
+}
+
+/* Scan Line Animation */
+.biometric-toggle .toggle-scan-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #a7f3d0;
+    box-shadow: 0 0 6px #34d399, 0 0 12px #059669;
+    opacity: 0;
+    transform: translateY(-2px);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.biometric-toggle.active .toggle-scan-line {
+    opacity: 0.8;
+    animation: scan-vertical 2s infinite ease-in-out;
+}
+
+@keyframes scan-vertical {
+    0%, 100% { transform: translateY(2px); }
+    50% { transform: translateY(30px); }
+}
+
+/* Biometric Knob */
+.biometric-toggle .toggle-knob {
+    position: absolute;
+    top: 3px;
+    left: 5px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: linear-gradient(135deg, #64748b, #475569);
+    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.biometric-toggle.active .toggle-knob {
+    left: 43px;
+    background: linear-gradient(135deg, #ffffff, #e2e8f0);
+    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.05), 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.biometric-toggle .toggle-knob-icon {
+    width: 14px;
+    height: 14px;
+    color: #cbd5e1;
+    transition: all 0.4s ease;
+}
+
+.biometric-toggle.active .toggle-knob-icon {
+    color: #059669;
+    filter: drop-shadow(0 0 2px rgba(5, 150, 105, 0.5));
+}
+
+/* Light mode overrides for biometric toggle */
+[data-theme="light"] .biometric-toggle {
+    background: linear-gradient(to bottom, #e2e8f0, #cbd5e1);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .biometric-toggle .toggle-knob {
+    background: linear-gradient(135deg, #94a3b8, #64748b);
+    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.1);
+}
+
+[data-theme="light"] .biometric-toggle .toggle-knob-icon {
+    color: #f1f5f9;
+}
+
+[data-theme="light"] .biometric-toggle.active {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+}
+
+[data-theme="light"] .biometric-toggle.active .toggle-knob {
+    background: #ffffff;
+    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.05), 0 3px 6px rgba(0,0,0,0.15);
 }
 
 /* ===== MAIN APP ===== */
@@ -554,7 +714,6 @@ input, select, textarea { font-family: inherit; }
 }
 .icon-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); }
 .icon-btn:active { transform: scale(0.93); }
-
 /* Custom Day/Night Toggle Switch */
 .day-night-toggle {
     position: relative;
@@ -563,7 +722,7 @@ input, select, textarea { font-family: inherit; }
     border-radius: 17px;
     cursor: pointer;
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.4s ease, box-shadow 0.4s ease;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     background: linear-gradient(to bottom, #0b0f19, #1a233d); /* dark background */
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -572,11 +731,24 @@ input, select, textarea { font-family: inherit; }
     flex-shrink: 0;
 }
 
+.day-night-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.day-night-toggle:active {
+    transform: scale(0.95);
+}
+
 /* Light mode override for background */
 [data-theme="light"] .day-night-toggle {
-    background: linear-gradient(to bottom, #4facfe, #81c7f5);
+    background: linear-gradient(to bottom, #4facfe, #00f2fe);
     border: 1px solid rgba(0, 0, 0, 0.05);
-    box-shadow: 0 4px 12px rgba(114, 198, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 242, 254, 0.25);
+}
+
+[data-theme="light"] .day-night-toggle:hover {
+    box-shadow: 0 6px 16px rgba(0, 242, 254, 0.4);
 }
 
 /* Toggle background stars (for dark mode) */
@@ -587,7 +759,7 @@ input, select, textarea { font-family: inherit; }
     width: 100%;
     height: 100%;
     opacity: 1;
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 [data-theme="light"] .toggle-stars {
@@ -600,8 +772,10 @@ input, select, textarea { font-family: inherit; }
     position: absolute;
     background: #ffd8a8;
     border-radius: 50%;
+    box-shadow: 0 0 4px #ffd8a8;
     transition: all 0.4s ease;
 }
+
 /* Star positions and sizes */
 .star-1 { width: 3px; height: 3px; top: 8px; left: 18px; }
 .star-2 { width: 2px; height: 2px; top: 18px; left: 12px; }
@@ -625,7 +799,7 @@ input, select, textarea { font-family: inherit; }
     height: 100%;
     opacity: 0;
     transform: translateY(10px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 [data-theme="light"] .toggle-clouds {
@@ -633,7 +807,7 @@ input, select, textarea { font-family: inherit; }
     transform: translateY(0);
 }
 
-/* Cloud styles - using overlapping white rounded divs like in the image */
+/* Cloud styles */
 .cloud {
     position: absolute;
     background: rgba(255, 255, 255, 0.95);
@@ -654,12 +828,13 @@ input, select, textarea { font-family: inherit; }
     height: 26px;
     border-radius: 50%;
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    background: linear-gradient(135deg, #e2e8f0, #94a3b8); /* Moon color */
+    background: linear-gradient(135deg, #f1f5f9, #cbd5e1); /* Moon color */
     box-shadow: inset -2px -2px 5px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.25);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    z-index: 2;
 }
 
 /* Sun knob state in Light mode */
@@ -686,7 +861,6 @@ input, select, textarea { font-family: inherit; }
 [data-theme="light"] .toggle-knob .crater {
     opacity: 0;
 }
-
 /* ===== BALANCE CARD ===== */
 .balance-card {
     position: relative; border-radius: 20px; overflow: hidden; margin-bottom: 20px;

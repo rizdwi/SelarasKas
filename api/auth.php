@@ -761,13 +761,18 @@ function handleWebAuthnCredentials() {
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
         $userId = requireAuth();
         $input = getInput();
-        $credId = $input['id'] ?? 0;
-        
         $db = getDB();
-        $stmt = $db->prepare("DELETE FROM webauthn_credentials WHERE id = ? AND user_id = ?");
-        $stmt->execute([$credId, $userId]);
         
-        jsonResponse(['success' => true, 'message' => 'Credential dihapus']);
+        if (isset($input['all']) && $input['all'] === true) {
+            $stmt = $db->prepare("DELETE FROM webauthn_credentials WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            jsonResponse(['success' => true, 'message' => 'Semua credential berhasil dihapus']);
+        } else {
+            $credId = $input['id'] ?? 0;
+            $stmt = $db->prepare("DELETE FROM webauthn_credentials WHERE id = ? AND user_id = ?");
+            $stmt->execute([$credId, $userId]);
+            jsonResponse(['success' => true, 'message' => 'Credential dihapus']);
+        }
     }
     
     // GET — list credentials
