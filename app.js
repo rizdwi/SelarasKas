@@ -386,6 +386,16 @@
         if (registerForm) registerForm.classList.remove('active');
         if (otpScreen) otpScreen.classList.remove('active');
         currentUser = null;
+        
+        // Pre-fill saved email
+        const savedEmail = localStorage.getItem('selaraskas_last_email');
+        if (savedEmail) {
+            const emailInput = document.getElementById('loginEmail');
+            if (emailInput) emailInput.value = savedEmail;
+        }
+        
+        // Check biometric availability
+        checkBiometricAvailability();
     }
 
     function showApp(user) {
@@ -625,17 +635,22 @@
             const btn = document.getElementById('loginSubmitBtn');
             btn.disabled = true;
             try {
+                const loginEmail = document.getElementById('loginEmail').value;
+                const rememberMe = document.getElementById('rememberMeCheck')?.checked || false;
                 const data = await api('auth.php?action=login', {
                     method: 'POST',
                     body: JSON.stringify({
-                        email: document.getElementById('loginEmail').value,
+                        email: loginEmail,
                         password: document.getElementById('loginPassword').value,
+                        remember_me: rememberMe,
                     }),
                 });
                 if (data.needs_verification) {
                     showOtpScreen(data.email);
                     showToast(data.message || 'Cek email untuk kode verifikasi 📧');
                 } else {
+                    // Save email for biometric login
+                    localStorage.setItem('selaraskas_last_email', loginEmail);
                     showApp(data.user);
                 }
             } catch (err) {
@@ -766,6 +781,7 @@
                 if (target === 'analytics') loadAnalytics();
                 if (target === 'budget') loadBudgets();
                 if (target === 'savings') loadSavings();
+                if (target === 'profile') loadBiometricSettings();
             });
         });
 
@@ -2884,6 +2900,264 @@
         showToast('Sinkronisasi selesai');
     }
 
+    // =============================================
+    // WebAuthn (Biometric) Functions
+    // =============================================
+    
+    async function checkBiometricAvailability() {
+        const btn = document.getElementById('biometricAuthBtn');
+        if (!btn) return;
+        
+        // Check if WebAuthn is supported
+        if (!window.PublicKeyCredential) {
+            btn.style.display = 'none';
+            return;
+        }
+        
+        // Check if platform authenticator is available (fingerprint/Face ID)
+        try {
+            const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+            if (!available) {
+                btn.style.display = 'none';
+                return;
+            }
+        } catch {
+            btn.style.display = 'none';
+            return;
+        }
+        
+        // Check if we have a saved email with registered credentials
+        const savedEmail = localStorage.getItem('selaraskas_last_email');
+        if (!savedEmail) {
+            btn.style.display = 'none';
+            return;
+        }
+        
+        // Check if credentials exist for this email
+        try {
+            const result = await api('auth.php?action=webauthn_login_options', {
+                method: 'POST',
+                body: JSON.stringify({ email: savedEmail })
+            });
+            if (result.allowCredentials && result.allowCredentials.length > 0) {
+                btn.style.display = 'flex';
+            } else {
+                btn.style.display = 'none';
+            }
+        } catch {
+            btn.style.display = 'none';
+        }
+    }
+    
+    async function performBiometricLogin() {
+        const savedEmail = localStorage.getItem('selaraskas_last_email');
+        if (!savedEmail) {
+            showToast('Login biasa dulu untuk mengaktifkan sidik jari');
+            return;
+        }
+        
+        try {
+            // Get login options from server
+            const options = await api('auth.php?action=webauthn_login_options', {
+                method: 'POST',
+                body: JSON.stringify({ email: savedEmail })
+            });
+            
+            // Convert challenge and credential IDs for WebAuthn API
+            const allowCredentials = options.allowCredentials.map(c => ({
+                type: c.type,
+                id: Uint8Array.from(atob(c.id.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)),
+            }));
+            
+            const challengeBytes = Uint8Array.from(
+                options.challenge.match(/.{1,2}/g).map(b => parseInt(b, 16))
+            );
+            
+            // Trigger biometric prompt
+            const credential = await navigator.credentials.get({
+                publicKey: {
+                    challenge: challengeBytes,
+                    rpId: options.rpId,
+                    timeout: options.timeout,
+                    userVerification: options.userVerification,
+                    allowCredentials: allowCredentials,
+                }
+            });
+            
+            // Send credential to server for verification
+            const credentialId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+            
+            const data = await api('auth.php?action=webauthn_login', {
+                method: 'POST',
+                body: JSON.stringify({
+                    credential_id: credentialId,
+                })
+            });
+            
+            if (data.success) {
+                showToast('Login berhasil! 🎉');
+                showApp(data.user);
+            }
+        } catch (err) {
+            if (err.name === 'NotAllowedError') {
+                showToast('Autentikasi dibatalkan');
+            } else {
+                console.error('Biometric login error:', err);
+                showToast(err.message || 'Gagal login dengan biometrik');
+            }
+        }
+    }
+    
+    async function registerBiometric() {
+        if (!window.PublicKeyCredential) {
+            showToast('Browser tidak mendukung biometrik');
+            return;
+        }
+        
+        try {
+            // Get registration options from server
+            const options = await api('auth.php?action=webauthn_register_options', {
+                method: 'POST',
+                body: JSON.stringify({})
+            });
+            
+            // Convert for WebAuthn API
+            const challengeBytes = Uint8Array.from(
+                options.challenge.match(/.{1,2}/g).map(b => parseInt(b, 16))
+            );
+            
+            const userId = Uint8Array.from(atob(options.user.id), c => c.charCodeAt(0));
+            
+            const excludeCredentials = (options.excludeCredentials || []).map(c => ({
+                type: c.type,
+                id: Uint8Array.from(atob(c.id.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)),
+            }));
+            
+            // Trigger biometric registration prompt
+            const credential = await navigator.credentials.create({
+                publicKey: {
+                    challenge: challengeBytes,
+                    rp: options.rp,
+                    user: {
+                        id: userId,
+                        name: options.user.name,
+                        displayName: options.user.displayName,
+                    },
+                    pubKeyCredParams: options.pubKeyCredParams,
+                    timeout: options.timeout,
+                    authenticatorSelection: options.authenticatorSelection,
+                    excludeCredentials: excludeCredentials,
+                    attestation: options.attestation,
+                }
+            });
+            
+            // Encode credential data
+            const credentialId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+            const publicKey = btoa(String.fromCharCode(...new Uint8Array(credential.response.getPublicKey ? credential.response.getPublicKey() : credential.response.attestationObject)));
+            
+            // Detect device name
+            const ua = navigator.userAgent;
+            let deviceName = 'Perangkat';
+            if (/iPhone/.test(ua)) deviceName = 'iPhone';
+            else if (/iPad/.test(ua)) deviceName = 'iPad';
+            else if (/Android/.test(ua)) deviceName = 'Android';
+            else if (/Windows/.test(ua)) deviceName = 'Windows PC';
+            else if (/Mac/.test(ua)) deviceName = 'Mac';
+            
+            // Send to server
+            const result = await api('auth.php?action=webauthn_register', {
+                method: 'POST',
+                body: JSON.stringify({
+                    credential_id: credentialId,
+                    public_key: publicKey,
+                    device_name: deviceName,
+                })
+            });
+            
+            showToast(result.message || 'Sidik jari berhasil didaftarkan! 🎉');
+            
+            // Save email for future biometric login
+            if (currentUser?.email) {
+                localStorage.setItem('selaraskas_last_email', currentUser.email);
+            }
+            
+            // Reload biometric settings
+            loadBiometricSettings();
+            
+        } catch (err) {
+            if (err.name === 'NotAllowedError') {
+                showToast('Pendaftaran dibatalkan');
+            } else if (err.name === 'InvalidStateError') {
+                showToast('Sidik jari sudah terdaftar');
+            } else {
+                console.error('Biometric register error:', err);
+                showToast(err.message || 'Gagal mendaftarkan sidik jari');
+            }
+        }
+    }
+    
+    async function loadBiometricSettings() {
+        const container = document.getElementById('biometricSettingsContainer');
+        if (!container) return;
+        
+        // Check if WebAuthn is supported
+        if (!window.PublicKeyCredential) {
+            container.innerHTML = '<div class="biometric-settings"><div class="biometric-settings-title">🔐 Sidik Jari / Face ID</div><p style="font-size:13px;color:var(--text-muted)">Browser tidak mendukung fitur ini</p></div>';
+            return;
+        }
+        
+        try {
+            const data = await api('auth.php?action=webauthn_credentials');
+            const creds = data.credentials || [];
+            
+            let credsHTML = '';
+            if (creds.length > 0) {
+                credsHTML = creds.map(c => `
+                    <div class="biometric-cred-item">
+                        <div>
+                            <div class="biometric-cred-name">🔑 ${c.device_name}</div>
+                            <div class="biometric-cred-date">${new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                        </div>
+                        <button class="biometric-cred-delete" onclick="window.Selaraskas.deleteBiometricCred(${c.id})">Hapus</button>
+                    </div>
+                `).join('');
+            } else {
+                credsHTML = '<p style="font-size:13px;color:var(--text-muted);margin:4px 0">Belum ada sidik jari terdaftar</p>';
+            }
+            
+            container.innerHTML = `
+                <div class="biometric-settings">
+                    <div class="biometric-settings-title">🔐 Sidik Jari / Face ID</div>
+                    ${credsHTML}
+                    <button class="biometric-register-btn" onclick="window.Selaraskas.registerBiometric()">
+                        + Daftarkan Sidik Jari / Face ID
+                    </button>
+                </div>
+            `;
+        } catch (err) {
+            console.error('Error loading biometric settings:', err);
+        }
+    }
+    
+    // Expose biometric functions globally
+    window.Selaraskas = window.Selaraskas || {};
+    window.Selaraskas.registerBiometric = registerBiometric;
+    window.Selaraskas.deleteBiometricCred = async function(id) {
+        if (!confirm('Hapus sidik jari ini?')) return;
+        try {
+            await api('auth.php?action=webauthn_credentials', {
+                method: 'DELETE',
+                body: JSON.stringify({ id })
+            });
+            showToast('Credential dihapus');
+            loadBiometricSettings();
+        } catch (err) {
+            showToast(err.message || 'Gagal menghapus');
+        }
+    };
+
+    // Biometric login button handler
+    document.getElementById('biometricAuthBtn')?.addEventListener('click', performBiometricLogin);
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);

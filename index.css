@@ -398,6 +398,114 @@ input, select, textarea { font-family: inherit; }
     color: #1877f2;
 }
 
+/* Remember Me */
+.remember-me-row {
+    display: flex;
+    align-items: center;
+    margin: -4px 0 4px;
+}
+.remember-me-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+}
+.remember-me-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-primary);
+    cursor: pointer;
+}
+
+/* Biometric Login Button */
+.biometric-btn {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    color: #fff !important;
+    border: none !important;
+    grid-column: 1 / -1;
+    font-size: 15px !important;
+    padding: 14px !important;
+    animation: biometricPulse 2s ease-in-out infinite;
+}
+.biometric-btn:hover {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+    color: #fff !important;
+}
+.biometric-btn svg {
+    color: #fff !important;
+}
+@keyframes biometricPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+}
+
+/* Biometric Settings in Profile */
+.biometric-settings {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: 12px;
+}
+.biometric-settings-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.biometric-cred-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+.biometric-cred-item:last-child {
+    border-bottom: none;
+}
+.biometric-cred-name {
+    font-size: 13px;
+    color: var(--text-primary);
+}
+.biometric-cred-date {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.biometric-cred-delete {
+    background: none;
+    border: none;
+    color: var(--color-danger);
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+}
+.biometric-cred-delete:hover {
+    background: rgba(239,68,68,0.1);
+}
+.biometric-register-btn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.biometric-register-btn:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-1px);
+}
+
 /* ===== MAIN APP ===== */
 .main-app { display: none; height: 100%; position: relative; }
 .main-app.active { display: block; }

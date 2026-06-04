@@ -60,6 +60,12 @@
                             </button>
                         </div>
                     </div>
+                    <div class="remember-me-row">
+                        <label class="remember-me-label">
+                            <input type="checkbox" id="rememberMeCheck" checked>
+                            <span>Ingat Saya</span>
+                        </label>
+                    </div>
                     <button type="submit" class="auth-submit-btn" id="loginSubmitBtn">
                         <span>Masuk</span>
                     </button>
@@ -67,6 +73,12 @@
                         <span>atau masuk dengan</span>
                     </div>
                     <div class="social-login-grid">
+                        <button type="button" class="social-btn biometric-btn" id="biometricAuthBtn" style="display:none;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;">
+                                <path d="M12 10v4"/><path d="M7.5 8a5.5 5.5 0 0 1 9 0"/><path d="M5 6a9 9 0 0 1 14 0"/><path d="M2 4a13 13 0 0 1 20 0"/><path d="M12 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
+                            </svg>
+                            <span>Sidik Jari / Face ID</span>
+                        </button>
                         <button type="button" class="social-btn google-btn" id="googleAuthBtn">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;"><path d="M12.24 10.285V13.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.524 0-6.386-2.862-6.386-6.386 0-3.524 2.862-6.386 6.386-6.386 1.63 0 3.124.613 4.27 1.621l2.427-2.427C18.666 2.016 15.632 1 12.24 1 6.033 1 1 6.033 1 12.24s5.033 11.24 11.24 11.24c5.84 0 10.74-4.14 10.74-10.74 0-.69-.06-1.35-.16-1.955H12.24z"/></svg>
                             <span>Google</span>
@@ -502,6 +514,9 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Biometric Settings -->
+                <div id="biometricSettingsContainer"></div>
 
                 <button class="logout-btn" id="logoutBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>

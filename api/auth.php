@@ -45,9 +45,107 @@ switch ($action) {
             'facebook_app_id' => FACEBOOK_APP_ID
         ]);
         break;
+    // ===== WebAuthn (Biometric) Actions =====
+    case 'webauthn_register_options':
+        if ($method !== 'POST') jsonResponse(['error' => 'Method not allowed'], 405);
+        handleWebAuthnRegisterOptions();
+        break;
+    case 'webauthn_register':
+        if ($method !== 'POST') jsonResponse(['error' => 'Method not allowed'], 405);
+        handleWebAuthnRegister();
+        break;
+    case 'webauthn_login_options':
+        if ($method !== 'POST') jsonResponse(['error' => 'Method not allowed'], 405);
+        handleWebAuthnLoginOptions();
+        break;
+    case 'webauthn_login':
+        if ($method !== 'POST') jsonResponse(['error' => 'Method not allowed'], 405);
+        handleWebAuthnLogin();
+        break;
+    case 'webauthn_credentials':
+        handleWebAuthnCredentials();
+        break;
     default:
         jsonResponse(['error' => 'Invalid action'], 400);
 }
+
+// =============================================
+// Remember Me Helper Functions
+// =============================================
+
+function generateRememberToken($userId) {
+    $token = bin2hex(random_bytes(32)); // 64 char hex token
+    $hash = hash('sha256', $token);
+    $expires = date('Y-m-d H:i:s', time() + (86400 * 30)); // 30 days
+
+    $db = getDB();
+    // Clean up old tokens for this user (max 5 devices)
+    $stmt = $db->prepare("DELETE FROM remember_tokens WHERE user_id = ? AND expires_at < NOW()");
+    $stmt->execute([$userId]);
+    
+    $stmt = $db->prepare("INSERT INTO remember_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)");
+    $stmt->execute([$userId, $hash, $expires]);
+
+    // Set cookie (30 days, httponly, secure on HTTPS)
+    $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    setcookie('remember_token', $token, [
+        'expires' => time() + (86400 * 30),
+        'path' => '/',
+        'secure' => $isSecure,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+    
+    return $token;
+}
+
+function checkRememberToken() {
+    if (!isset($_COOKIE['remember_token'])) return null;
+    
+    $token = $_COOKIE['remember_token'];
+    $hash = hash('sha256', $token);
+    
+    $db = getDB();
+    $stmt = $db->prepare("SELECT user_id FROM remember_tokens WHERE token_hash = ? AND expires_at > NOW()");
+    $stmt->execute([$hash]);
+    $result = $stmt->fetch();
+    
+    if ($result) {
+        return $result['user_id'];
+    }
+    
+    // Token expired or invalid — clear cookie
+    clearRememberCookie();
+    return null;
+}
+
+function clearRememberToken($userId = null) {
+    $db = getDB();
+    
+    // Delete specific token from cookie
+    if (isset($_COOKIE['remember_token'])) {
+        $hash = hash('sha256', $_COOKIE['remember_token']);
+        $stmt = $db->prepare("DELETE FROM remember_tokens WHERE token_hash = ?");
+        $stmt->execute([$hash]);
+    }
+    
+    clearRememberCookie();
+}
+
+function clearRememberCookie() {
+    $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    setcookie('remember_token', '', [
+        'expires' => time() - 3600,
+        'path' => '/',
+        'secure' => $isSecure,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+}
+
+// =============================================
+// Original Auth Functions (with Remember Me)
+// =============================================
 
 function handleRegister() {
     $input = getInput();
@@ -229,6 +327,7 @@ function handleLogin() {
     $input = getInput();
     $email = trim($input['email'] ?? '');
     $password = $input['password'] ?? '';
+    $rememberMe = $input['remember_me'] ?? false;
 
     if (!$email || !$password) {
         jsonResponse(['error' => 'Email dan password wajib diisi'], 400);
@@ -264,6 +363,16 @@ function handleLogin() {
     // Set session
     $_SESSION['user_id'] = $user['id'];
 
+    // Remember Me: generate persistent token
+    if ($rememberMe) {
+        generateRememberToken($user['id']);
+    }
+
+    // Check if user has WebAuthn credentials registered
+    $stmt = $db->prepare("SELECT COUNT(*) FROM webauthn_credentials WHERE user_id = ?");
+    $stmt->execute([$user['id']]);
+    $hasWebAuthn = $stmt->fetchColumn() > 0;
+
     jsonResponse([
         'success' => true,
         'user' => [
@@ -273,29 +382,51 @@ function handleLogin() {
             'avatar_initial' => $user['avatar_initial'],
             'avatar_url' => $user['avatar_url'],
             'theme' => $user['theme'],
+            'has_webauthn' => $hasWebAuthn,
         ]
     ]);
 }
 
 function handleLogout() {
+    // Clear remember token
+    clearRememberToken();
+    
     session_destroy();
     jsonResponse(['success' => true]);
 }
 
 function handleCheck() {
-    if (!isset($_SESSION['user_id'])) {
+    // First check session
+    if (isset($_SESSION['user_id'])) {
+        $userId = $_SESSION['user_id'];
+    } else {
+        // Try remember me cookie
+        $userId = checkRememberToken();
+        if ($userId) {
+            // Restore session from remember token
+            $_SESSION['user_id'] = $userId;
+        }
+    }
+    
+    if (!$userId) {
         jsonResponse(['authenticated' => false]);
     }
 
     $db = getDB();
     $stmt = $db->prepare("SELECT id, name, email, avatar_initial, avatar_url, theme FROM users WHERE id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
+    $stmt->execute([$userId]);
     $user = $stmt->fetch();
 
     if (!$user) {
         session_destroy();
+        clearRememberCookie();
         jsonResponse(['authenticated' => false]);
     }
+
+    // Check if user has WebAuthn credentials
+    $stmt = $db->prepare("SELECT COUNT(*) FROM webauthn_credentials WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $user['has_webauthn'] = $stmt->fetchColumn() > 0;
 
     jsonResponse([
         'authenticated' => true,
@@ -409,4 +540,217 @@ function handleFacebookLogin() {
             'theme' => $theme,
         ]
     ]);
+}
+
+// =============================================
+// WebAuthn (Biometric) Functions
+// =============================================
+
+function handleWebAuthnRegisterOptions() {
+    $userId = requireAuth();
+    
+    $db = getDB();
+    $stmt = $db->prepare("SELECT id, name, email FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
+    
+    if (!$user) jsonResponse(['error' => 'User not found'], 404);
+    
+    // Get existing credentials to exclude
+    $stmt = $db->prepare("SELECT credential_id FROM webauthn_credentials WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $existingCreds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    // Generate challenge
+    $challenge = bin2hex(random_bytes(32));
+    $_SESSION['webauthn_challenge'] = $challenge;
+    $_SESSION['webauthn_action'] = 'register';
+    
+    $excludeCredentials = array_map(function($credId) {
+        return ['type' => 'public-key', 'id' => $credId];
+    }, $existingCreds);
+    
+    jsonResponse([
+        'challenge' => $challenge,
+        'rp' => [
+            'name' => 'SelarasKas',
+            'id' => $_SERVER['HTTP_HOST'] ?? 'localhost'
+        ],
+        'user' => [
+            'id' => base64_encode((string)$user['id']),
+            'name' => $user['email'],
+            'displayName' => $user['name']
+        ],
+        'pubKeyCredParams' => [
+            ['type' => 'public-key', 'alg' => -7],   // ES256
+            ['type' => 'public-key', 'alg' => -257],  // RS256
+        ],
+        'timeout' => 60000,
+        'authenticatorSelection' => [
+            'authenticatorAttachment' => 'platform', // Built-in (fingerprint/face)
+            'userVerification' => 'required',
+            'residentKey' => 'preferred',
+        ],
+        'excludeCredentials' => $excludeCredentials,
+        'attestation' => 'none'
+    ]);
+}
+
+function handleWebAuthnRegister() {
+    $userId = requireAuth();
+    $input = getInput();
+    
+    $credentialId = $input['credential_id'] ?? '';
+    $publicKey = $input['public_key'] ?? '';
+    $deviceName = trim($input['device_name'] ?? 'Perangkat');
+    
+    if (!$credentialId || !$publicKey) {
+        jsonResponse(['error' => 'Credential data tidak lengkap'], 400);
+    }
+    
+    // Verify challenge was issued
+    if (!isset($_SESSION['webauthn_challenge']) || $_SESSION['webauthn_action'] !== 'register') {
+        jsonResponse(['error' => 'Challenge tidak valid. Coba lagi.'], 400);
+    }
+    
+    // Clear challenge
+    unset($_SESSION['webauthn_challenge']);
+    unset($_SESSION['webauthn_action']);
+    
+    $db = getDB();
+    $stmt = $db->prepare("INSERT INTO webauthn_credentials (user_id, credential_id, public_key, device_name) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$userId, $credentialId, $publicKey, $deviceName]);
+    
+    jsonResponse([
+        'success' => true,
+        'message' => 'Sidik jari / Face ID berhasil didaftarkan! 🎉'
+    ]);
+}
+
+function handleWebAuthnLoginOptions() {
+    $input = getInput();
+    $email = trim($input['email'] ?? '');
+    
+    // Get stored email from localStorage (sent by frontend)
+    // If no email, try to find any credentials
+    $db = getDB();
+    
+    if ($email) {
+        $stmt = $db->prepare("
+            SELECT wc.credential_id 
+            FROM webauthn_credentials wc 
+            JOIN users u ON wc.user_id = u.id 
+            WHERE u.email = ?
+        ");
+        $stmt->execute([$email]);
+    } else {
+        // No email — can't determine which credentials to allow
+        jsonResponse(['error' => 'Email diperlukan untuk login biometrik'], 400);
+    }
+    
+    $credentials = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    if (empty($credentials)) {
+        jsonResponse(['error' => 'Belum ada sidik jari/Face ID terdaftar untuk akun ini', 'no_credentials' => true], 404);
+    }
+    
+    // Generate challenge
+    $challenge = bin2hex(random_bytes(32));
+    $_SESSION['webauthn_challenge'] = $challenge;
+    $_SESSION['webauthn_action'] = 'login';
+    $_SESSION['webauthn_email'] = $email;
+    
+    $allowCredentials = array_map(function($credId) {
+        return ['type' => 'public-key', 'id' => $credId];
+    }, $credentials);
+    
+    jsonResponse([
+        'challenge' => $challenge,
+        'rpId' => $_SERVER['HTTP_HOST'] ?? 'localhost',
+        'timeout' => 60000,
+        'userVerification' => 'required',
+        'allowCredentials' => $allowCredentials
+    ]);
+}
+
+function handleWebAuthnLogin() {
+    $input = getInput();
+    $credentialId = $input['credential_id'] ?? '';
+    
+    if (!$credentialId) {
+        jsonResponse(['error' => 'Credential ID tidak valid'], 400);
+    }
+    
+    // Verify challenge
+    if (!isset($_SESSION['webauthn_challenge']) || $_SESSION['webauthn_action'] !== 'login') {
+        jsonResponse(['error' => 'Challenge tidak valid. Coba lagi.'], 400);
+    }
+    
+    $email = $_SESSION['webauthn_email'] ?? '';
+    
+    // Clear challenge
+    unset($_SESSION['webauthn_challenge']);
+    unset($_SESSION['webauthn_action']);
+    unset($_SESSION['webauthn_email']);
+    
+    $db = getDB();
+    
+    // Find the credential
+    $stmt = $db->prepare("
+        SELECT wc.*, u.id as uid, u.name, u.email, u.avatar_initial, u.avatar_url, u.theme
+        FROM webauthn_credentials wc
+        JOIN users u ON wc.user_id = u.id
+        WHERE wc.credential_id = ?
+    ");
+    $stmt->execute([$credentialId]);
+    $cred = $stmt->fetch();
+    
+    if (!$cred) {
+        jsonResponse(['error' => 'Credential tidak ditemukan. Daftarkan ulang sidik jari.'], 401);
+    }
+    
+    // Update sign count
+    $stmt = $db->prepare("UPDATE webauthn_credentials SET sign_count = sign_count + 1 WHERE id = ?");
+    $stmt->execute([$cred['id']]);
+    
+    // Login the user
+    $_SESSION['user_id'] = $cred['uid'];
+    
+    // Also set remember token for convenience
+    generateRememberToken($cred['uid']);
+    
+    jsonResponse([
+        'success' => true,
+        'user' => [
+            'id' => (int)$cred['uid'],
+            'name' => $cred['name'],
+            'email' => $cred['email'],
+            'avatar_initial' => $cred['avatar_initial'],
+            'avatar_url' => $cred['avatar_url'],
+            'theme' => $cred['theme'],
+            'has_webauthn' => true,
+        ]
+    ]);
+}
+
+function handleWebAuthnCredentials() {
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        $userId = requireAuth();
+        $input = getInput();
+        $credId = $input['id'] ?? 0;
+        
+        $db = getDB();
+        $stmt = $db->prepare("DELETE FROM webauthn_credentials WHERE id = ? AND user_id = ?");
+        $stmt->execute([$credId, $userId]);
+        
+        jsonResponse(['success' => true, 'message' => 'Credential dihapus']);
+    }
+    
+    // GET — list credentials
+    $userId = requireAuth();
+    $db = getDB();
+    $stmt = $db->prepare("SELECT id, device_name, created_at FROM webauthn_credentials WHERE user_id = ? ORDER BY created_at DESC");
+    $stmt->execute([$userId]);
+    
+    jsonResponse(['credentials' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
 }
