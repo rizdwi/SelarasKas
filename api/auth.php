@@ -5,6 +5,30 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/send_email.php';
 
+// Auto-migrate: create tables if not exist (runs silently)
+try {
+    $pdo = getDB();
+    $pdo->exec("CREATE TABLE IF NOT EXISTS remember_tokens (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        token_hash VARCHAR(64) NOT NULL,
+        expires_at DATETIME NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE KEY idx_token_hash (token_hash)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS webauthn_credentials (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        credential_id TEXT NOT NULL,
+        public_key TEXT NOT NULL,
+        sign_count INT DEFAULT 0,
+        device_name VARCHAR(100) DEFAULT 'Perangkat',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+} catch (Exception $e) { /* tables already exist */ }
+
 $action = $_GET['action'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
 
