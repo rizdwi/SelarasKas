@@ -128,12 +128,49 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Generate CSRF token if not present
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// Fallback for environments lacking getallheaders() (e.g. IIS / FastCGI / CLI)
+if (!function_exists('getallheaders')) {
+    function getallheaders() {
+        $headers = [];
+        foreach ($_SERVER as $name => $value) {
+            if (substr($name, 0, 5) == 'HTTP_') {
+                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+            }
+        }
+        return $headers;
+    }
+}
+
 function requireAuth() {
     if (!isset($_SESSION['user_id'])) {
         http_response_code(401);
         echo json_encode(['error' => 'Unauthorized']);
         exit;
     }
+    
+    // CSRF verification for modifying operations (POST, PUT, DELETE)
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    if (in_array(strtoupper($method), ['POST', 'PUT', 'DELETE'])) {
+        $headers = array_change_key_case(getallheaders(), CASE_LOWER);
+        $csrfToken = $headers['x-csrf-token'] ?? '';
+        
+        if (empty($csrfToken)) {
+            $input = getInput();
+            $csrfToken = $input['csrf_token'] ?? '';
+        }
+        
+        if (empty($_SESSION['csrf_token']) || $csrfToken !== $_SESSION['csrf_token']) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Validasi CSRF Token gagal.']);
+            exit;
+        }
+    }
+    
     return $_SESSION['user_id'];
 }
 

@@ -293,6 +293,7 @@ function handleVerifyEmail() {
     jsonResponse([
         'success' => true,
         'message' => 'Email berhasil diverifikasi! 🎉',
+        'csrf_token' => $_SESSION['csrf_token'] ?? null,
         'user' => [
             'id' => (int)$user['id'],
             'name' => $user['name'],
@@ -399,6 +400,7 @@ function handleLogin() {
 
     jsonResponse([
         'success' => true,
+        'csrf_token' => $_SESSION['csrf_token'] ?? null,
         'user' => [
             'id' => (int)$user['id'],
             'name' => $user['name'],
@@ -454,6 +456,7 @@ function handleCheck() {
 
     jsonResponse([
         'authenticated' => true,
+        'csrf_token' => $_SESSION['csrf_token'] ?? null,
         'user' => $user
     ]);
 }
@@ -501,6 +504,7 @@ function handleGoogleLogin() {
 
     jsonResponse([
         'success' => true,
+        'csrf_token' => $_SESSION['csrf_token'] ?? null,
         'user' => [
             'id' => (int)$userId,
             'name' => $name,
@@ -555,6 +559,7 @@ function handleFacebookLogin() {
 
     jsonResponse([
         'success' => true,
+        'csrf_token' => $_SESSION['csrf_token'] ?? null,
         'user' => [
             'id' => (int)$userId,
             'name' => $name,
@@ -745,6 +750,7 @@ function handleWebAuthnLogin() {
     
     jsonResponse([
         'success' => true,
+        'csrf_token' => $_SESSION['csrf_token'] ?? null,
         'user' => [
             'id' => (int)$cred['uid'],
             'name' => $cred['name'],

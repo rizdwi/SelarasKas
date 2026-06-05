@@ -21,14 +21,30 @@
     const SAVINGS_ICONS = ['target','piggy-bank','wallet','coins','trophy','plane','home','car','laptop','smartphone','gift','heart'];
     const SAVINGS_COLORS = ['#818cf8','#34d399','#fbbf24','#ff6b6b','#f472b6','#38bdf8','#a78bfa','#fb923c'];
 
+    let csrfToken = null;
+
     // ===== API CLIENT =====
     async function api(endpoint, options = {}) {
         try {
+            const method = (options.method || 'GET').toUpperCase();
+            const headers = { 'Content-Type': 'application/json', ...options.headers };
+            
+            // Attach CSRF Token for state-changing methods if available
+            if (['POST', 'PUT', 'DELETE'].includes(method) && csrfToken) {
+                headers['X-CSRF-Token'] = csrfToken;
+            }
+
             const res = await fetch(`${API}/${endpoint}`, {
-                headers: { 'Content-Type': 'application/json' },
                 ...options,
+                headers,
             });
             const data = await res.json();
+            
+            // Capture CSRF Token if returned by the API
+            if (data && data.csrf_token) {
+                csrfToken = data.csrf_token;
+            }
+
             if (!res.ok) {
                 const err = new Error(data.error || 'Request failed');
                 // Pass through verification data for OTP flow
