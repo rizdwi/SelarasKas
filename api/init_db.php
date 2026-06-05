@@ -52,6 +52,8 @@ try {
         `email_verified` TINYINT(1) DEFAULT 0,
         `verification_code` VARCHAR(6) DEFAULT NULL,
         `verification_expires` TIMESTAMP NULL DEFAULT NULL,
+        `reset_code` VARCHAR(6) DEFAULT NULL,
+        `reset_expires` TIMESTAMP NULL DEFAULT NULL,
         `theme` VARCHAR(5) DEFAULT 'dark',
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB");
@@ -75,6 +77,12 @@ try {
     } catch(PDOException $e) { /* Ignore if already exists */ }
     try {
         $pdo->exec("ALTER TABLE `users` ADD COLUMN `verification_expires` TIMESTAMP NULL DEFAULT NULL");
+    } catch(PDOException $e) { /* Ignore if already exists */ }
+    try {
+        $pdo->exec("ALTER TABLE `users` ADD COLUMN `reset_code` VARCHAR(6) DEFAULT NULL");
+    } catch(PDOException $e) { /* Ignore if already exists */ }
+    try {
+        $pdo->exec("ALTER TABLE `users` ADD COLUMN `reset_expires` TIMESTAMP NULL DEFAULT NULL");
     } catch(PDOException $e) { /* Ignore if already exists */ }
 
     echo json_encode(['step' => 'Table users created']) . "\n";

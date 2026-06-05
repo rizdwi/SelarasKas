@@ -402,6 +402,7 @@ input, select, textarea { font-family: inherit; }
 .remember-me-row {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     margin: -4px 0 4px;
 }
 .remember-me-label {
@@ -418,6 +419,23 @@ input, select, textarea { font-family: inherit; }
     height: 16px;
     accent-color: var(--color-primary);
     cursor: pointer;
+}
+
+/* Forgot Password Link */
+.forgot-password-link {
+    background: none;
+    border: none;
+    color: var(--accent-coral);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s ease;
+    opacity: 0.85;
+}
+.forgot-password-link:hover {
+    opacity: 1;
+    text-decoration: underline;
 }
 
 /* Biometric Login Button */
@@ -547,123 +565,76 @@ input, select, textarea { font-family: inherit; }
 /* Biometric Toggle Switch */
 .biometric-toggle {
     position: relative;
-    width: 74px;
-    height: 34px;
-    border-radius: 17px;
+    width: 56px;
+    height: 30px;
+    border-radius: 15px;
     cursor: pointer;
-    overflow: hidden;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.4s ease, box-shadow 0.4s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    background: linear-gradient(to bottom, #1e293b, #0f172a);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+    background: linear-gradient(145deg, #1e293b, #334155);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     display: inline-block;
     vertical-align: middle;
     flex-shrink: 0;
 }
-
-.biometric-toggle:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-}
-
-.biometric-toggle:active {
-    transform: scale(0.95);
-}
-
+.biometric-toggle:hover { transform: scale(1.06); }
+.biometric-toggle:active { transform: scale(0.95); }
 .biometric-toggle.active {
-    background: linear-gradient(135deg, #059669, #10b981);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
-}
-
-.biometric-toggle.active:hover {
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.55);
-}
-
-/* Scan Line Animation */
-.biometric-toggle .toggle-scan-line {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: #a7f3d0;
-    box-shadow: 0 0 6px #34d399, 0 0 12px #059669;
-    opacity: 0;
-    transform: translateY(-2px);
-    pointer-events: none;
-    z-index: 1;
-}
-
-.biometric-toggle.active .toggle-scan-line {
-    opacity: 0.8;
-    animation: scan-vertical 2s infinite ease-in-out;
-}
-
-@keyframes scan-vertical {
-    0%, 100% { transform: translateY(2px); }
-    50% { transform: translateY(30px); }
+    background: linear-gradient(145deg, #059669, #10b981);
+    border-color: rgba(16, 185, 129, 0.25);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), 0 0 16px rgba(16,185,129,0.2);
 }
 
 /* Biometric Knob */
 .biometric-toggle .toggle-knob {
     position: absolute;
     top: 3px;
-    left: 5px;
-    width: 26px;
-    height: 26px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    background: linear-gradient(135deg, #64748b, #475569);
-    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.25);
+    transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: linear-gradient(145deg, #64748b, #475569);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2;
 }
-
 .biometric-toggle.active .toggle-knob {
-    left: 43px;
-    background: linear-gradient(135deg, #ffffff, #e2e8f0);
-    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.05), 0 4px 10px rgba(0, 0, 0, 0.2);
+    left: 29px;
+    background: linear-gradient(145deg, #ffffff, #f1f5f9);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
 }
-
 .biometric-toggle .toggle-knob-icon {
-    width: 14px;
-    height: 14px;
-    color: #cbd5e1;
+    width: 13px; height: 13px;
+    color: #94a3b8;
     transition: all 0.4s ease;
+    opacity: 0.7;
 }
-
 .biometric-toggle.active .toggle-knob-icon {
     color: #059669;
-    filter: drop-shadow(0 0 2px rgba(5, 150, 105, 0.5));
+    opacity: 1;
 }
 
-/* Light mode overrides for biometric toggle */
+/* Light mode biometric toggle */
 [data-theme="light"] .biometric-toggle {
-    background: linear-gradient(to bottom, #e2e8f0, #cbd5e1);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    background: linear-gradient(145deg, #e2e8f0, #cbd5e1);
+    border-color: rgba(0,0,0,0.06);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
 }
-
 [data-theme="light"] .biometric-toggle .toggle-knob {
-    background: linear-gradient(135deg, #94a3b8, #64748b);
-    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.1);
+    background: linear-gradient(145deg, #94a3b8, #64748b);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
-
-[data-theme="light"] .biometric-toggle .toggle-knob-icon {
-    color: #f1f5f9;
-}
-
+[data-theme="light"] .biometric-toggle .toggle-knob-icon { color: #e2e8f0; }
 [data-theme="light"] .biometric-toggle.active {
-    background: linear-gradient(135deg, #10b981, #059669);
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+    background: linear-gradient(145deg, #10b981, #34d399);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.06), 0 0 14px rgba(16,185,129,0.15);
 }
-
 [data-theme="light"] .biometric-toggle.active .toggle-knob {
-    background: #ffffff;
-    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.05), 0 3px 6px rgba(0,0,0,0.15);
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 /* ===== MAIN APP ===== */
@@ -714,152 +685,180 @@ input, select, textarea { font-family: inherit; }
 }
 .icon-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); }
 .icon-btn:active { transform: scale(0.93); }
-/* Custom Day/Night Toggle Switch */
+/* Custom Day/Night Toggle Switch — Premium Redesign */
 .day-night-toggle {
     position: relative;
-    width: 74px;
-    height: 34px;
-    border-radius: 17px;
+    width: 80px;
+    height: 36px;
+    border-radius: 18px;
     cursor: pointer;
     overflow: hidden;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.4s ease, box-shadow 0.4s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    background: linear-gradient(to bottom, #0b0f19, #1a233d); /* dark background */
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2), inset 0 -2px 6px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(180deg, #0a0e27 0%, #1a1d4e 50%, #2d1b69 100%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     display: inline-block;
     vertical-align: middle;
     flex-shrink: 0;
 }
-
 .day-night-toggle:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    transform: scale(1.06);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 -2px 6px rgba(0, 0, 0, 0.15);
 }
+.day-night-toggle:active { transform: scale(0.95); }
 
-.day-night-toggle:active {
-    transform: scale(0.95);
-}
-
-/* Light mode override for background */
+/* Light mode sky */
 [data-theme="light"] .day-night-toggle {
-    background: linear-gradient(to bottom, #4facfe, #00f2fe);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    box-shadow: 0 4px 12px rgba(0, 242, 254, 0.25);
+    background: linear-gradient(180deg, #38bdf8 0%, #7dd3fc 50%, #bae6fd 100%);
+    border-color: rgba(56, 189, 248, 0.2);
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25), inset 0 -2px 6px rgba(0, 0, 0, 0.05);
 }
-
 [data-theme="light"] .day-night-toggle:hover {
-    box-shadow: 0 6px 16px rgba(0, 242, 254, 0.4);
+    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4), inset 0 -2px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* Toggle background stars (for dark mode) */
+/* Stars container (dark mode) */
 .toggle-stars {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0; width: 100%; height: 100%;
     opacity: 1;
-    transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-
 [data-theme="light"] .toggle-stars {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: scale(0.5) translateY(-8px);
 }
 
-/* Star styles - creating small sparkles */
+/* Stars */
 .star {
     position: absolute;
-    background: #ffd8a8;
+    background: #fefce8;
     border-radius: 50%;
-    box-shadow: 0 0 4px #ffd8a8;
-    transition: all 0.4s ease;
+    box-shadow: 0 0 3px #fefce8, 0 0 6px rgba(254, 252, 232, 0.3);
 }
+.star-1 { width: 2px; height: 2px; top: 8px; left: 14px; animation: twinkle 2.5s infinite ease-in-out; }
+.star-2 { width: 3px; height: 3px; top: 20px; left: 10px; animation: twinkle 3.5s infinite ease-in-out 0.3s; }
+.star-3 { width: 2px; height: 2px; top: 24px; left: 24px; animation: twinkle 2s infinite ease-in-out 0.8s; }
+.star-4 { width: 2px; height: 2px; top: 6px; left: 30px; animation: twinkle 4s infinite ease-in-out 1.2s; }
+.star-5 { width: 3px; height: 3px; top: 16px; left: 36px; animation: twinkle 3s infinite ease-in-out 0.5s; }
 
-/* Star positions and sizes */
-.star-1 { width: 3px; height: 3px; top: 8px; left: 18px; }
-.star-2 { width: 2px; height: 2px; top: 18px; left: 12px; }
-.star-3 { width: 4px; height: 4px; top: 22px; left: 24px; opacity: 0.8; }
-.star-4 { width: 2px; height: 2px; top: 10px; left: 32px; }
-
-/* Star twinkle effect */
 @keyframes twinkle {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
+    0%, 100% { opacity: 0.2; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
 }
-.star-1 { animation: twinkle 3s infinite ease-in-out; }
-.star-3 { animation: twinkle 2s infinite ease-in-out 0.5s; }
 
-/* Toggle background clouds (for light mode) */
+/* Shooting star */
+.shooting-star {
+    position: absolute;
+    top: 10px;
+    left: 8px;
+    width: 12px;
+    height: 1.5px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
+    border-radius: 1px;
+    opacity: 0;
+    animation: shootingStar 4s infinite ease-in-out 2s;
+}
+@keyframes shootingStar {
+    0%, 85%, 100% { opacity: 0; transform: translateX(0) translateY(0) scaleX(0); }
+    90% { opacity: 1; transform: translateX(20px) translateY(6px) scaleX(1); }
+    95% { opacity: 0; transform: translateX(32px) translateY(10px) scaleX(0.3); }
+}
+[data-theme="light"] .shooting-star { animation: none; opacity: 0; }
+
+/* Clouds container (light mode) */
 .toggle-clouds {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0; width: 100%; height: 100%;
     opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: translateY(8px);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-
 [data-theme="light"] .toggle-clouds {
     opacity: 1;
     transform: translateY(0);
 }
 
-/* Cloud styles */
+/* Clouds */
 .cloud {
     position: absolute;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 50%;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
-    transition: all 0.4s ease;
+    filter: blur(0.5px);
 }
-.cloud-1 { width: 22px; height: 22px; bottom: -6px; right: 20px; background: rgba(255, 255, 255, 0.8); }
-.cloud-2 { width: 26px; height: 26px; bottom: -8px; right: 6px; }
-.cloud-3 { width: 16px; height: 16px; bottom: -2px; right: -2px; background: rgba(255, 255, 255, 0.85); }
+.cloud-1 { width: 20px; height: 12px; bottom: 2px; right: 28px; border-radius: 10px; animation: cloudDrift 6s infinite ease-in-out; }
+.cloud-2 { width: 28px; height: 14px; bottom: -2px; right: 8px; border-radius: 10px; animation: cloudDrift 8s infinite ease-in-out 1s; }
+.cloud-3 { width: 14px; height: 8px; bottom: 8px; right: 16px; border-radius: 8px; opacity: 0.7; animation: cloudDrift 5s infinite ease-in-out 2s; }
 
-/* The knob representing the Sun/Moon */
-.toggle-knob {
+@keyframes cloudDrift {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(3px); }
+}
+
+/* Sun rays (light mode only) */
+.sun-rays {
     position: absolute;
-    top: 3px;
-    left: 43px; /* Moon at the right in dark mode */
+    top: 5px;
+    left: 5px;
     width: 26px;
     height: 26px;
     border-radius: 50%;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    background: linear-gradient(135deg, #f1f5f9, #cbd5e1); /* Moon color */
-    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.25);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 1;
+    background: transparent;
+    box-shadow: 0 0 0 3px rgba(255, 200, 50, 0.15), 0 0 0 7px rgba(255, 200, 50, 0.08), 0 0 0 12px rgba(255, 200, 50, 0.03);
+    animation: sunPulse 3s infinite ease-in-out;
+}
+[data-theme="light"] .sun-rays {
+    opacity: 1;
+}
+@keyframes sunPulse {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.1); opacity: 1; }
+}
+
+/* The knob — Sun/Moon */
+.day-night-toggle .toggle-knob {
+    position: absolute;
+    top: 4px;
+    left: 48px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: linear-gradient(145deg, #e8e4f0, #c9c3d8);
+    box-shadow: inset -3px -2px 4px rgba(0,0,0,0.12), 0 3px 8px rgba(0,0,0,0.3), 0 0 12px rgba(200, 195, 216, 0.15);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    z-index: 2;
+    z-index: 3;
 }
 
-/* Sun knob state in Light mode */
-[data-theme="light"] .toggle-knob {
-    left: 5px; /* Sun at the left in light mode */
-    background: linear-gradient(135deg, #ffcf33, #ff9500); /* Sun color */
-    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.1), 0 3px 8px rgba(255,149,0,0.4);
+/* Sun knob state */
+[data-theme="light"] .day-night-toggle .toggle-knob {
+    left: 4px;
+    background: linear-gradient(145deg, #fde047, #f59e0b);
+    box-shadow: inset -2px -2px 4px rgba(0,0,0,0.08), 0 3px 10px rgba(245, 158, 11, 0.5), 0 0 20px rgba(245, 158, 11, 0.2);
 }
 
-/* Craters for the moon knob */
-.toggle-knob .crater {
+/* Moon craters */
+.day-night-toggle .toggle-knob .crater {
     position: absolute;
-    background: #cbd5e1;
+    background: rgba(180, 175, 195, 0.6);
     border-radius: 50%;
     box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1);
     opacity: 1;
-    transition: opacity 0.4s ease;
+    transition: all 0.4s ease;
 }
-
 .crater-1 { width: 6px; height: 6px; top: 5px; left: 6px; }
-.crater-2 { width: 7px; height: 7px; top: 12px; left: 13px; }
-.crater-3 { width: 4px; height: 4px; bottom: 4px; left: 6px; }
+.crater-2 { width: 8px; height: 8px; top: 13px; left: 14px; }
+.crater-3 { width: 4px; height: 4px; bottom: 5px; left: 7px; }
 
-[data-theme="light"] .toggle-knob .crater {
+[data-theme="light"] .day-night-toggle .toggle-knob .crater {
     opacity: 0;
+    transform: scale(0);
 }
 /* ===== BALANCE CARD ===== */
 .balance-card {

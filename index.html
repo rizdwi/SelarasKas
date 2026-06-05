@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="index.css?v=18">
+    <link rel="stylesheet" href="index.css?v=19">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a0e1a">
     <!-- iOS PWA Support -->
@@ -65,6 +65,7 @@
                             <input type="checkbox" id="rememberMeCheck" checked>
                             <span>Ingat Saya</span>
                         </label>
+                        <button type="button" class="forgot-password-link" id="showForgotPassword">Lupa Password?</button>
                     </div>
                     <button type="submit" class="auth-submit-btn" id="loginSubmitBtn">
                         <span>Masuk</span>
@@ -172,6 +173,97 @@
                         <p id="otpResendText">Tidak menerima kode?</p>
                         <button type="button" class="otp-resend-btn" id="otpResendBtn" disabled>
                             Kirim Ulang Kode <span id="otpCountdown">(60s)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Forgot Password Form -->
+                <div id="forgotPasswordForm" class="auth-form">
+                    <div class="otp-header">
+                        <button type="button" class="otp-back-btn" id="forgotBackBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                        </button>
+                        <div class="otp-icon-wrapper" style="background:rgba(245,158,11,0.15);">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="16" r="1"/>
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <h2 class="otp-title">Lupa Password</h2>
+                    <p class="otp-subtitle">Masukkan email yang terdaftar untuk menerima kode reset password</p>
+                    
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label for="forgotEmail">Email</label>
+                        <input type="email" id="forgotEmail" placeholder="email@contoh.com" required autocomplete="email">
+                    </div>
+                    
+                    <div class="auth-error" id="forgotError"></div>
+                    
+                    <button type="button" class="auth-submit-btn" id="forgotSubmitBtn">
+                        <span>Kirim Kode Reset</span>
+                    </button>
+                    
+                    <p class="auth-switch">Ingat password? <button type="button" id="forgotToLogin">Masuk</button></p>
+                </div>
+
+                <!-- Reset Password Form -->
+                <div id="resetPasswordForm" class="auth-form">
+                    <div class="otp-header">
+                        <button type="button" class="otp-back-btn" id="resetBackBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                        </button>
+                        <div class="otp-icon-wrapper" style="background:rgba(16,185,129,0.15);">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                <path d="M9 12l2 2 4-4"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <h2 class="otp-title">Reset Password</h2>
+                    <p class="otp-subtitle">Masukkan kode yang dikirim ke</p>
+                    <p class="otp-email" id="resetEmailDisplay">email@contoh.com</p>
+                    
+                    <div class="otp-inputs" id="resetOtpInputs">
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="0">
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="1">
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="2">
+                        <div class="otp-separator">–</div>
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="3">
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="4">
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="5">
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label for="resetNewPassword">Password Baru</label>
+                        <div class="password-input-container">
+                            <input type="password" id="resetNewPassword" placeholder="Minimal 6 karakter" required autocomplete="new-password">
+                            <button type="button" class="password-toggle-btn" data-toggle="resetNewPassword">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye" style="pointer-events:none;color:currentColor;"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="resetConfirmPassword">Konfirmasi Password</label>
+                        <div class="password-input-container">
+                            <input type="password" id="resetConfirmPassword" placeholder="Ketik ulang password" required autocomplete="new-password">
+                            <button type="button" class="password-toggle-btn" data-toggle="resetConfirmPassword">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye" style="pointer-events:none;color:currentColor;"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="auth-error" id="resetError"></div>
+                    
+                    <button type="button" class="auth-submit-btn" id="resetSubmitBtn">
+                        <span>Reset Password</span>
+                    </button>
+                    
+                    <div class="otp-resend">
+                        <p id="resetResendText">Tidak menerima kode?</p>
+                        <button type="button" class="otp-resend-btn" id="resetResendBtn" disabled>
+                            Kirim Ulang Kode <span id="resetCountdown">(60s)</span>
                         </button>
                     </div>
                 </div>
@@ -493,18 +585,20 @@
                                 <span class="settings-item-subtitle" id="themeLabel">Dark Mode</span>
                             </div>
                             <div class="day-night-toggle" id="themeSwitchBtn" aria-label="Toggle theme">
-                                <div class="toggle-bg"></div>
                                 <div class="toggle-stars">
                                     <div class="star star-1"></div>
                                     <div class="star star-2"></div>
                                     <div class="star star-3"></div>
                                     <div class="star star-4"></div>
+                                    <div class="star star-5"></div>
+                                    <div class="shooting-star"></div>
                                 </div>
                                 <div class="toggle-clouds">
                                     <div class="cloud cloud-1"></div>
                                     <div class="cloud cloud-2"></div>
                                     <div class="cloud cloud-3"></div>
                                 </div>
+                                <div class="sun-rays"></div>
                                 <div class="toggle-knob">
                                     <div class="crater crater-1"></div>
                                     <div class="crater crater-2"></div>
@@ -528,13 +622,13 @@
                                 <span class="settings-item-subtitle" id="biometricLabel">Tidak Aktif</span>
                             </div>
                             <div class="biometric-toggle" id="biometricToggleBtn" aria-label="Toggle biometric login">
-                                <div class="toggle-bg"></div>
-                                <div class="toggle-scan-line"></div>
                                 <div class="toggle-knob">
-                                    <svg class="toggle-knob-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                                        <line x1="12" y1="19" x2="12" y2="22"/>
+                                    <svg class="toggle-knob-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 10a2 2 0 0 0-2 2c0 1.02.77 2 2 2s2-.98 2-2a2 2 0 0 0-2-2z"/>
+                                        <path d="M18 8a6 6 0 0 0-12 0v4a6 6 0 0 0 12 0V8z" opacity="0" />
+                                        <path d="M7 3.34C4.07 5.22 2 8.36 2 12c0 5.52 4.48 10 10 10s10-4.48 10-10c0-3.64-2.07-6.78-5-8.66"/>
+                                        <path d="M12 6a6 6 0 0 0-6 6"/>
+                                        <path d="M18 12a6 6 0 0 0-6-6"/>
                                     </svg>
                                 </div>
                             </div>

@@ -27,6 +27,8 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    try { $pdo->exec("ALTER TABLE `users` ADD COLUMN `reset_code` VARCHAR(6) DEFAULT NULL"); } catch (Exception $e) { /* column exists */ }
+    try { $pdo->exec("ALTER TABLE `users` ADD COLUMN `reset_expires` TIMESTAMP NULL DEFAULT NULL"); } catch (Exception $e) { /* column exists */ }
 } catch (Exception $e) { /* tables already exist */ }
 
 $action = $_GET['action'] ?? '';
@@ -88,6 +90,18 @@ switch ($action) {
         break;
     case 'webauthn_credentials':
         handleWebAuthnCredentials();
+        break;
+    case 'forgot_password':
+        if ($method !== 'POST') jsonResponse(['error' => 'Method not allowed'], 405);
+        handleForgotPassword();
+        break;
+    case 'verify_reset_code':
+        if ($method !== 'POST') jsonResponse(['error' => 'Method not allowed'], 405);
+        handleVerifyResetCode();
+        break;
+    case 'reset_password':
+        if ($method !== 'POST') jsonResponse(['error' => 'Method not allowed'], 405);
+        handleResetPassword();
         break;
     default:
         jsonResponse(['error' => 'Invalid action'], 400);
@@ -567,6 +581,156 @@ function handleFacebookLogin() {
             'avatar_initial' => $initial,
             'avatar_url' => $dbAvatar,
             'theme' => $theme,
+        ]
+    ]);
+}
+
+// =============================================
+// Forgot / Reset Password Functions
+// =============================================
+
+function handleForgotPassword() {
+    $input = getInput();
+    $email = trim($input['email'] ?? '');
+
+    if (!$email) {
+        jsonResponse(['error' => 'Email wajib diisi'], 400);
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        jsonResponse(['error' => 'Format email tidak valid'], 400);
+    }
+
+    $db = getDB();
+    $stmt = $db->prepare("SELECT id, name, email_verified FROM users WHERE email = ?");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
+
+    // Always return success to prevent email enumeration
+    if (!$user || !$user['email_verified']) {
+        jsonResponse([
+            'success' => true,
+            'message' => 'Jika email terdaftar, kode reset akan dikirim'
+        ]);
+    }
+
+    // Rate limit: check if last reset code was sent less than 60 seconds ago
+    $stmt2 = $db->prepare("SELECT reset_expires FROM users WHERE id = ?");
+    $stmt2->execute([$user['id']]);
+    $userData = $stmt2->fetch();
+    
+    if ($userData && $userData['reset_expires']) {
+        $lastSent = strtotime($userData['reset_expires']) - 900;
+        if (time() - $lastSent < 60) {
+            $waitSeconds = 60 - (time() - $lastSent);
+            jsonResponse(['error' => "Tunggu {$waitSeconds} detik sebelum mengirim ulang kode", 'wait' => $waitSeconds], 429);
+        }
+    }
+
+    $code = generateVerificationCode();
+    $expires = date('Y-m-d H:i:s', time() + 900); // 15 minutes
+
+    $stmt = $db->prepare("UPDATE users SET reset_code = ?, reset_expires = ? WHERE id = ?");
+    $stmt->execute([$code, $expires, $user['id']]);
+
+    $emailSent = sendPasswordResetEmail($email, $user['name'], $code);
+
+    jsonResponse([
+        'success' => true,
+        'message' => $emailSent
+            ? 'Kode reset password telah dikirim ke ' . $email
+            : 'Jika email terdaftar, kode reset akan dikirim'
+    ]);
+}
+
+function handleVerifyResetCode() {
+    $input = getInput();
+    $email = trim($input['email'] ?? '');
+    $code = trim($input['code'] ?? '');
+
+    if (!$email || !$code) {
+        jsonResponse(['error' => 'Email dan kode wajib diisi'], 400);
+    }
+
+    if (strlen($code) !== 6 || !ctype_digit($code)) {
+        jsonResponse(['error' => 'Kode harus 6 digit angka'], 400);
+    }
+
+    $db = getDB();
+    $stmt = $db->prepare("SELECT id, reset_code, reset_expires FROM users WHERE email = ? AND email_verified = 1");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
+
+    if (!$user) {
+        jsonResponse(['error' => 'Akun tidak ditemukan'], 404);
+    }
+
+    if (!$user['reset_code'] || $user['reset_code'] !== $code) {
+        jsonResponse(['error' => 'Kode verifikasi salah'], 400);
+    }
+
+    if (strtotime($user['reset_expires']) < time()) {
+        jsonResponse(['error' => 'Kode sudah kedaluwarsa. Silakan kirim ulang kode.', 'expired' => true], 400);
+    }
+
+    jsonResponse([
+        'success' => true,
+        'verified' => true,
+        'message' => 'Kode berhasil diverifikasi'
+    ]);
+}
+
+function handleResetPassword() {
+    $input = getInput();
+    $email = trim($input['email'] ?? '');
+    $code = trim($input['code'] ?? '');
+    $newPassword = $input['new_password'] ?? '';
+
+    if (!$email || !$code || !$newPassword) {
+        jsonResponse(['error' => 'Semua field wajib diisi'], 400);
+    }
+
+    if (strlen($newPassword) < 6) {
+        jsonResponse(['error' => 'Password minimal 6 karakter'], 400);
+    }
+
+    $db = getDB();
+    $stmt = $db->prepare("SELECT * FROM users WHERE email = ? AND email_verified = 1");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
+
+    if (!$user) {
+        jsonResponse(['error' => 'Akun tidak ditemukan'], 404);
+    }
+
+    // Verify code again for security
+    if (!$user['reset_code'] || $user['reset_code'] !== $code) {
+        jsonResponse(['error' => 'Kode verifikasi tidak valid'], 400);
+    }
+
+    if (strtotime($user['reset_expires']) < time()) {
+        jsonResponse(['error' => 'Kode sudah kedaluwarsa'], 400);
+    }
+
+    // Update password and clear reset code
+    $hash = password_hash($newPassword, PASSWORD_BCRYPT);
+    $stmt = $db->prepare("UPDATE users SET password = ?, reset_code = NULL, reset_expires = NULL WHERE id = ?");
+    $stmt->execute([$hash, $user['id']]);
+
+    // Auto login
+    $_SESSION['user_id'] = $user['id'];
+
+    jsonResponse([
+        'success' => true,
+        'message' => 'Password berhasil direset! 🎉',
+        'csrf_token' => $_SESSION['csrf_token'] ?? null,
+        'user' => [
+            'id' => (int)$user['id'],
+            'name' => $user['name'],
+            'email' => $user['email'],
+            'avatar_initial' => $user['avatar_initial'],
+            'avatar_url' => $user['avatar_url'],
+            'theme' => $user['theme'],
         ]
     ]);
 }

@@ -408,13 +408,17 @@
     function showAuth() {
         document.getElementById('authScreen').classList.add('active');
         document.getElementById('mainApp').classList.remove('active');
-        // Reset to login form, hide OTP
+        // Reset to login form, hide all other forms
         const loginForm = document.getElementById('loginForm');
         const registerForm = document.getElementById('registerForm');
         const otpScreen = document.getElementById('otpScreen');
+        const forgotForm = document.getElementById('forgotPasswordForm');
+        const resetForm = document.getElementById('resetPasswordForm');
         if (loginForm) loginForm.classList.add('active');
         if (registerForm) registerForm.classList.remove('active');
         if (otpScreen) otpScreen.classList.remove('active');
+        if (forgotForm) forgotForm.classList.remove('active');
+        if (resetForm) resetForm.classList.remove('active');
         currentUser = null;
         
         // Pre-fill saved email
@@ -645,18 +649,209 @@
             if (resendCountdown) clearInterval(resendCountdown);
         });
 
-        document.getElementById('showRegister').addEventListener('click', () => {
+        // Helper to hide all auth forms
+        function hideAllForms() {
             loginForm.classList.remove('active');
+            registerForm.classList.remove('active');
             otpScreen.classList.remove('active');
-            registerForm.classList.add('active');
+            const fp = document.getElementById('forgotPasswordForm');
+            const rp = document.getElementById('resetPasswordForm');
+            if (fp) fp.classList.remove('active');
+            if (rp) rp.classList.remove('active');
             authError.textContent = '';
+        }
+
+        document.getElementById('showRegister').addEventListener('click', () => {
+            hideAllForms();
+            registerForm.classList.add('active');
         });
 
         document.getElementById('showLogin').addEventListener('click', () => {
-            registerForm.classList.remove('active');
-            otpScreen.classList.remove('active');
+            hideAllForms();
             loginForm.classList.add('active');
-            authError.textContent = '';
+        });
+
+        // ===== FORGOT PASSWORD FLOW =====
+        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+        const resetPasswordForm = document.getElementById('resetPasswordForm');
+        let resetEmail = '';
+        let resetCountdownTimer = null;
+
+        // Show forgot password form
+        document.getElementById('showForgotPassword')?.addEventListener('click', () => {
+            hideAllForms();
+            if (forgotPasswordForm) forgotPasswordForm.classList.add('active');
+            // Pre-fill email from login form
+            const loginEmailVal = document.getElementById('loginEmail')?.value;
+            const forgotEmailInput = document.getElementById('forgotEmail');
+            if (loginEmailVal && forgotEmailInput) forgotEmailInput.value = loginEmailVal;
+        });
+
+        // Back from forgot password
+        document.getElementById('forgotBackBtn')?.addEventListener('click', () => {
+            hideAllForms();
+            loginForm.classList.add('active');
+        });
+        document.getElementById('forgotToLogin')?.addEventListener('click', () => {
+            hideAllForms();
+            loginForm.classList.add('active');
+        });
+
+        // Submit forgot password (send OTP)
+        document.getElementById('forgotSubmitBtn')?.addEventListener('click', async () => {
+            const forgotError = document.getElementById('forgotError');
+            const btn = document.getElementById('forgotSubmitBtn');
+            const email = document.getElementById('forgotEmail')?.value?.trim();
+            if (forgotError) forgotError.textContent = '';
+            if (!email) {
+                if (forgotError) forgotError.textContent = 'Masukkan alamat email';
+                return;
+            }
+            btn.disabled = true;
+            try {
+                const data = await api('auth.php?action=forgot_password', {
+                    method: 'POST',
+                    body: JSON.stringify({ email })
+                });
+                showToast(data.message || 'Kode reset telah dikirim 📧');
+                resetEmail = email;
+                // Show reset password form
+                hideAllForms();
+                if (resetPasswordForm) resetPasswordForm.classList.add('active');
+                const resetEmailDisplay = document.getElementById('resetEmailDisplay');
+                if (resetEmailDisplay) resetEmailDisplay.textContent = email;
+                // Clear OTP inputs
+                const resetOtpInputs = document.querySelectorAll('#resetOtpInputs .otp-digit');
+                resetOtpInputs.forEach(i => { i.value = ''; });
+                if (resetOtpInputs[0]) resetOtpInputs[0].focus();
+                // Start resend countdown
+                startResetResendCountdown(60);
+            } catch (err) {
+                if (forgotError) forgotError.textContent = err.message || 'Terjadi kesalahan';
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        // Reset OTP input handling
+        const resetOtpContainer = document.getElementById('resetOtpInputs');
+        if (resetOtpContainer) {
+            const resetDigits = resetOtpContainer.querySelectorAll('.otp-digit');
+            resetDigits.forEach((input, idx) => {
+                input.addEventListener('input', (e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    e.target.value = val;
+                    if (val && idx < resetDigits.length - 1) resetDigits[idx + 1].focus();
+                });
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+                        resetDigits[idx - 1].focus();
+                    }
+                });
+                input.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+                    pasted.split('').forEach((ch, i) => {
+                        if (resetDigits[i]) resetDigits[i].value = ch;
+                    });
+                    if (resetDigits[Math.min(pasted.length, resetDigits.length - 1)]) {
+                        resetDigits[Math.min(pasted.length, resetDigits.length - 1)].focus();
+                    }
+                });
+            });
+        }
+
+        // Back from reset password
+        document.getElementById('resetBackBtn')?.addEventListener('click', () => {
+            hideAllForms();
+            if (forgotPasswordForm) forgotPasswordForm.classList.add('active');
+            if (resetCountdownTimer) clearInterval(resetCountdownTimer);
+        });
+
+        // Reset resend countdown
+        function startResetResendCountdown(seconds) {
+            const btn = document.getElementById('resetResendBtn');
+            const countdown = document.getElementById('resetCountdown');
+            if (!btn || !countdown) return;
+            btn.disabled = true;
+            let sec = seconds;
+            countdown.textContent = `(${sec}s)`;
+            if (resetCountdownTimer) clearInterval(resetCountdownTimer);
+            resetCountdownTimer = setInterval(() => {
+                sec--;
+                countdown.textContent = `(${sec}s)`;
+                if (sec <= 0) {
+                    clearInterval(resetCountdownTimer);
+                    btn.disabled = false;
+                    countdown.textContent = '';
+                }
+            }, 1000);
+        }
+
+        // Resend reset code
+        document.getElementById('resetResendBtn')?.addEventListener('click', async () => {
+            if (!resetEmail) return;
+            try {
+                await api('auth.php?action=forgot_password', {
+                    method: 'POST',
+                    body: JSON.stringify({ email: resetEmail })
+                });
+                showToast('Kode reset dikirim ulang 📧');
+                startResetResendCountdown(60);
+            } catch (err) {
+                showToast(err.message || 'Gagal mengirim ulang kode');
+                if (err.wait) startResetResendCountdown(err.wait);
+            }
+        });
+
+        // Submit reset password
+        document.getElementById('resetSubmitBtn')?.addEventListener('click', async () => {
+            const resetError = document.getElementById('resetError');
+            const btn = document.getElementById('resetSubmitBtn');
+            if (resetError) resetError.textContent = '';
+
+            // Collect OTP
+            const resetDigits = document.querySelectorAll('#resetOtpInputs .otp-digit');
+            const code = Array.from(resetDigits).map(i => i.value).join('');
+            if (code.length !== 6) {
+                if (resetError) resetError.textContent = 'Masukkan 6 digit kode verifikasi';
+                return;
+            }
+
+            const newPassword = document.getElementById('resetNewPassword')?.value;
+            const confirmPassword = document.getElementById('resetConfirmPassword')?.value;
+            if (!newPassword || newPassword.length < 6) {
+                if (resetError) resetError.textContent = 'Password minimal 6 karakter';
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                if (resetError) resetError.textContent = 'Password tidak cocok';
+                return;
+            }
+
+            btn.disabled = true;
+            try {
+                const data = await api('auth.php?action=reset_password', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: resetEmail,
+                        code: code,
+                        new_password: newPassword
+                    })
+                });
+                showToast(data.message || 'Password berhasil direset! 🎉');
+                if (data.user) {
+                    localStorage.setItem('selaraskas_last_email', resetEmail);
+                    showApp(data.user);
+                } else {
+                    hideAllForms();
+                    loginForm.classList.add('active');
+                }
+            } catch (err) {
+                if (resetError) resetError.textContent = err.message || 'Gagal mereset password';
+            } finally {
+                btn.disabled = false;
+            }
         });
 
         loginForm.addEventListener('submit', async (e) => {
@@ -3221,9 +3416,13 @@
             const section = document.getElementById('biometricCredentialsSection');
             const list = document.getElementById('biometricCredentialsList');
             
+            const registerBtn = document.getElementById('biometricRegisterBtn');
+            
             if (creds.length > 0) {
                 if (label) label.textContent = `Aktif (${creds.length} Perangkat)`;
                 if (toggle) toggle.classList.add('active');
+                // Hide register button when credentials exist
+                if (registerBtn) registerBtn.style.display = 'none';
                 if (list) {
                     list.innerHTML = creds.map(c => `
                         <div class="biometric-cred-item">
@@ -3242,6 +3441,8 @@
             } else {
                 if (label) label.textContent = 'Tidak Aktif';
                 if (toggle) toggle.classList.remove('active');
+                // Show register button when no credentials
+                if (registerBtn) registerBtn.style.display = '';
                 if (list) list.innerHTML = '';
                 if (section) {
                     section.style.maxHeight = '0px';
