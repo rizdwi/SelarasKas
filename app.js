@@ -2982,10 +2982,7 @@
         
         for (let task of queue) {
             try {
-                await fetch(`${API}/${task.endpoint}`, {
-                    headers: { 'Content-Type': 'application/json' },
-                    ...task.options,
-                });
+                await api(task.endpoint, task.options);
             } catch (err) {
                 console.error('Failed to sync task', task, err);
             }
