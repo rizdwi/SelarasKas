@@ -81,6 +81,20 @@
         return 'Rp ' + abs.toLocaleString('id-ID');
     }
 
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"']/g, function(m) {
+            switch (m) {
+                case '&': return '&amp;';
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '"': return '&quot;';
+                case "'": return '&#039;';
+                default: return m;
+            }
+        });
+    }
+
     // Safely resolve a Lucide icon name, falling back to 'box' for missing/emoji values
     function safeIcon(name) {
         if (!name || name.length < 3) return 'box';
@@ -936,8 +950,8 @@
                     <div class="transaction-content">
                         <div class="transaction-icon" style="background:${bg}; display:flex; align-items:center; justify-content:center;">${renderEmojiOrIcon(iconName, '20px', iconColor)}</div>
                         <div class="transaction-details">
-                            <span class="transaction-name">${tx.description || tx.category_name}</span>
-                            <span class="transaction-category">${catName}</span>
+                            <span class="transaction-name">${escapeHTML(tx.description || tx.category_name)}</span>
+                            <span class="transaction-category">${escapeHTML(catName)}</span>
                         </div>
                         <div class="transaction-amount-col">
                             <span class="transaction-amount ${isIncome ? 'income' : 'expense'}">
@@ -1090,6 +1104,8 @@
         el.innerHTML = goals.map(g => {
             const pct = g.target_amount > 0 ? Math.min(100, Math.round((g.current_amount / g.target_amount) * 100)) : 0;
             const deadlineStr = g.deadline ? new Date(g.deadline).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) : '';
+            const safeTitle = escapeHTML(g.title);
+            const escapedOnclickTitle = escapeHTML(g.title.replace(/'/g, "\\'"));
             return `
                 <div class="savings-goal-card">
                     <div class="savings-goal-top">
@@ -1097,11 +1113,11 @@
                             ${renderEmojiOrIcon(g.emoji, '24px', g.color)}
                         </div>
                         <div class="savings-goal-info">
-                            <span class="savings-goal-title">${g.title}</span>
+                            <span class="savings-goal-title">${safeTitle}</span>
                             <span class="savings-goal-amounts">${formatRp(g.current_amount, true)} / ${formatRp(g.target_amount, true)}</span>
                         </div>
                         <div class="savings-goal-actions">
-                            <button class="savings-action-add" onclick="event.stopPropagation(); window.Selaraskas.showAddToSaving(${g.id}, '${g.title}')">
+                            <button class="savings-action-add" onclick="event.stopPropagation(); window.Selaraskas.showAddToSaving(${g.id}, '${escapedOnclickTitle}')">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                             </button>
                             <button class="savings-action-delete" onclick="event.stopPropagation(); window.Selaraskas.deleteSaving(${g.id})">
@@ -1366,7 +1382,7 @@
 
     function showAddToSaving(id, title) {
         const formHTML = `
-            <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">Menambah ke: <strong>${title}</strong></p>
+            <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">Menambah ke: <strong>${escapeHTML(title)}</strong></p>
             <div class="form-group">
                 <label>Jumlah Tambah (Rp)</label>
                 <div class="input-with-icon">

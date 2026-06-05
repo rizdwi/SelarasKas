@@ -114,7 +114,19 @@ if (DB_HOST !== 'localhost' && DB_HOST !== '127.0.0.1') {
     );
 }
 
-session_start();
+// Secure session cookie settings before starting session
+if (session_status() === PHP_SESSION_NONE) {
+    $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    session_set_cookie_params([
+        'lifetime' => 0, // Session cookie (expires when browser closes)
+        'path' => '/',
+        'domain' => '',
+        'secure' => $isSecure,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+    session_start();
+}
 
 function requireAuth() {
     if (!isset($_SESSION['user_id'])) {
