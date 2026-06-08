@@ -1768,3 +1768,356 @@ input, select, textarea { font-family: inherit; }
     margin-top: 6px;
 }
 
+/* ===== 2026 UI POLISH: TACTILE CONTROLS ===== */
+:root, [data-theme="dark"] {
+    --control-surface: rgba(255, 255, 255, 0.075);
+    --control-surface-hover: rgba(255, 255, 255, 0.12);
+    --control-border: rgba(255, 255, 255, 0.12);
+    --control-border-strong: rgba(255, 255, 255, 0.2);
+    --control-shadow: 0 14px 32px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --control-shadow-soft: 0 8px 22px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    --focus-ring: 0 0 0 3px rgba(255, 107, 107, 0.22);
+}
+
+[data-theme="light"] {
+    --control-surface: rgba(255, 255, 255, 0.82);
+    --control-surface-hover: rgba(255, 255, 255, 0.98);
+    --control-border: rgba(15, 23, 42, 0.09);
+    --control-border-strong: rgba(15, 23, 42, 0.16);
+    --control-shadow: 0 14px 30px rgba(15, 23, 42, 0.11), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    --control-shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    --focus-ring: 0 0 0 3px rgba(255, 107, 107, 0.2);
+}
+
+button,
+.day-night-toggle,
+.biometric-toggle,
+.remember-me-label input[type="checkbox"] {
+    touch-action: manipulation;
+}
+
+.auth-screen {
+    justify-content: flex-start;
+    overflow-y: auto;
+}
+
+.auth-container {
+    margin: auto auto;
+    padding: 12px 0;
+}
+
+button:focus-visible,
+.day-night-toggle:focus-visible,
+.biometric-toggle:focus-visible,
+.remember-me-label input[type="checkbox"]:focus-visible,
+.form-group input:focus-visible,
+.form-group select:focus-visible,
+.form-group textarea:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring), var(--control-shadow-soft);
+}
+
+.auth-submit-btn,
+.modal-submit-btn,
+.biometric-register-btn,
+.add-fab-btn {
+    position: relative;
+    isolation: isolate;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: linear-gradient(135deg, #ff5f73 0%, #ff8a55 54%, #ffd166 100%);
+    box-shadow: 0 14px 30px rgba(255, 107, 107, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+    transform: translateY(0);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.auth-submit-btn::after,
+.modal-submit-btn::after,
+.biometric-register-btn::after,
+.add-fab-btn::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0));
+    pointer-events: none;
+    z-index: -1;
+}
+
+.auth-submit-btn:hover,
+.modal-submit-btn:hover,
+.add-fab-btn:hover {
+    filter: saturate(1.08) brightness(1.04);
+    transform: translateY(-2px);
+    box-shadow: 0 18px 38px rgba(255, 107, 107, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.auth-submit-btn:active,
+.modal-submit-btn:active,
+.biometric-register-btn:active,
+.add-fab-btn:active {
+    transform: translateY(0) scale(0.98);
+    filter: saturate(0.98);
+}
+
+.modal-submit-btn.success-btn,
+.biometric-register-btn {
+    background: linear-gradient(135deg, #10b981 0%, #2dd4bf 58%, #86efac 100%);
+    box-shadow: 0 14px 30px rgba(16, 185, 129, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.social-btn,
+.otp-back-btn,
+.otp-resend-btn,
+.icon-btn,
+.month-nav-btn,
+.modal-close,
+.logout-btn,
+.biometric-cred-delete,
+.category-parent,
+.icon-option {
+    border: 1px solid var(--control-border);
+    background: var(--control-surface);
+    box-shadow: var(--control-shadow-soft);
+    backdrop-filter: blur(18px) saturate(1.18);
+    -webkit-backdrop-filter: blur(18px) saturate(1.18);
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+}
+
+.social-btn:hover,
+.otp-back-btn:hover,
+.otp-resend-btn:hover:not(:disabled),
+.icon-btn:hover,
+.month-nav-btn:hover,
+.modal-close:hover,
+.category-parent:hover,
+.icon-option:hover {
+    background: var(--control-surface-hover);
+    border-color: var(--control-border-strong);
+    transform: translateY(-1px);
+    box-shadow: var(--control-shadow);
+}
+
+.social-btn:active,
+.otp-back-btn:active,
+.otp-resend-btn:active,
+.icon-btn:active,
+.month-nav-btn:active,
+.modal-close:active,
+.category-parent:active,
+.icon-option:active {
+    transform: translateY(0) scale(0.97);
+}
+
+.password-toggle-btn {
+    right: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    color: var(--text-secondary);
+    background: transparent;
+    transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.password-toggle-btn:hover {
+    background: var(--control-surface);
+    color: var(--text-primary);
+    transform: scale(1.04);
+}
+
+.remember-me-label input[type="checkbox"],
+.ocr-item-row .ocr-item-check {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid var(--control-border-strong);
+    border-radius: 6px;
+    background: var(--control-surface);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.remember-me-label input[type="checkbox"]::after,
+.ocr-item-row .ocr-item-check::after {
+    content: '';
+    width: 9px;
+    height: 5px;
+    border-left: 2px solid white;
+    border-bottom: 2px solid white;
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.65) translateY(-1px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.remember-me-label input[type="checkbox"]:checked,
+.ocr-item-row .ocr-item-check:checked {
+    background: linear-gradient(135deg, #ff5f73, #ff8a55);
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+.remember-me-label input[type="checkbox"]:checked::after,
+.ocr-item-row .ocr-item-check:checked::after {
+    opacity: 1;
+    transform: rotate(-45deg) scale(1) translateY(-1px);
+}
+
+.remember-me-label input[type="checkbox"]:active,
+.ocr-item-row .ocr-item-check:active {
+    transform: scale(0.92);
+}
+
+.day-night-toggle {
+    width: 68px;
+    height: 34px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #101828 0%, #27304f 100%);
+    border: 1px solid var(--control-border);
+    box-shadow: var(--control-shadow-soft);
+    backdrop-filter: blur(20px) saturate(1.2);
+    -webkit-backdrop-filter: blur(20px) saturate(1.2);
+}
+
+.day-night-toggle:hover {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: var(--control-shadow);
+}
+
+.day-night-toggle:active {
+    transform: scale(0.97);
+}
+
+[data-theme="light"] .day-night-toggle {
+    background: linear-gradient(135deg, #f8fafc 0%, #dbeafe 52%, #bae6fd 100%);
+    border-color: rgba(14, 165, 233, 0.22);
+    box-shadow: 0 12px 26px rgba(14, 165, 233, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.day-night-toggle .toggle-knob {
+    top: 3px;
+    left: 35px;
+    width: 28px;
+    height: 28px;
+    background: radial-gradient(circle at 35% 30%, #ffffff 0 12%, #dbe4f0 45%, #a9b4c6 100%);
+    box-shadow: 0 7px 16px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+[data-theme="light"] .day-night-toggle .toggle-knob {
+    left: 3px;
+    background: radial-gradient(circle at 38% 32%, #fff7ad 0 20%, #fbbf24 54%, #f97316 100%);
+    box-shadow: 0 7px 18px rgba(245, 158, 11, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.star,
+.shooting-star,
+.cloud,
+.sun-rays {
+    animation-duration: 8s;
+}
+
+.shooting-star {
+    opacity: 0.45;
+}
+
+.biometric-toggle {
+    width: 58px;
+    height: 32px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(100,116,139,0.24), rgba(15,23,42,0.54));
+    border: 1px solid var(--control-border);
+    box-shadow: var(--control-shadow-soft), inset 0 0 0 1px rgba(255,255,255,0.02);
+    overflow: hidden;
+}
+
+.biometric-toggle::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: inherit;
+    background: linear-gradient(90deg, transparent 0 42%, rgba(255,255,255,0.08) 100%);
+    opacity: 0.6;
+}
+
+.biometric-toggle:hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: var(--control-shadow);
+}
+
+.biometric-toggle.active {
+    background: linear-gradient(135deg, #059669 0%, #14b8a6 58%, #67e8f9 100%);
+    border-color: rgba(45, 212, 191, 0.42);
+    box-shadow: 0 12px 28px rgba(20, 184, 166, 0.24), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+
+.biometric-toggle .toggle-knob {
+    top: 3px;
+    left: 3px;
+    width: 26px;
+    height: 26px;
+    background: linear-gradient(145deg, #f8fafc, #cbd5e1);
+    box-shadow: 0 7px 16px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.biometric-toggle.active .toggle-knob {
+    left: 29px;
+    background: #ffffff;
+    box-shadow: 0 7px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+.bottom-nav {
+    padding-top: 8px;
+    border-top: 1px solid var(--control-border);
+    box-shadow: 0 -16px 34px rgba(0, 0, 0, 0.18);
+}
+
+.nav-item {
+    min-width: 56px;
+    min-height: 48px;
+    border-radius: 14px;
+    transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.nav-item:hover {
+    background: var(--control-surface);
+    color: var(--text-secondary);
+}
+
+.nav-item.active {
+    color: #fff;
+    background: linear-gradient(135deg, rgba(255, 95, 115, 0.95), rgba(255, 138, 85, 0.95));
+    box-shadow: 0 10px 24px rgba(255, 107, 107, 0.22), inset 0 1px 0 rgba(255,255,255,0.22);
+}
+
+.nav-item.active::before {
+    display: none;
+}
+
+.balance-action-btn {
+    border-radius: 14px;
+    transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.balance-action-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.balance-action-btn:active {
+    transform: scale(0.98);
+}
+
+.action-icon {
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 18px rgba(0,0,0,0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
