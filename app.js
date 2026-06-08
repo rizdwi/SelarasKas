@@ -519,11 +519,11 @@
             document.getElementById('otpEmailDisplay').textContent = email;
             document.getElementById('otpError').textContent = '';
             // Clear OTP inputs
-            document.querySelectorAll('.otp-digit').forEach(inp => {
+            document.querySelectorAll('#otpInputs .otp-digit').forEach(inp => {
                 inp.value = '';
                 inp.classList.remove('filled', 'error');
             });
-            document.querySelector('.otp-digit[data-index="0"]').focus();
+            document.querySelector('#otpInputs .otp-digit[data-index="0"]').focus();
             startResendCountdown(60);
         }
 
@@ -546,7 +546,7 @@
         }
 
         // OTP input logic
-        const otpInputs = document.querySelectorAll('.otp-digit');
+        const otpInputs = document.querySelectorAll('#otpInputs .otp-digit');
         otpInputs.forEach((input, idx) => {
             input.addEventListener('input', (e) => {
                 const val = e.target.value.replace(/[^0-9]/g, '');
