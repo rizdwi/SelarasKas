@@ -562,6 +562,10 @@ input, select, textarea { font-family: inherit; }
     transform: translateY(0) scale(0.98);
 }
 
+.biometric-credentials-section.has-credentials .biometric-register-btn {
+    display: none !important;
+}
+
 /* Biometric Toggle Switch */
 .biometric-toggle {
     position: relative;

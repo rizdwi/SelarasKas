@@ -3421,6 +3421,7 @@
             if (creds.length > 0) {
                 if (label) label.textContent = `Aktif (${creds.length} Perangkat)`;
                 if (toggle) toggle.classList.add('active');
+                if (section) section.classList.add('has-credentials');
                 // Hide register button when credentials exist
                 if (registerBtn) registerBtn.style.display = 'none';
                 if (list) {
@@ -3441,6 +3442,7 @@
             } else {
                 if (label) label.textContent = 'Tidak Aktif';
                 if (toggle) toggle.classList.remove('active');
+                if (section) section.classList.remove('has-credentials');
                 // Show register button when no credentials
                 if (registerBtn) registerBtn.style.display = '';
                 if (list) list.innerHTML = '';
