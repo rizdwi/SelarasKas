@@ -767,7 +767,7 @@ function handleWebAuthnRegisterOptions() {
         'challenge' => $challenge,
         'rp' => [
             'name' => 'SelarasKas',
-            'id' => $_SERVER['HTTP_HOST'] ?? 'localhost'
+            'id' => explode(':', $_SERVER['HTTP_HOST'] ?? 'localhost')[0]
         ],
         'user' => [
             'id' => base64_encode((string)$user['id']),
@@ -859,7 +859,7 @@ function handleWebAuthnLoginOptions() {
     
     jsonResponse([
         'challenge' => $challenge,
-        'rpId' => $_SERVER['HTTP_HOST'] ?? 'localhost',
+        'rpId' => explode(':', $_SERVER['HTTP_HOST'] ?? 'localhost')[0],
         'timeout' => 60000,
         'userVerification' => 'required',
         'allowCredentials' => $allowCredentials

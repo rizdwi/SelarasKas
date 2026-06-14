@@ -100,7 +100,7 @@ Jika tidak ada item terdeteksi atau bukan struk:
 PROMPT;
 
 // Build Gemini API request
-$model = 'gemini-flash-latest';
+$model = 'gemini-3.1-flash-lite';
 $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . $model . ':generateContent?key=' . urlencode($apiKey);
 
 $requestBody = [
@@ -138,7 +138,7 @@ curl_setopt_array($ch, [
         'Content-Type: application/json',
     ],
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT => 45,
+    CURLOPT_TIMEOUT => 60,
     CURLOPT_SSL_VERIFYPEER => true,
 ]);
 

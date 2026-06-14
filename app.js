@@ -37,6 +37,7 @@
             const res = await fetch(`${API}/${endpoint}`, {
                 ...options,
                 headers,
+                credentials: 'include',
             });
             const data = await res.json();
             
@@ -1092,15 +1093,18 @@
         }
 
         if (catEl) {
-            catEl.innerHTML = chartItems.slice(0, 5).map(item => `
+            catEl.innerHTML = chartItems.slice(0, 5).map(item => {
+                const catLabel = item.category_name || item.name || 'Lainnya';
+                return `
                 <div class="category-item">
                     <div class="category-dot" style="background:${item.color || '#94a3b8'}"></div>
                     <div class="category-info">
-                        <span class="category-name" style="display:flex;align-items:center;gap:8px;">${renderEmojiOrIcon(item.emoji, '16px')} ${item.category_name}</span>
+                        <span class="category-name" style="display:flex;align-items:center;gap:8px;">${renderEmojiOrIcon(item.emoji, '16px')} ${catLabel}</span>
                         <span class="category-amount">${formatRp(item.total, true)} · ${((parseFloat(item.total) / total) * 100).toFixed(0)}%</span>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         // Draw donut
@@ -1271,6 +1275,7 @@
             const val = parseFloat(item.total) || 0;
             const pct = max > 0 ? (val / max) * 100 : 0;
             const rankClass = i < 3 ? `rank-${i + 1}` : '';
+            const catLabel = item.category_name || item.name || 'Lainnya';
             return `
                 <div class="top-spending-item">
                     <div class="top-spending-rank ${rankClass}" ${i >= 3 ? 'style="background:var(--bg-card);color:var(--text-muted);"' : ''}>
@@ -1278,7 +1283,7 @@
                     </div>
                     <div class="top-spending-icon" style="background:${item.color}18; display:flex; align-items:center; justify-content:center;">${renderEmojiOrIcon(item.emoji, '20px', item.color)}</div>
                     <div class="top-spending-info">
-                        <span class="top-spending-name">${item.category_name}</span>
+                        <span class="top-spending-name">${catLabel}</span>
                         <div class="top-spending-bar">
                             <div class="top-spending-bar-fill" style="width:${pct}%;background:${item.color}"></div>
                         </div>
@@ -1661,7 +1666,139 @@
         });
     }
 
-    // ===== TIME =====
+    // ===== EXPORT ANALYTICS AS PNG =====
+    async function exportAnalyticsAsPng() {
+        const btn = document.getElementById('exportReportBtn');
+        if (!btn) return;
+
+        if (typeof html2canvas === 'undefined') {
+            showToast('Library export belum termuat. Coba refresh halaman.');
+            return;
+        }
+
+        btn.classList.add('loading');
+        btn.querySelector('span').textContent = 'Membuat PNG...';
+
+        try {
+            const page = document.getElementById('page-analytics');
+
+            // Temporarily hide the header (export button) and bottom spacer for cleaner output
+            const header = page.querySelector('.page-header');
+            const spacer = page.querySelector('.bottom-spacer');
+            const ptrCont = page.querySelector('.ptr-container');
+
+            // Hide UI-only elements from snapshot
+            if (btn) btn.style.visibility = 'hidden';
+            if (ptrCont) ptrCont.style.display = 'none';
+
+            // Force fixed-pixel page dimensions for canvas capture
+            const origOverflow = page.style.overflow;
+            const origMaxH = page.style.maxHeight;
+            page.style.overflow = 'visible';
+            page.style.maxHeight = 'none';
+
+            const monthLabel = document.getElementById('monthLabel')?.textContent || currentMonth;
+            const userName = currentUser?.name || 'SelarasKas';
+
+            // Capture the analytics page
+            const canvas = await html2canvas(page, {
+                backgroundColor: getComputedStyle(document.documentElement)
+                    .getPropertyValue('--bg-primary').trim() || '#0a0e1a',
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                logging: false,
+                scrollX: 0,
+                scrollY: 0,
+                width: page.scrollWidth,
+                height: page.scrollHeight,
+            });
+
+            // Restore hidden elements
+            page.style.overflow = origOverflow;
+            page.style.maxHeight = origMaxH;
+            if (btn) btn.style.visibility = '';
+            if (ptrCont) ptrCont.style.display = '';
+
+            // Build final canvas with branded header
+            const PADDING = 40;
+            const HEADER_H = 90;
+            const finalW = canvas.width + PADDING * 2;
+            const finalH = canvas.height + HEADER_H + PADDING * 2;
+
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = finalW;
+            finalCanvas.height = finalH;
+            const ctx = finalCanvas.getContext('2d');
+
+            // Background gradient
+            const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+            const bgColor = isDark ? '#0a0e1a' : '#f8fafc';
+            const accentColor = '#818cf8';
+
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, finalW, finalH);
+
+            // Branded header bar
+            const headerGrad = ctx.createLinearGradient(0, 0, finalW, 0);
+            headerGrad.addColorStop(0, 'rgba(129,140,248,0.15)');
+            headerGrad.addColorStop(1, 'rgba(99,102,241,0.05)');
+            ctx.fillStyle = headerGrad;
+            ctx.fillRect(0, 0, finalW, HEADER_H);
+
+            // Accent border bottom of header
+            ctx.fillStyle = accentColor;
+            ctx.fillRect(0, HEADER_H - 2, finalW, 2);
+
+            // App name
+            ctx.fillStyle = '#e0e7ff';
+            ctx.font = `bold ${32}px Inter, sans-serif`;
+            ctx.fillText('SelarasKas', PADDING, 44);
+
+            // Subtitle: Laporan Keuangan
+            ctx.fillStyle = accentColor;
+            ctx.font = `500 ${14}px Inter, sans-serif`;
+            ctx.fillText('Laporan Keuangan Bulanan', PADDING, 68);
+
+            // Month label (right-aligned)
+            ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+            ctx.font = `600 ${15}px Inter, sans-serif`;
+            const mlW = ctx.measureText(monthLabel).width;
+            ctx.fillText(monthLabel, finalW - PADDING - mlW, 44);
+
+            // Date generated
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            ctx.fillStyle = isDark ? '#64748b' : '#94a3b8';
+            ctx.font = `400 ${12}px Inter, sans-serif`;
+            const dsW = ctx.measureText(dateStr).width;
+            ctx.fillText(dateStr, finalW - PADDING - dsW, 68);
+
+            // Paste the captured analytics content
+            ctx.drawImage(canvas, PADDING, HEADER_H + PADDING / 2);
+
+            // Download
+            const link = document.createElement('a');
+            const safeMonth = monthLabel.replace(/\s+/g, '_');
+            link.download = `SelarasKas_Laporan_${safeMonth}.png`;
+            link.href = finalCanvas.toDataURL('image/png');
+            link.click();
+
+            showToast(`✅ Laporan ${monthLabel} berhasil diexport!`);
+        } catch (err) {
+            console.error('Export error:', err);
+            showToast('Gagal export laporan. Coba lagi.');
+            // Restore visibility if error
+            const btnEl = document.getElementById('exportReportBtn');
+            if (btnEl) btnEl.style.visibility = '';
+            const ptrEl = document.getElementById('page-analytics')?.querySelector('.ptr-container');
+            if (ptrEl) ptrEl.style.display = '';
+        } finally {
+            btn.classList.remove('loading');
+            btn.querySelector('span').textContent = 'Export PNG';
+        }
+    }
+
     function updateTime() {
         const now = new Date();
         const el = document.getElementById('statusTime');
@@ -2081,6 +2218,9 @@
         
         const scanReceiptBtn = document.getElementById('scanReceiptBtn');
         if (scanReceiptBtn) scanReceiptBtn.addEventListener('click', showScanReceiptForm);
+
+        const exportBtn = document.getElementById('exportReportBtn');
+        if (exportBtn) exportBtn.addEventListener('click', exportAnalyticsAsPng);
         
         const addBudgetBtn = document.getElementById('addBudgetBtn');
         if (addBudgetBtn) addBudgetBtn.addEventListener('click', showBudgetForm);

@@ -342,7 +342,7 @@ function getDashboardData($userId) {
 
     // 2. Get Chart Data
     $stmt = $db->prepare("
-        SELECT c.name, COALESCE(SUM(t.amount), 0) as total, c.color, c.emoji
+        SELECT c.name as category_name, COALESCE(SUM(t.amount), 0) as total, c.color, c.emoji
         FROM transactions t
         JOIN categories c ON t.category_id = c.id
         WHERE t.user_id = ? 

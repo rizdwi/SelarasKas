@@ -980,6 +980,42 @@ input, select, textarea { font-family: inherit; }
 }
 .add-fab-btn:active { transform:scale(0.9); }
 
+/* Export Report Button */
+.export-report-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(129,140,248,0.15), rgba(99,102,241,0.25));
+    border: 1px solid rgba(129,140,248,0.4);
+    color: #a5b4fc;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+.export-report-btn:hover {
+    background: linear-gradient(135deg, rgba(129,140,248,0.3), rgba(99,102,241,0.4));
+    border-color: rgba(129,140,248,0.7);
+    color: #c7d2fe;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+}
+.export-report-btn:active { transform: scale(0.96); }
+.export-report-btn.loading {
+    opacity: 0.7;
+    pointer-events: none;
+    animation: exportPulse 1s ease-in-out infinite;
+}
+@keyframes exportPulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 0.4; }
+}
+
+
+
 /* Month Navigator */
 .month-nav { display:flex; align-items:center; gap:12px; margin-top:8px; }
 .month-nav-btn {
