@@ -315,6 +315,7 @@ function handleVerifyEmail() {
             'avatar_initial' => $user['avatar_initial'],
             'avatar_url' => $user['avatar_url'],
             'theme' => $user['theme'],
+            'subscription_tier' => $user['subscription_tier'] ?? 'free',
         ]
     ]);
 }
@@ -422,6 +423,7 @@ function handleLogin() {
             'avatar_initial' => $user['avatar_initial'],
             'avatar_url' => $user['avatar_url'],
             'theme' => $user['theme'],
+            'subscription_tier' => $user['subscription_tier'] ?? 'free',
             'has_webauthn' => $hasWebAuthn,
         ]
     ]);
@@ -453,7 +455,7 @@ function handleCheck() {
     }
 
     $db = getDB();
-    $stmt = $db->prepare("SELECT id, name, email, avatar_initial, avatar_url, theme FROM users WHERE id = ?");
+    $stmt = $db->prepare("SELECT id, name, email, avatar_initial, avatar_url, theme, subscription_tier FROM users WHERE id = ?");
     $stmt->execute([$userId]);
     $user = $stmt->fetch();
 
@@ -526,6 +528,7 @@ function handleGoogleLogin() {
             'avatar_initial' => $initial,
             'avatar_url' => $dbAvatar,
             'theme' => $theme,
+            'subscription_tier' => 'free',
         ]
     ]);
 }
@@ -581,6 +584,7 @@ function handleFacebookLogin() {
             'avatar_initial' => $initial,
             'avatar_url' => $dbAvatar,
             'theme' => $theme,
+            'subscription_tier' => 'free',
         ]
     ]);
 }
@@ -731,6 +735,7 @@ function handleResetPassword() {
             'avatar_initial' => $user['avatar_initial'],
             'avatar_url' => $user['avatar_url'],
             'theme' => $user['theme'],
+            'subscription_tier' => $user['subscription_tier'] ?? 'free',
         ]
     ]);
 }
@@ -890,7 +895,7 @@ function handleWebAuthnLogin() {
     
     // Find the credential
     $stmt = $db->prepare("
-        SELECT wc.*, u.id as uid, u.name, u.email, u.avatar_initial, u.avatar_url, u.theme
+        SELECT wc.*, u.id as uid, u.name, u.email, u.avatar_initial, u.avatar_url, u.theme, u.subscription_tier
         FROM webauthn_credentials wc
         JOIN users u ON wc.user_id = u.id
         WHERE wc.credential_id = ?
@@ -922,6 +927,7 @@ function handleWebAuthnLogin() {
             'avatar_initial' => $cred['avatar_initial'],
             'avatar_url' => $cred['avatar_url'],
             'theme' => $cred['theme'],
+            'subscription_tier' => $cred['subscription_tier'] ?? 'free',
             'has_webauthn' => true,
         ]
     ]);

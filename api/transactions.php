@@ -211,8 +211,10 @@ function createTransaction($userId) {
     ");
     $stmt->execute([$userId, $walletId, $categoryId, $amount, $type, $description, $date]);
 
-    // Award Gamification Points
-    addGamificationPoints($userId, $type === 'income' ? 'add_income' : 'add_budget');
+    // Award Gamification Points (only for income entries)
+    if ($type === 'income') {
+        addGamificationPoints($userId, 'add_income');
+    }
 
     jsonResponse(['success' => true, 'id' => (int)$db->lastInsertId()], 201);
 }

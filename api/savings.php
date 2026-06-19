@@ -26,6 +26,7 @@ switch ($method) {
 }
 
 function getSavings($userId) {
+    global $walletId;
     $db = getDB();
     $stmt = $db->prepare("SELECT * FROM savings_goals WHERE wallet_id = ? ORDER BY created_at DESC");
     $stmt->execute([$walletId]);
@@ -43,6 +44,7 @@ function getSavings($userId) {
 }
 
 function createSaving($userId) {
+    global $walletId;
     $input = getInput();
     $title = trim($input['title'] ?? '');
     $emoji = $input['emoji'] ?? '🎯';
@@ -66,6 +68,7 @@ function createSaving($userId) {
 }
 
 function updateSaving($userId) {
+    global $walletId;
     $input = getInput();
     $id = (int)($input['id'] ?? 0);
 
@@ -103,6 +106,7 @@ function updateSaving($userId) {
 }
 
 function deleteSaving($userId) {
+    global $walletId;
     $id = (int)($_GET['id'] ?? 0);
     if (!$id) jsonResponse(['error' => 'ID required'], 400);
 

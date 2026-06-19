@@ -13,7 +13,7 @@ try {
     
     // 1. Add new columns to users
     try { $pdo->exec("ALTER TABLE `users` ADD COLUMN `role` ENUM('user', 'admin') DEFAULT 'user'"); } catch(Exception $e){}
-    try { $pdo->exec("ALTER TABLE `users` ADD COLUMN `subscription_tier` ENUM('free', 'pro', 'family') DEFAULT 'free'"); } catch(Exception $e){}
+    try { $pdo->exec("ALTER TABLE `users` ADD COLUMN `subscription_tier` ENUM('free', 'premium', 'pro') DEFAULT 'free'"); } catch(Exception $e){}
     try { $pdo->exec("ALTER TABLE `users` ADD COLUMN `health_score` INT DEFAULT 100"); } catch(Exception $e){}
     try { $pdo->exec("ALTER TABLE `users` ADD COLUMN `gamification_points` INT DEFAULT 0"); } catch(Exception $e){}
 
@@ -43,20 +43,28 @@ try {
         `id` INT AUTO_INCREMENT PRIMARY KEY,
         `user_id` INT NOT NULL,
         `badge_id` VARCHAR(50) NOT NULL,
+        `badge_name` VARCHAR(100) DEFAULT NULL,
+        `badge_icon` VARCHAR(10) DEFAULT NULL,
         `earned_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY `unique_badge` (`user_id`, `badge_id`),
         FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
     ) ENGINE=InnoDB");
+    // Migrate: add badge_name/badge_icon columns if missing (for existing installs)
+    try { $pdo->exec("ALTER TABLE `user_badges` ADD COLUMN `badge_name` VARCHAR(100) DEFAULT NULL"); } catch(Exception $e){}
+    try { $pdo->exec("ALTER TABLE `user_badges` ADD COLUMN `badge_icon` VARCHAR(10) DEFAULT NULL"); } catch(Exception $e){}
 
     // 5. Create chat_history table
     $pdo->exec("CREATE TABLE IF NOT EXISTS `chat_history` (
         `id` INT AUTO_INCREMENT PRIMARY KEY,
         `user_id` INT NOT NULL,
+        `wallet_id` INT NULL,
         `sender` ENUM('user', 'ai') NOT NULL,
         `message` TEXT NOT NULL,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
     ) ENGINE=InnoDB");
+    // Migrate: add wallet_id to existing chat_history if missing
+    try { $pdo->exec("ALTER TABLE `chat_history` ADD COLUMN `wallet_id` INT NULL AFTER `user_id`"); } catch(Exception $e){}
 
     // 6. Add wallet_id to existing tables
     $tablesToAlter = ['transactions', 'categories', 'savings_goals', 'budgets'];

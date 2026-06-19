@@ -1050,7 +1050,8 @@
                             });
                             if (res && res.success) {
                                 loadDashboard();
-                                const activePage = document.querySelector('.nav-item.active').dataset.page;
+                                const activeNavItem = document.querySelector('.nav-item.active');
+                                const activePage = activeNavItem ? activeNavItem.dataset.page : 'home';
                                 if (activePage === 'analytics') loadAnalytics();
                                 if (activePage === 'budget') loadBudgets();
                                 if (activePage === 'savings') loadSavings();
