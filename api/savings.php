@@ -58,6 +58,27 @@ function createSaving($userId) {
     }
 
     $db = getDB();
+
+    // Check user's subscription tier
+    $stmtTier = $db->prepare("SELECT subscription_tier FROM users WHERE id = ?");
+    $stmtTier->execute([$userId]);
+    $tier = $stmtTier->fetchColumn() ?: 'free';
+
+    if ($tier === 'free') {
+        $stmtC = $db->prepare("SELECT COUNT(*) FROM savings_goals WHERE wallet_id = ?");
+        $stmtC->execute([$walletId]);
+        $count = $stmtC->fetchColumn();
+        if ($count >= 1) {
+            jsonResponse(['error' => 'Akun Free maksimal memiliki 1 target tabungan. Upgrade untuk menambah lebih banyak.'], 403);
+        }
+    } elseif ($tier === 'pro') {
+        $stmtC = $db->prepare("SELECT COUNT(*) FROM savings_goals WHERE wallet_id = ?");
+        $stmtC->execute([$walletId]);
+        $count = $stmtC->fetchColumn();
+        if ($count >= 3) {
+            jsonResponse(['error' => 'Akun Pro maksimal memiliki 3 target tabungan. Upgrade ke Premium untuk target tanpa batas.'], 403);
+        }
+    }
     $stmt = $db->prepare("
         INSERT INTO savings_goals (user_id, wallet_id, title, emoji, target_amount, current_amount, deadline, color)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)

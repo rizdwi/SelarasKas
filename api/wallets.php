@@ -70,17 +70,21 @@ function handleCreateWallet() {
 
     $db = getDB();
 
-    // Check tier (mock implementation for tier limit)
+    // Check tier
     $stmt = $db->prepare("SELECT subscription_tier FROM users WHERE id = ?");
     $stmt->execute([$userId]);
     $user = $stmt->fetch();
-    if ($user['subscription_tier'] === 'free') {
-        // Allow max 1 shared wallet for free users as a trial
+    $tier = $user['subscription_tier'] ?? 'free';
+    
+    if ($tier === 'free') {
+        jsonResponse(['error' => 'Akun Free tidak diizinkan membuat Dompet Bersama (Multiplayer). Silakan upgrade ke Pro/Premium.'], 403);
+    } elseif ($tier === 'pro') {
+        // Allow max 2 shared wallets for Pro users
         $stmtC = $db->prepare("SELECT COUNT(*) FROM wallets WHERE owner_id = ? AND type = 'shared'");
         $stmtC->execute([$userId]);
         $sharedCount = $stmtC->fetchColumn();
-        if ($sharedCount >= 1) {
-            jsonResponse(['error' => 'Akun Free maksimal memiliki 1 dompet bersama. Silakan upgrade.'], 403);
+        if ($sharedCount >= 2) {
+            jsonResponse(['error' => 'Akun Pro maksimal memiliki 2 dompet bersama. Upgrade ke Premium untuk membuat dompet bersama tanpa batas.'], 403);
         }
     }
 
@@ -146,6 +150,22 @@ function handleInviteMember() {
     $myRole = $stmt->fetchColumn();
     if ($myRole !== 'owner') {
         jsonResponse(['error' => 'Hanya owner yang dapat mengundang anggota'], 403);
+    }
+
+    // Check tier limits for collaboration
+    $stmtTier = $db->prepare("SELECT subscription_tier FROM users WHERE id = ?");
+    $stmtTier->execute([$userId]);
+    $tier = $stmtTier->fetchColumn() ?: 'free';
+
+    if ($tier === 'free') {
+        jsonResponse(['error' => 'Fitur kolaborasi (multiplayer) eksklusif untuk Pro/Premium. Silakan upgrade.'], 403);
+    } elseif ($tier === 'pro') {
+        $stmtC = $db->prepare("SELECT COUNT(*) FROM wallet_members WHERE wallet_id = ?");
+        $stmtC->execute([$walletId]);
+        $memberCount = $stmtC->fetchColumn();
+        if ($memberCount >= 5) {
+            jsonResponse(['error' => 'Paket Pro maksimal memiliki 5 anggota per dompet bersama. Upgrade ke Premium untuk anggota tanpa batas.'], 403);
+        }
     }
 
     // Check if user to invite exists

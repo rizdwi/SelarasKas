@@ -1970,6 +1970,102 @@
         }
     }
 
+    // ===== EXPORT ANALYTICS AS PDF =====
+    async function exportAnalyticsAsPdf() {
+        const btn = document.getElementById('exportReportPdfBtn');
+        if (!btn) return;
+
+        if (currentUser && currentUser.subscription_tier !== 'premium') {
+            if (typeof window.showUpgradeModal === 'function') {
+                window.showUpgradeModal();
+            } else {
+                showToast('Export Laporan PDF eksklusif untuk Premium. Upgrade sekarang!');
+            }
+            return;
+        }
+
+        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+            showToast('Library export belum termuat. Coba refresh halaman.');
+            return;
+        }
+
+        btn.classList.add('loading');
+        const span = btn.querySelector('span');
+        if (span) span.textContent = 'PDF...';
+
+        try {
+            const page = document.getElementById('page-analytics');
+
+            // Temporarily hide the header and bottom spacer for cleaner output
+            const pngBtn = document.getElementById('exportReportBtn');
+            const ptrCont = page.querySelector('.ptr-container');
+
+            if (btn) btn.style.visibility = 'hidden';
+            if (pngBtn) pngBtn.style.visibility = 'hidden';
+            if (ptrCont) ptrCont.style.display = 'none';
+
+            const origOverflow = page.style.overflow;
+            const origMaxH = page.style.maxHeight;
+            page.style.overflow = 'visible';
+            page.style.maxHeight = 'none';
+
+            const monthLabel = document.getElementById('monthLabel')?.textContent || currentMonth;
+            
+            // Capture page
+            const canvas = await html2canvas(page, {
+                backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim() || '#0a0e1a',
+                scale: 2,
+                useCORS: true,
+                allowTaint: true
+            });
+
+            // Restore visibility
+            if (btn) btn.style.visibility = '';
+            if (pngBtn) pngBtn.style.visibility = '';
+            if (ptrCont) ptrCont.style.display = '';
+            page.style.overflow = origOverflow;
+            page.style.maxHeight = origMaxH;
+
+            // Generate PDF
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = 210; // A4 width in mm
+            const pageHeight = 297; // A4 height in mm
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            let heightLeft = imgHeight;
+            let position = 0;
+            
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+            
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            const safeMonth = monthLabel.replace(/\s+/g, '_');
+            pdf.save(`SelarasKas_Laporan_${safeMonth}.pdf`);
+            showToast(`✅ Laporan ${monthLabel} berhasil diexport ke PDF!`);
+        } catch (err) {
+            console.error('Export PDF error:', err);
+            showToast('Gagal export PDF. Coba lagi.');
+            
+            const pngBtn = document.getElementById('exportReportBtn');
+            if (btn) btn.style.visibility = '';
+            if (pngBtn) pngBtn.style.visibility = '';
+            const ptrEl = document.getElementById('page-analytics')?.querySelector('.ptr-container');
+            if (ptrEl) ptrEl.style.display = '';
+        } finally {
+            btn.classList.remove('loading');
+            if (span) span.textContent = 'PDF';
+        }
+    }
+
     function updateTime() {
         const now = new Date();
         const el = document.getElementById('statusTime');
@@ -2393,6 +2489,9 @@
 
         const exportBtn = document.getElementById('exportReportBtn');
         if (exportBtn) exportBtn.addEventListener('click', exportAnalyticsAsPng);
+        
+        const exportPdfBtn = document.getElementById('exportReportPdfBtn');
+        if (exportPdfBtn) exportPdfBtn.addEventListener('click', exportAnalyticsAsPdf);
         
         const addBudgetBtn = document.getElementById('addBudgetBtn');
         if (addBudgetBtn) addBudgetBtn.addEventListener('click', showBudgetForm);
@@ -2872,6 +2971,15 @@
 
     // ===== CAMERA OCR SCANNER FUNCTIONS =====
     async function showScanReceiptForm() {
+        if (currentUser && currentUser.subscription_tier === 'free') {
+            if (typeof window.showUpgradeModal === 'function') {
+                window.showUpgradeModal();
+            } else {
+                showToast('Fitur Scan Struk AI eksklusif untuk Pro/Premium. Silakan upgrade!');
+            }
+            return;
+        }
+
         const categories = await loadCategories('expense');
         
         const html = `
@@ -3780,8 +3888,8 @@
     let selectedUpgradePlan = null;
 
     const PRICING = {
-        premium: { monthly: 29000, yearly: 209000 },
-        pro:     { monthly: 59000, yearly: 425000 },
+        pro:     { monthly: 75000, yearly: 540000 },
+        premium: { monthly: 135000, yearly: 972000 },
     };
 
     function formatRupiah(n) {
@@ -3880,7 +3988,6 @@
     async function confirmPayment() {
         if (!selectedUpgradePlan) return;
         const billing = isYearlyBilling ? 'yearly' : 'monthly';
-        const payMethod = document.querySelector('input[name="payMethod"]:checked')?.value || 'transfer';
         
         const btn = document.getElementById('confirmPayBtn');
         btn.textContent = 'Memproses...';
@@ -3891,57 +3998,58 @@
                 method: 'POST',
                 body: JSON.stringify({
                     tier: selectedUpgradePlan,
-                    billing,
-                    payment_method: payMethod,
+                    billing
                 })
             });
 
-            if (data.success) {
-                // Update currentUser tier immediately
-                if (currentUser) currentUser.subscription_tier = data.tier;
-
-                closeUpgradeModal();
-                updateSubscriptionStatusCard();
-                showPaymentInstructionsToast(data.payment_instructions, data.amount, selectedUpgradePlan, billing);
+            if (data.success && data.snap_token) {
+                // Open Midtrans Snap Popup
+                if (typeof window.snap !== 'undefined') {
+                    window.snap.pay(data.snap_token, {
+                        onSuccess: function(result) {
+                            showToast('Pembayaran berhasil! Status akun Anda sedang diperbarui...');
+                            
+                            // Update currentUser tier locally & close modal
+                            if (currentUser) currentUser.subscription_tier = selectedUpgradePlan;
+                            closeUpgradeModal();
+                            updateSubscriptionStatusCard();
+                            
+                            // Sync with database after a short delay
+                            setTimeout(async () => {
+                                try {
+                                    const status = await api('subscription.php?action=status');
+                                    if (status.success && currentUser) {
+                                        currentUser.subscription_tier = status.tier;
+                                        updateSubscriptionStatusCard();
+                                    }
+                                } catch (e) {}
+                            }, 2500);
+                        },
+                        onPending: function(result) {
+                            showToast('Menunggu pembayaran... Silakan selesaikan pembayaran Anda.');
+                            closeUpgradeModal();
+                        },
+                        onError: function(result) {
+                            showToast('Pembayaran gagal. Silakan coba kembali.');
+                            btn.textContent = 'Bayar Sekarang (via Midtrans)';
+                            btn.classList.remove('loading');
+                        },
+                        onClose: function() {
+                            showToast('Proses pembayaran dibatalkan.');
+                            btn.textContent = 'Bayar Sekarang (via Midtrans)';
+                            btn.classList.remove('loading');
+                        }
+                    });
+                } else {
+                    showToast('Sistem pembayaran Midtrans gagal dimuat. Coba refresh halaman.');
+                    btn.textContent = 'Bayar Sekarang (via Midtrans)';
+                    btn.classList.remove('loading');
+                }
             }
         } catch (err) {
             showToast(err.message || 'Gagal memproses upgrade');
-        } finally {
-            btn.textContent = 'Konfirmasi Pembayaran';
+            btn.textContent = 'Bayar Sekarang (via Midtrans)';
             btn.classList.remove('loading');
-        }
-    }
-
-    function showPaymentInstructionsToast(instructions, amount, tier, billing) {
-        // Build a nice confirmation bottom sheet
-        const tierLabel   = tier === 'premium' ? 'Premium 💎' : 'Pro 🚀';
-        const billingLabel = billing === 'yearly' ? 'Tahunan' : 'Bulanan';
-        const amountFmt   = formatRupiah(amount);
-        const stepsHtml   = instructions.steps.map((s, i) => `<div style="display:flex;gap:10px;margin-bottom:10px;"><div style="min-width:22px;height:22px;border-radius:50%;background:rgba(129,140,248,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#818cf8;flex-shrink:0;">${i+1}</div><div style="font-size:13px;color:var(--text-secondary);line-height:1.5;">${s}</div></div>`).join('');
-
-        const modalBody  = document.getElementById('modalBody');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalOverlay = document.getElementById('modalOverlay');
-
-        if (modalBody && modalTitle && modalOverlay) {
-            modalTitle.textContent = `Instruksi Pembayaran — ${instructions.title}`;
-            modalBody.innerHTML = `
-                <div style="padding:4px 0;">
-                    <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:14px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:24px;">🎉</span>
-                        <div>
-                            <div style="font-size:14px;font-weight:700;color:#10b981;margin-bottom:2px;">Upgrade Berhasil Diproses!</div>
-                            <div style="font-size:12px;color:var(--text-muted);">Paket ${tierLabel} ${billingLabel} — ${amountFmt}</div>
-                        </div>
-                    </div>
-                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.5;">Selesaikan pembayaran dengan mengikuti langkah berikut:</p>
-                    ${stepsHtml}
-                    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;margin-top:8px;font-size:12px;color:#f59e0b;">
-                        ⚡ Setelah konfirmasi pembayaran diterima, akun Anda akan langsung diaktifkan
-                    </div>
-                </div>
-            `;
-            modalOverlay.classList.add('active');
         }
     }
 

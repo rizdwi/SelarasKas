@@ -21,7 +21,37 @@ if ($method !== 'POST') {
     jsonResponse(['error' => 'Method not allowed'], 405);
 }
 
-requireAuth();
+$userId = requireAuth();
+
+$db = getDB();
+
+// Auto-migrate: create ocr_scans_log table if it doesn't exist
+try {
+    $db->exec("CREATE TABLE IF NOT EXISTS `ocr_scans_log` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `user_id` INT NOT NULL,
+        `scanned_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB");
+} catch (Exception $e) {}
+
+// Check user subscription tier
+$stmtTier = $db->prepare("SELECT subscription_tier FROM users WHERE id = ?");
+$stmtTier->execute([$userId]);
+$tier = $stmtTier->fetchColumn() ?: 'free';
+
+if ($tier === 'free') {
+    jsonResponse(['error' => 'Fitur scan struk AI eksklusif untuk Pro/Premium. Silakan upgrade!'], 403);
+} elseif ($tier === 'pro') {
+    // Count monthly scans
+    $currentMonth = date('Y-m');
+    $stmtC = $db->prepare("SELECT COUNT(*) FROM ocr_scans_log WHERE user_id = ? AND DATE_FORMAT(scanned_at, '%Y-%m') = ?");
+    $stmtC->execute([$userId, $currentMonth]);
+    $scanCount = $stmtC->fetchColumn();
+    if ($scanCount >= 10) {
+        jsonResponse(['error' => 'Kuota scan struk Akun Pro Anda (10x per bulan) telah habis. Upgrade ke Premium untuk scan tanpa batas.'], 403);
+    }
+}
 
 // Read raw input
 $rawInput = file_get_contents('php://input');
@@ -239,6 +269,12 @@ if ($total <= 0 && count($items) > 0) {
         return $sum + $item['price'];
     }, 0);
 }
+
+// Log successful scan in ocr_scans_log
+try {
+    $stmtLog = $db->prepare("INSERT INTO ocr_scans_log (user_id) VALUES (?)");
+    $stmtLog->execute([$userId]);
+} catch (Exception $e) {}
 
 jsonResponse([
     'success' => true,

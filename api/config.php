@@ -34,6 +34,11 @@ define('RESEND_API_KEY', getenv('RESEND_API_KEY') ?: ($_ENV['RESEND_API_KEY'] ??
 $_gemini_key = defined('GEMINI_API_KEY_LOCAL') ? GEMINI_API_KEY_LOCAL : (getenv('GEMINI_API_KEY') ?: ($_ENV['GEMINI_API_KEY'] ?? ''));
 define('GEMINI_API_KEY', $_gemini_key);
 
+// Midtrans Payment Gateway Configuration
+define('MIDTRANS_SERVER_KEY', getenv('MIDTRANS_SERVER_KEY') ?: ($_ENV['MIDTRANS_SERVER_KEY'] ?? 'SB-Mid-server-yUtg-Z8a3mCj4wS8QyQ9Fk9a')); // Default sandbox key
+define('MIDTRANS_CLIENT_KEY', getenv('MIDTRANS_CLIENT_KEY') ?: ($_ENV['MIDTRANS_CLIENT_KEY'] ?? 'SB-Mid-client-8K218N-pA4lEovwI')); // Default sandbox client key
+define('MIDTRANS_IS_PRODUCTION', filter_var(getenv('MIDTRANS_IS_PRODUCTION') ?: ($_ENV['MIDTRANS_IS_PRODUCTION'] ?? false), FILTER_VALIDATE_BOOLEAN));
+
 function getDB() {
     static $pdo = null;
     if ($pdo === null) {

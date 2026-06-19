@@ -51,6 +51,29 @@ try {
             throw new Exception("Kategori, jumlah, dan bulan wajib diisi");
         }
 
+        // Get user's subscription tier
+        $stmtTier = $pdo->prepare("SELECT subscription_tier FROM users WHERE id = ?");
+        $stmtTier->execute([$userId]);
+        $tier = $stmtTier->fetchColumn() ?: 'free';
+
+        if ($tier === 'free') {
+            // Count current budgets for this wallet and month (excluding target category if update)
+            $stmtC = $pdo->prepare("SELECT COUNT(*) FROM budgets WHERE wallet_id = ? AND month = ? AND category_id != ?");
+            $stmtC->execute([$walletId, $input['month'], $input['category_id']]);
+            $count = $stmtC->fetchColumn();
+            if ($count >= 1) {
+                jsonResponse(['error' => 'Akun Free maksimal memiliki 1 anggaran bulanan. Upgrade untuk menambah lebih banyak.'], 403);
+            }
+        } elseif ($tier === 'pro') {
+            // Count current budgets for this wallet and month (excluding target category if update)
+            $stmtC = $pdo->prepare("SELECT COUNT(*) FROM budgets WHERE wallet_id = ? AND month = ? AND category_id != ?");
+            $stmtC->execute([$walletId, $input['month'], $input['category_id']]);
+            $count = $stmtC->fetchColumn();
+            if ($count >= 3) {
+                jsonResponse(['error' => 'Akun Pro maksimal memiliki 3 anggaran bulanan. Upgrade ke Premium untuk anggaran tanpa batas.'], 403);
+            }
+        }
+
         $stmt = $pdo->prepare("
             INSERT INTO budgets (user_id, wallet_id, category_id, amount, month)
             VALUES (:uid, :walletId, :cid, :amt, :month)

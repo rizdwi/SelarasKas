@@ -31,6 +31,23 @@ function handleChat($userId, $walletId, $input) {
     $stmt = $db->prepare("SELECT subscription_tier FROM users WHERE id = ?");
     $stmt->execute([$userId]);
     $user = $stmt->fetch();
+    $tier = $user['subscription_tier'] ?? 'free';
+
+    if ($tier === 'free') {
+        jsonResponse(['error' => 'Fitur SelarasAI eksklusif untuk Pro/Premium. Silakan upgrade!'], 403);
+    } elseif ($tier === 'pro') {
+        // Count user queries in the current month from chat_history
+        $currentMonth = date('Y-m');
+        $stmtC = $db->prepare("
+            SELECT COUNT(*) FROM chat_history 
+            WHERE user_id = ? AND sender = 'user' AND DATE_FORMAT(created_at, '%Y-%m') = ?
+        ");
+        $stmtC->execute([$userId, $currentMonth]);
+        $queryCount = $stmtC->fetchColumn();
+        if ($queryCount >= 15) {
+            jsonResponse(['error' => 'Kuota chat SelarasAI Akun Pro Anda (15x per bulan) telah habis. Upgrade ke Premium untuk chat tanpa batas.'], 403);
+        }
+    }
 
     $context = getFinancialContext($userId, $walletId);
     
@@ -52,6 +69,15 @@ function handleChat($userId, $walletId, $input) {
 }
 
 function generateInsight($userId, $walletId) {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT subscription_tier FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $tier = $stmt->fetchColumn() ?: 'free';
+
+    if ($tier === 'free') {
+        jsonResponse(['success' => true, 'insight' => 'Buka analisis lengkap & asisten finansial dengan upgrade ke Pro atau Premium! 💎']);
+    }
+
     $context = getFinancialContext($userId, $walletId);
     
     $prompt = "Kamu adalah Asisten Keuangan Pribadi bernama 'SelarasAI'.\n"

@@ -1,6 +1,6 @@
 <?php
 // ============================================
-// SelarasKas — Subscription Upgrade API
+// SelarasKas — Subscription Upgrade API (Midtrans Snap)
 // ============================================
 require_once __DIR__ . '/config.php';
 
@@ -65,76 +65,76 @@ function handleUpgrade($userId) {
     $input = getInput();
     $tier = $input['tier'] ?? '';
     $billing = $input['billing'] ?? 'monthly'; // 'monthly' or 'yearly'
-    $method = $input['payment_method'] ?? 'transfer';
 
     if (!in_array($tier, ['premium', 'pro'])) {
         jsonResponse(['error' => 'Paket tidak valid'], 400);
     }
 
-    // Pricing table (IDR)
+    // New Pricing table (IDR)
     $prices = [
-        'premium' => ['monthly' => 29000, 'yearly' => 209000],  // yearly = 29000*12 * 0.6
-        'pro'     => ['monthly' => 59000, 'yearly' => 425000],  // yearly = 59000*12 * 0.6
+        'pro'     => ['monthly' => 75000, 'yearly' => 540000],   // 40% discount
+        'premium' => ['monthly' => 135000, 'yearly' => 972000],  // 40% discount
     ];
 
     $price = $prices[$tier][$billing] ?? 0;
-
-    // Set expiry: 1 month or 1 year from now
-    $expiresAt = $billing === 'yearly'
-        ? date('Y-m-d H:i:s', strtotime('+1 year'))
-        : date('Y-m-d H:i:s', strtotime('+1 month'));
-
     $db = getDB();
 
-    // Ensure subscription columns exist (auto-migrate)
+    // Ensure subscription columns exist & tier column is flexible VARCHAR (auto-migrate)
+    try { $db->exec("ALTER TABLE `users` MODIFY COLUMN `subscription_tier` VARCHAR(20) DEFAULT 'free'"); } catch(Exception $e){}
     try { $db->exec("ALTER TABLE `users` ADD COLUMN `subscription_expires_at` DATETIME NULL DEFAULT NULL"); } catch(Exception $e){}
     try { $db->exec("ALTER TABLE `users` ADD COLUMN `subscription_plan` VARCHAR(20) NULL DEFAULT NULL"); } catch(Exception $e){}
-    try { $db->exec("ALTER TABLE `users` ADD COLUMN `subscription_billing` ENUM('monthly','yearly') DEFAULT 'monthly'"); } catch(Exception $e){}
+    try { $db->exec("ALTER TABLE `users` ADD COLUMN `subscription_billing` VARCHAR(20) DEFAULT 'monthly'"); } catch(Exception $e){}
 
-    // Update user subscription
-    $stmt = $db->prepare("
-        UPDATE users SET
-            subscription_tier = ?,
-            subscription_expires_at = ?,
-            subscription_plan = ?,
-            subscription_billing = ?
-        WHERE id = ?
-    ");
-    $stmt->execute([$tier, $expiresAt, $tier, $billing, $userId]);
+    // Fetch user details for Midtrans
+    $stmtUser = $db->prepare("SELECT name, email FROM users WHERE id = ?");
+    $stmtUser->execute([$userId]);
+    $user = $stmtUser->fetch();
+    $userName = $user['name'] ?? 'User SelarasKas';
+    $userEmail = $user['email'] ?? 'user@selaraskas.com';
 
-    // Log the transaction (if subscriptions table exists)
+    // Generate unique order ID
+    $orderId = 'SK-' . $userId . '-' . time() . '-' . rand(1000, 9999);
+
+    // Call Midtrans Snap to generate token
+    $snapToken = createMidtransSnapToken($orderId, $price, $userEmail, $userName);
+
+    if (!$snapToken) {
+        jsonResponse(['error' => 'Gagal membuat sesi pembayaran Midtrans. Pastikan konfigurasi server benar.'], 500);
+    }
+
+    // Insert order to db as pending
     try {
         $db->exec("CREATE TABLE IF NOT EXISTS `subscription_orders` (
             `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `order_id` VARCHAR(100) NULL UNIQUE,
             `user_id` INT NOT NULL,
             `tier` VARCHAR(20) NOT NULL,
             `billing` VARCHAR(10) NOT NULL,
             `amount` INT NOT NULL,
-            `payment_method` VARCHAR(50) NOT NULL,
+            `snap_token` VARCHAR(255) NULL,
             `status` ENUM('pending','paid','cancelled') DEFAULT 'pending',
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
         ) ENGINE=InnoDB");
 
-        $stmtO = $db->prepare("INSERT INTO subscription_orders (user_id, tier, billing, amount, payment_method, status) VALUES (?, ?, ?, ?, ?, 'pending')");
-        $stmtO->execute([$userId, $tier, $billing, $price, $method]);
-        $orderId = $db->lastInsertId();
-    } catch(Exception $e) {
-        $orderId = null;
-    }
+        // Migration for existing table
+        try { $db->exec("ALTER TABLE `subscription_orders` ADD COLUMN `order_id` VARCHAR(100) NULL UNIQUE"); } catch(Exception $e){}
+        try { $db->exec("ALTER TABLE `subscription_orders` ADD COLUMN `snap_token` VARCHAR(255) NULL"); } catch(Exception $e){}
 
-    // Get payment instructions
-    $instructions = getPaymentInstructions($method, $price, $tier, $billing);
+        $stmtO = $db->prepare("INSERT INTO subscription_orders (order_id, user_id, tier, billing, amount, snap_token, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
+        $stmtO->execute([$orderId, $userId, $tier, $billing, $price, $snapToken]);
+    } catch(Exception $e) {
+        jsonResponse(['error' => 'Gagal mencatat transaksi di sistem: ' . $e->getMessage()], 500);
+    }
 
     jsonResponse([
         'success' => true,
-        'message' => "Berhasil upgrade ke $tier! 🎉",
-        'tier' => $tier,
-        'billing' => $billing,
-        'amount' => $price,
-        'expires_at' => $expiresAt,
+        'snap_token' => $snapToken,
+        'client_key' => defined('MIDTRANS_CLIENT_KEY') ? MIDTRANS_CLIENT_KEY : '',
         'order_id' => $orderId,
-        'payment_instructions' => $instructions,
+        'amount' => $price,
+        'tier' => $tier,
+        'billing' => $billing
     ]);
 }
 
@@ -145,53 +145,53 @@ function handleCancel($userId) {
     jsonResponse(['success' => true, 'message' => 'Langganan berhasil dibatalkan.']);
 }
 
-function getPaymentInstructions($method, $amount, $tier, $billing) {
-    $amountFmt = 'Rp ' . number_format($amount, 0, ',', '.');
-    $tierLabel = ucfirst($tier);
-    $billingLabel = $billing === 'yearly' ? 'Tahunan' : 'Bulanan';
-
-    switch ($method) {
-        case 'transfer':
-            return [
-                'title' => 'Transfer Bank',
-                'steps' => [
-                    "Transfer $amountFmt ke rekening BCA: 1234567890 a.n. SelarasKas",
-                    "Gunakan keterangan: UPGRADE-$tierLabel-" . strtoupper($billing),
-                    "Kirim bukti transfer ke: support@selaraskas.com",
-                    "Akun Premium aktif dalam 1×24 jam kerja",
-                ]
-            ];
-        case 'gopay':
-            return [
-                'title' => 'GoPay',
-                'steps' => [
-                    "Transfer $amountFmt ke GoPay: 0812-3456-7890 (SelarasKas)",
-                    "Gunakan catatan: UPGRADE-$tierLabel",
-                    "Screenshot & kirim ke: support@selaraskas.com",
-                    "Akun Premium aktif dalam 1×24 jam kerja",
-                ]
-            ];
-        case 'ovo':
-            return [
-                'title' => 'OVO',
-                'steps' => [
-                    "Transfer $amountFmt ke OVO: 0812-3456-7890 (SelarasKas)",
-                    "Gunakan catatan: UPGRADE-$tierLabel",
-                    "Screenshot & kirim ke: support@selaraskas.com",
-                    "Akun Premium aktif dalam 1×24 jam kerja",
-                ]
-            ];
-        case 'qris':
-            return [
-                'title' => 'QRIS',
-                'steps' => [
-                    "Scan QRIS SelarasKas di bawah ini",
-                    "Masukkan nominal $amountFmt",
-                    "Screenshot bukti bayar & kirim ke: support@selaraskas.com",
-                    "Akun Premium aktif dalam 1×24 jam kerja",
-                ]
-            ];
-        default:
-            return ['title' => 'Pembayaran', 'steps' => ["Hubungi support@selaraskas.com untuk instruksi pembayaran $amountFmt"]];
+function createMidtransSnapToken($orderId, $amount, $email, $name) {
+    $serverKey = defined('MIDTRANS_SERVER_KEY') ? MIDTRANS_SERVER_KEY : '';
+    $isProd = defined('MIDTRANS_IS_PRODUCTION') ? MIDTRANS_IS_PRODUCTION : false;
+    
+    if (!$serverKey) {
+        error_log('MIDTRANS_SERVER_KEY not configured');
+        return null;
     }
+
+    $url = $isProd 
+        ? 'https://app.midtrans.com/snap/v1/transactions' 
+        : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
+
+    $payload = [
+        'transaction_details' => [
+            'order_id' => $orderId,
+            'gross_amount' => (int)$amount,
+        ],
+        'customer_details' => [
+            'first_name' => $name,
+            'email' => $email,
+        ],
+        'credit_card' => [
+            'secure' => true,
+        ]
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Accept: application/json',
+        'Authorization: Basic ' . base64_encode($serverKey . ':')
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode !== 201 && $httpCode !== 200) {
+        error_log("Midtrans API Error: HTTP $httpCode Response: $response");
+        return null;
+    }
+
+    $result = json_decode($response, true);
+    return $result['token'] ?? null;
 }
