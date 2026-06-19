@@ -6,11 +6,13 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
-$host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? 'localhost');
-$port = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '3306');
-$user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'root');
-$pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : ($_ENV['DB_PASS'] ?? '');
-$dbname = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'finflow_db');
+require_once __DIR__ . '/config.php';
+
+$host = DB_HOST;
+$port = DB_PORT;
+$user = DB_USER;
+$pass = DB_PASS;
+$dbname = DB_NAME;
 
 try {
     $options = [
