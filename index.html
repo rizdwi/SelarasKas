@@ -671,6 +671,26 @@
                     </div>
                 </div>
 
+                <!-- Subscription Section -->
+                <div class="settings-list" style="margin-top: 20px;">
+                    <div class="settings-group">
+                        <h3 class="settings-group-title">Berlangganan</h3>
+                        <div class="subscription-status-card" id="subscriptionStatusCard">
+                            <div class="sub-status-left">
+                                <div class="sub-status-icon" id="subStatusIcon">🆓</div>
+                                <div>
+                                    <div class="sub-status-name" id="subStatusName">Paket Free</div>
+                                    <div class="sub-status-desc" id="subStatusDesc">Upgrade untuk fitur lengkap</div>
+                                </div>
+                            </div>
+                            <button class="upgrade-cta-btn" id="openUpgradeBtn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                                Upgrade
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <button class="logout-btn" id="logoutBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     <span>Keluar</span>
@@ -738,6 +758,156 @@
             </div>
         </div>
 
+        <!-- ===== UPGRADE PREMIUM MODAL ===== -->
+        <div class="upgrade-overlay" id="upgradeOverlay">
+            <div class="upgrade-modal" id="upgradeModal">
+                <!-- Close button -->
+                <button class="upgrade-close-btn" id="upgradeCloseBtn" aria-label="Tutup">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+
+                <!-- Header -->
+                <div class="upgrade-header">
+                    <div class="upgrade-crown">👑</div>
+                    <h2 class="upgrade-title">Upgrade ke Premium</h2>
+                    <p class="upgrade-subtitle">Buka semua fitur eksklusif SelarasKas dan kelola keuangan seperti pro</p>
+                </div>
+
+                <!-- Current badge -->
+                <div class="current-plan-badge" id="currentPlanBadge">
+                    <span class="plan-dot free-dot"></span>
+                    <span>Paket Saat Ini: <strong id="currentPlanLabel">Free</strong></span>
+                </div>
+
+                <!-- Billing toggle -->
+                <div class="billing-toggle-wrap">
+                    <span class="billing-label" id="lblMonthly">Bulanan</span>
+                    <div class="billing-toggle" id="billingToggle">
+                        <div class="billing-knob" id="billingKnob"></div>
+                    </div>
+                    <span class="billing-label" id="lblYearly">Tahunan <span class="save-badge">Hemat 40%</span></span>
+                </div>
+
+                <!-- Pricing cards -->
+                <div class="pricing-cards" id="pricingCards">
+                    <!-- Free -->
+                    <div class="pricing-card free-card" data-plan="free">
+                        <div class="pricing-card-header">
+                            <span class="plan-emoji">🆓</span>
+                            <div>
+                                <h3 class="plan-name">Free</h3>
+                                <p class="plan-tagline">Mulai perjalananmu</p>
+                            </div>
+                        </div>
+                        <div class="plan-price">
+                            <span class="price-amount">Rp 0</span>
+                            <span class="price-period">/ selamanya</span>
+                        </div>
+                        <ul class="plan-features">
+                            <li class="feature-item"><span class="feat-check">✓</span> 1 Dompet Pribadi</li>
+                            <li class="feature-item"><span class="feat-check">✓</span> Catat Transaksi Tak Terbatas</li>
+                            <li class="feature-item"><span class="feat-check">✓</span> Analitik Dasar</li>
+                            <li class="feature-item feat-no"><span class="feat-x">✗</span> SelarasAI Chatbot</li>
+                            <li class="feature-item feat-no"><span class="feat-x">✗</span> Export Laporan PNG</li>
+                            <li class="feature-item feat-no"><span class="feat-x">✗</span> Dompet Bersama (Multiplayer)</li>
+                        </ul>
+                        <button class="plan-btn free-btn current-plan-btn" disabled id="freePlanBtn">Paket Aktif</button>
+                    </div>
+
+                    <!-- Premium (RECOMMENDED) -->
+                    <div class="pricing-card premium-card recommended" data-plan="premium">
+                        <div class="recommended-badge">⭐ Terpopuler</div>
+                        <div class="pricing-card-header">
+                            <span class="plan-emoji">💎</span>
+                            <div>
+                                <h3 class="plan-name">Premium</h3>
+                                <p class="plan-tagline">Untuk pencatat serius</p>
+                            </div>
+                        </div>
+                        <div class="plan-price">
+                            <span class="price-amount" id="premiumPrice">Rp 29.000</span>
+                            <span class="price-period" id="premiumPeriod">/ bulan</span>
+                        </div>
+                        <ul class="plan-features">
+                            <li class="feature-item"><span class="feat-check">✓</span> Semua fitur Free</li>
+                            <li class="feature-item"><span class="feat-check">✓</span> <strong>SelarasAI Chatbot Tanpa Batas</strong></li>
+                            <li class="feature-item"><span class="feat-check">✓</span> <strong>Export Laporan PNG</strong></li>
+                            <li class="feature-item"><span class="feat-check">✓</span> Hingga 3 Dompet Bersama</li>
+                            <li class="feature-item"><span class="feat-check">✓</span> Gamifikasi Lencana Eksklusif</li>
+                            <li class="feature-item feat-no"><span class="feat-x">✗</span> Anggota Tidak Terbatas</li>
+                        </ul>
+                        <button class="plan-btn premium-btn" id="premiumPlanBtn">✨ Pilih Premium</button>
+                    </div>
+
+                    <!-- Pro -->
+                    <div class="pricing-card pro-card" data-plan="pro">
+                        <div class="pricing-card-header">
+                            <span class="plan-emoji">🚀</span>
+                            <div>
+                                <h3 class="plan-name">Pro</h3>
+                                <p class="plan-tagline">Untuk keluarga & tim</p>
+                            </div>
+                        </div>
+                        <div class="plan-price">
+                            <span class="price-amount" id="proPrice">Rp 59.000</span>
+                            <span class="price-period" id="proPeriod">/ bulan</span>
+                        </div>
+                        <ul class="plan-features">
+                            <li class="feature-item"><span class="feat-check">✓</span> Semua fitur Premium</li>
+                            <li class="feature-item"><span class="feat-check">✓</span> <strong>Dompet Bersama Tak Terbatas</strong></li>
+                            <li class="feature-item"><span class="feat-check">✓</span> <strong>Anggota Tak Terbatas</strong></li>
+                            <li class="feature-item"><span class="feat-check">✓</span> Prioritas Support</li>
+                            <li class="feature-item"><span class="feat-check">✓</span> Akses Fitur Beta</li>
+                            <li class="feature-item"><span class="feat-check">✓</span> Laporan Lanjutan</li>
+                        </ul>
+                        <button class="plan-btn pro-btn" id="proPlanBtn">🚀 Pilih Pro</button>
+                    </div>
+                </div>
+
+                <!-- Payment method notice -->
+                <div class="payment-notice">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>Pembayaran aman via Transfer Bank · GoPay · OVO · QRIS</span>
+                </div>
+
+                <!-- Confirm payment modal (step 2) -->
+                <div class="payment-step" id="paymentStep" style="display:none;">
+                    <button class="back-btn" id="backToPricingBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                        Kembali
+                    </button>
+                    <div class="payment-summary" id="paymentSummary"></div>
+                    <div class="payment-methods">
+                        <h4>Pilih Metode Bayar</h4>
+                        <div class="payment-method-grid">
+                            <label class="payment-method-option">
+                                <input type="radio" name="payMethod" value="transfer" checked>
+                                <div class="method-card"><span>🏦</span><span>Transfer Bank</span></div>
+                            </label>
+                            <label class="payment-method-option">
+                                <input type="radio" name="payMethod" value="gopay">
+                                <div class="method-card"><span>💚</span><span>GoPay</span></div>
+                            </label>
+                            <label class="payment-method-option">
+                                <input type="radio" name="payMethod" value="ovo">
+                                <div class="method-card"><span>💜</span><span>OVO</span></div>
+                            </label>
+                            <label class="payment-method-option">
+                                <input type="radio" name="payMethod" value="qris">
+                                <div class="method-card"><span>📱</span><span>QRIS</span></div>
+                            </label>
+                        </div>
+                    </div>
+                    <button class="plan-btn premium-btn" id="confirmPayBtn" style="width:100%;margin-top:16px;">
+                        Konfirmasi Pembayaran
+                    </button>
+                    <p style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:10px;">
+                        Demo: Pembayaran akan diproses secara manual. Tim kami akan menghubungi Anda.
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <!-- ===== BOTTOM SHEET MODAL ===== -->
         <div class="modal-overlay" id="modalOverlay">
             <div class="modal-sheet" id="modalSheet">
@@ -754,6 +924,7 @@
             </div>
         </div>
 
+
         <!-- Toast -->
         <div class="toast" id="toast">
             <div class="toast-content">
@@ -763,6 +934,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=23"></script>
+    <script src="app.js?v=24"></script>
 </body>
 </html>

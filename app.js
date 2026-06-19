@@ -1129,7 +1129,11 @@
 
             // Simple tier check for AI Chat
             if (currentUser && currentUser.subscription_tier === 'free') {
-                showToast('Fitur SelarasAI eksklusif untuk pengguna Premium/Pro. Silakan upgrade!');
+                if (typeof window.showUpgradeModal === 'function') {
+                    window.showUpgradeModal();
+                } else {
+                    showToast('Fitur SelarasAI eksklusif untuk pengguna Premium/Pro. Silakan upgrade!');
+                }
                 return;
             }
 
@@ -1830,7 +1834,11 @@
         if (!btn) return;
 
         if (currentUser && currentUser.subscription_tier === 'free') {
-            showToast('Export Laporan eksklusif untuk Premium/Pro. Upgrade sekarang!');
+            if (typeof window.showUpgradeModal === 'function') {
+                window.showUpgradeModal();
+            } else {
+                showToast('Export Laporan eksklusif untuk Premium/Pro. Upgrade sekarang!');
+            }
             return;
         }
 
@@ -3766,9 +3774,274 @@
     // Biometric login button handler
     document.getElementById('biometricAuthBtn')?.addEventListener('click', performBiometricLogin);
 
+    // ===== UPGRADE PREMIUM MODAL =====
+
+    let isYearlyBilling = false;
+    let selectedUpgradePlan = null;
+
+    const PRICING = {
+        premium: { monthly: 29000, yearly: 209000 },
+        pro:     { monthly: 59000, yearly: 425000 },
+    };
+
+    function formatRupiah(n) {
+        return 'Rp ' + n.toLocaleString('id-ID');
+    }
+
+    // Open upgrade modal
+    window.showUpgradeModal = function(highlightPlan = null) {
+        const overlay = document.getElementById('upgradeOverlay');
+        if (!overlay) return;
+
+        // Reset to pricing view
+        document.getElementById('pricingCards').style.display = '';
+        document.getElementById('paymentStep').style.display = 'none';
+        document.getElementById('payment-notice') && (document.getElementById('payment-notice').style.display = '');
+        
+        // Update current plan badge
+        updateUpgradeModalBadge();
+        updatePricingCards();
+        updateBillingUI();
+
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+
+    function closeUpgradeModal() {
+        const overlay = document.getElementById('upgradeOverlay');
+        if (overlay) overlay.classList.remove('active');
+        document.body.style.overflow = '';
+        selectedUpgradePlan = null;
+    }
+
+    function updateUpgradeModalBadge() {
+        const tier = currentUser?.subscription_tier || 'free';
+        const dot  = document.querySelector('.current-plan-badge .plan-dot');
+        const label = document.getElementById('currentPlanLabel');
+        if (dot) {
+            dot.className = 'plan-dot ' + (tier === 'free' ? 'free-dot' : tier === 'premium' ? 'premium-dot' : 'pro-dot');
+        }
+        if (label) label.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
+    }
+
+    function updatePricingCards() {
+        const tier = currentUser?.subscription_tier || 'free';
+        
+        // Reset all buttons
+        const freePlanBtn    = document.getElementById('freePlanBtn');
+        const premiumPlanBtn = document.getElementById('premiumPlanBtn');
+        const proPlanBtn     = document.getElementById('proPlanBtn');
+
+        // Reset button styles
+        if (freePlanBtn)    { freePlanBtn.disabled = tier === 'free';    freePlanBtn.textContent = tier === 'free' ? 'Paket Aktif ✓' : 'Downgrade'; freePlanBtn.className = 'plan-btn free-btn' + (tier === 'free' ? ' current-plan-btn' : ''); }
+        if (premiumPlanBtn) { premiumPlanBtn.disabled = tier === 'premium'; premiumPlanBtn.textContent = tier === 'premium' ? '✓ Paket Aktif' : '✨ Pilih Premium'; premiumPlanBtn.className = 'plan-btn premium-btn' + (tier === 'premium' ? ' current-plan-btn' : ''); }
+        if (proPlanBtn)     { proPlanBtn.disabled = tier === 'pro';      proPlanBtn.textContent = tier === 'pro' ? '✓ Paket Aktif' : '🚀 Pilih Pro'; proPlanBtn.className = 'plan-btn pro-btn' + (tier === 'pro' ? ' current-plan-btn' : ''); }
+    }
+
+    function updateBillingUI() {
+        const toggle   = document.getElementById('billingToggle');
+        const lblMonth = document.getElementById('lblMonthly');
+        const lblYear  = document.getElementById('lblYearly');
+        if (toggle) toggle.classList.toggle('yearly', isYearlyBilling);
+        if (lblMonth) lblMonth.classList.toggle('active', !isYearlyBilling);
+        if (lblYear)  lblYear.classList.toggle('active', isYearlyBilling);
+
+        // Update prices
+        const premiumP  = document.getElementById('premiumPrice');
+        const premiumPd = document.getElementById('premiumPeriod');
+        const proP      = document.getElementById('proPrice');
+        const proPd     = document.getElementById('proPeriod');
+
+        if (premiumP)  premiumP.textContent  = formatRupiah(isYearlyBilling ? PRICING.premium.yearly : PRICING.premium.monthly);
+        if (premiumPd) premiumPd.textContent  = isYearlyBilling ? '/ tahun' : '/ bulan';
+        if (proP)      proP.textContent       = formatRupiah(isYearlyBilling ? PRICING.pro.yearly : PRICING.pro.monthly);
+        if (proPd)     proPd.textContent      = isYearlyBilling ? '/ tahun' : '/ bulan';
+    }
+
+    function showPaymentStep(plan) {
+        selectedUpgradePlan = plan;
+        const billing = isYearlyBilling ? 'yearly' : 'monthly';
+        const price   = PRICING[plan][billing];
+        const planLabel = plan === 'premium' ? 'Premium 💎' : 'Pro 🚀';
+        const billingLabel = billing === 'yearly' ? 'Tahunan' : 'Bulanan';
+
+        document.getElementById('paymentSummary').innerHTML = `
+            <div class="summary-row"><span>Paket</span><strong>${planLabel}</strong></div>
+            <div class="summary-row"><span>Durasi</span><strong>${billingLabel}</strong></div>
+            <div class="summary-row"><span>Total Bayar</span><strong>${formatRupiah(price)}</strong></div>
+        `;
+
+        document.getElementById('pricingCards').style.display = 'none';
+        const payNotice = document.querySelector('.payment-notice');
+        if (payNotice) payNotice.style.display = 'none';
+        document.getElementById('paymentStep').style.display = 'flex';
+    }
+
+    async function confirmPayment() {
+        if (!selectedUpgradePlan) return;
+        const billing = isYearlyBilling ? 'yearly' : 'monthly';
+        const payMethod = document.querySelector('input[name="payMethod"]:checked')?.value || 'transfer';
+        
+        const btn = document.getElementById('confirmPayBtn');
+        btn.textContent = 'Memproses...';
+        btn.classList.add('loading');
+
+        try {
+            const data = await api('subscription.php?action=upgrade', {
+                method: 'POST',
+                body: JSON.stringify({
+                    tier: selectedUpgradePlan,
+                    billing,
+                    payment_method: payMethod,
+                })
+            });
+
+            if (data.success) {
+                // Update currentUser tier immediately
+                if (currentUser) currentUser.subscription_tier = data.tier;
+
+                closeUpgradeModal();
+                updateSubscriptionStatusCard();
+                showPaymentInstructionsToast(data.payment_instructions, data.amount, selectedUpgradePlan, billing);
+            }
+        } catch (err) {
+            showToast(err.message || 'Gagal memproses upgrade');
+        } finally {
+            btn.textContent = 'Konfirmasi Pembayaran';
+            btn.classList.remove('loading');
+        }
+    }
+
+    function showPaymentInstructionsToast(instructions, amount, tier, billing) {
+        // Build a nice confirmation bottom sheet
+        const tierLabel   = tier === 'premium' ? 'Premium 💎' : 'Pro 🚀';
+        const billingLabel = billing === 'yearly' ? 'Tahunan' : 'Bulanan';
+        const amountFmt   = formatRupiah(amount);
+        const stepsHtml   = instructions.steps.map((s, i) => `<div style="display:flex;gap:10px;margin-bottom:10px;"><div style="min-width:22px;height:22px;border-radius:50%;background:rgba(129,140,248,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#818cf8;flex-shrink:0;">${i+1}</div><div style="font-size:13px;color:var(--text-secondary);line-height:1.5;">${s}</div></div>`).join('');
+
+        const modalBody  = document.getElementById('modalBody');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalOverlay = document.getElementById('modalOverlay');
+
+        if (modalBody && modalTitle && modalOverlay) {
+            modalTitle.textContent = `Instruksi Pembayaran — ${instructions.title}`;
+            modalBody.innerHTML = `
+                <div style="padding:4px 0;">
+                    <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:14px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:24px;">🎉</span>
+                        <div>
+                            <div style="font-size:14px;font-weight:700;color:#10b981;margin-bottom:2px;">Upgrade Berhasil Diproses!</div>
+                            <div style="font-size:12px;color:var(--text-muted);">Paket ${tierLabel} ${billingLabel} — ${amountFmt}</div>
+                        </div>
+                    </div>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.5;">Selesaikan pembayaran dengan mengikuti langkah berikut:</p>
+                    ${stepsHtml}
+                    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;margin-top:8px;font-size:12px;color:#f59e0b;">
+                        ⚡ Setelah konfirmasi pembayaran diterima, akun Anda akan langsung diaktifkan
+                    </div>
+                </div>
+            `;
+            modalOverlay.classList.add('active');
+        }
+    }
+
+    function updateSubscriptionStatusCard() {
+        const tier = currentUser?.subscription_tier || 'free';
+        const card = document.getElementById('subscriptionStatusCard');
+        const icon = document.getElementById('subStatusIcon');
+        const name = document.getElementById('subStatusName');
+        const desc = document.getElementById('subStatusDesc');
+        const btn  = document.getElementById('openUpgradeBtn');
+
+        if (!card) return;
+
+        card.className = 'subscription-status-card';
+        if (tier === 'premium') {
+            card.classList.add('is-premium');
+            if (icon) icon.textContent = '💎';
+            if (name) name.textContent = 'Paket Premium';
+            if (desc) desc.textContent = 'Semua fitur eksklusif aktif ✓';
+            if (btn)  { btn.textContent = '✓ Aktif'; btn.classList.add('is-active'); btn.disabled = true; }
+        } else if (tier === 'pro') {
+            card.classList.add('is-pro');
+            if (icon) icon.textContent = '🚀';
+            if (name) name.textContent = 'Paket Pro';
+            if (desc) desc.textContent = 'Semua fitur Pro aktif ✓';
+            if (btn)  { btn.textContent = '✓ Aktif'; btn.classList.add('is-active'); btn.disabled = true; }
+        } else {
+            if (icon) icon.textContent = '🆓';
+            if (name) name.textContent = 'Paket Free';
+            if (desc) desc.textContent = 'Upgrade untuk fitur lengkap';
+            if (btn)  { btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg> Upgrade'; btn.classList.remove('is-active'); btn.disabled = false; }
+        }
+    }
+
+    // ---- Wire up upgrade modal events ----
+
+    // Open from profile page Upgrade button
+    document.getElementById('openUpgradeBtn')?.addEventListener('click', () => window.showUpgradeModal());
+
+    // Close button
+    document.getElementById('upgradeCloseBtn')?.addEventListener('click', closeUpgradeModal);
+
+    // Close on overlay click
+    document.getElementById('upgradeOverlay')?.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('upgradeOverlay')) closeUpgradeModal();
+    });
+
+    // Billing toggle
+    document.getElementById('billingToggle')?.addEventListener('click', () => {
+        isYearlyBilling = !isYearlyBilling;
+        updateBillingUI();
+    });
+
+    // Plan buttons
+    document.getElementById('premiumPlanBtn')?.addEventListener('click', () => {
+        const tier = currentUser?.subscription_tier || 'free';
+        if (tier === 'premium') return;
+        showPaymentStep('premium');
+    });
+
+    document.getElementById('proPlanBtn')?.addEventListener('click', () => {
+        const tier = currentUser?.subscription_tier || 'free';
+        if (tier === 'pro') return;
+        showPaymentStep('pro');
+    });
+
+    // Back to pricing
+    document.getElementById('backToPricingBtn')?.addEventListener('click', () => {
+        document.getElementById('pricingCards').style.display = '';
+        const payNotice = document.querySelector('.payment-notice');
+        if (payNotice) payNotice.style.display = '';
+        document.getElementById('paymentStep').style.display = 'none';
+        selectedUpgradePlan = null;
+    });
+
+    // Confirm payment
+    document.getElementById('confirmPayBtn')?.addEventListener('click', confirmPayment);
+
+    // Also hook the showToast-based "upgrade" prompts to open modal instead
+    // Intercept the AI chat and export "upgrade now" messages to show modal
+    const _origShowToast = window.__showToastFn;
+    
+    // Make modal triggerable from tier-lock messages
+    window.openUpgradeModalFromLock = () => window.showUpgradeModal('premium');
+
+    // Update subscription status card on profile page load
+    const profileNavItem = document.querySelector('[data-page="profile"]');
+    if (profileNavItem) {
+        profileNavItem.addEventListener('click', () => {
+            setTimeout(updateSubscriptionStatusCard, 100);
+        });
+    }
+
+    // Initial update on app load (after showApp is called)
+    const _origShowApp = showApp;
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
     }
 })();
+
