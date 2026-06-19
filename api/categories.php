@@ -10,14 +10,15 @@ if ($method !== 'GET') {
     jsonResponse(['error' => 'Method not allowed'], 405);
 }
 
-requireAuth();
+$userId = requireAuth();
+$walletId = requireActiveWallet($userId);
 
 $db = getDB();
 $type = $_GET['type'] ?? '';
 
 // Get all categories with hierarchy
-$sql = "SELECT id, name, type, parent_id, emoji, color, sort_order FROM categories WHERE user_id IS NULL";
-$params = [];
+$sql = "SELECT id, name, type, parent_id, emoji, color, sort_order FROM categories WHERE (wallet_id IS NULL OR wallet_id = ?)";
+$params = [$walletId];
 
 if ($type && in_array($type, ['income', 'expense'])) {
     $sql .= " AND type = ?";

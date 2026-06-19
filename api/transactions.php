@@ -3,10 +3,12 @@
 // FinFlow — Transactions API
 // ============================================
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/gamification.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 $userId = requireAuth();
+$walletId = requireActiveWallet($userId);
 
 switch ($method) {
     case 'GET':
@@ -39,6 +41,7 @@ switch ($method) {
 }
 
 function getTransactions($userId) {
+    global $walletId;
     $db = getDB();
     $month = $_GET['month'] ?? date('Y-m');
     $type = $_GET['type'] ?? '';
@@ -49,9 +52,9 @@ function getTransactions($userId) {
             FROM transactions t
             JOIN categories c ON t.category_id = c.id
             LEFT JOIN categories pc ON c.parent_id = pc.id
-            WHERE t.user_id = ?
+            WHERE t.wallet_id = ?
             AND (CASE WHEN DAY(t.transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(t.transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(t.transaction_date, '%Y-%m') END) = ?";
-    $params = [$userId, $month];
+    $params = [$walletId, $month];
 
     if ($type && in_array($type, ['income', 'expense'])) {
         $sql .= " AND t.type = ?";
@@ -68,6 +71,7 @@ function getTransactions($userId) {
 }
 
 function getSummary($userId) {
+    global $walletId;
     $db = getDB();
     $month = $_GET['month'] ?? date('Y-m');
 
@@ -75,10 +79,10 @@ function getSummary($userId) {
     $stmt = $db->prepare("
         SELECT type, COALESCE(SUM(amount), 0) as total
         FROM transactions
-        WHERE user_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
+        WHERE wallet_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
         GROUP BY type
     ");
-    $stmt->execute([$userId, $month]);
+    $stmt->execute([$walletId, $month]);
     $rows = $stmt->fetchAll();
 
     $income = 0;
@@ -93,10 +97,10 @@ function getSummary($userId) {
     $stmt = $db->prepare("
         SELECT type, COALESCE(SUM(amount), 0) as total
         FROM transactions
-        WHERE user_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
+        WHERE wallet_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
         GROUP BY type
     ");
-    $stmt->execute([$userId, $prevMonth]);
+    $stmt->execute([$walletId, $prevMonth]);
     $prevRows = $stmt->fetchAll();
 
     $prevIncome = 0;
@@ -111,9 +115,9 @@ function getSummary($userId) {
         SELECT
             COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) -
             COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as balance
-        FROM transactions WHERE user_id = ?
+        FROM transactions WHERE wallet_id = ?
     ");
-    $stmt->execute([$userId]);
+    $stmt->execute([$walletId]);
     $balance = (float)$stmt->fetchColumn();
 
     jsonResponse([
@@ -129,6 +133,7 @@ function getSummary($userId) {
 }
 
 function getChartData($userId) {
+    global $walletId;
     $db = getDB();
     $month = $_GET['month'] ?? date('Y-m');
 
@@ -142,18 +147,19 @@ function getChartData($userId) {
             SUM(t.amount) as total
         FROM transactions t
         JOIN categories c ON t.category_id = c.id
-        WHERE t.user_id = ? AND t.type = 'expense'
+        WHERE t.wallet_id = ? AND t.type = 'expense'
         AND (CASE WHEN DAY(t.transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(t.transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(t.transaction_date, '%Y-%m') END) = ?
         GROUP BY c.id, c.name, c.emoji, c.color
         ORDER BY total DESC
     ");
-    $stmt->execute([$userId, $month]);
+    $stmt->execute([$walletId, $month]);
     $data = $stmt->fetchAll();
 
     jsonResponse(['chart' => $data]);
 }
 
 function getWeeklyData($userId) {
+    global $walletId;
     $db = getDB();
     $month = $_GET['month'] ?? date('Y-m');
 
@@ -165,11 +171,11 @@ function getWeeklyData($userId) {
             type,
             SUM(amount) as total
         FROM transactions
-        WHERE user_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
+        WHERE wallet_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
         GROUP BY date, day_name, type
         ORDER BY date
     ");
-    $stmt->execute([$userId, $month]);
+    $stmt->execute([$walletId, $month]);
     $rows = $stmt->fetchAll();
 
     // Group by date
@@ -186,6 +192,7 @@ function getWeeklyData($userId) {
 }
 
 function createTransaction($userId) {
+    global $walletId;
     $input = getInput();
     $categoryId = (int)($input['category_id'] ?? 0);
     $amount = (float)($input['amount'] ?? 0);
@@ -199,21 +206,25 @@ function createTransaction($userId) {
 
     $db = getDB();
     $stmt = $db->prepare("
-        INSERT INTO transactions (user_id, category_id, amount, type, description, transaction_date)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO transactions (user_id, wallet_id, category_id, amount, type, description, transaction_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$userId, $categoryId, $amount, $type, $description, $date]);
+    $stmt->execute([$userId, $walletId, $categoryId, $amount, $type, $description, $date]);
+
+    // Award Gamification Points
+    addGamificationPoints($userId, $type === 'income' ? 'add_income' : 'add_budget');
 
     jsonResponse(['success' => true, 'id' => (int)$db->lastInsertId()], 201);
 }
 
 function deleteTransaction($userId) {
+    global $walletId;
     $id = (int)($_GET['id'] ?? 0);
     if (!$id) jsonResponse(['error' => 'ID required'], 400);
 
     $db = getDB();
-    $stmt = $db->prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?");
-    $stmt->execute([$id, $userId]);
+    $stmt = $db->prepare("DELETE FROM transactions WHERE id = ? AND wallet_id = ?");
+    $stmt->execute([$id, $walletId]);
 
     if ($stmt->rowCount() === 0) {
         jsonResponse(['error' => 'Transaction not found'], 404);
@@ -223,6 +234,7 @@ function deleteTransaction($userId) {
 }
 
 function getCashflowData($userId) {
+    global $walletId;
     $db = getDB();
     $month = $_GET['month'] ?? date('Y-m');
 
@@ -232,11 +244,11 @@ function getCashflowData($userId) {
             type,
             SUM(amount) as total
         FROM transactions
-        WHERE user_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
+        WHERE wallet_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
         GROUP BY date, type
         ORDER BY date
     ");
-    $stmt->execute([$userId, $month]);
+    $stmt->execute([$walletId, $month]);
     $rows = $stmt->fetchAll();
 
     $daily = [];
@@ -252,6 +264,7 @@ function getCashflowData($userId) {
 }
 
 function getComparisonData($userId) {
+    global $walletId;
     $db = getDB();
     $month = $_GET['month'] ?? date('Y-m');
     $prevMonth = date('Y-m', strtotime($month . '-01 -1 month'));
@@ -259,10 +272,10 @@ function getComparisonData($userId) {
     $stmt = $db->prepare("
         SELECT (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) as m, type, COALESCE(SUM(amount), 0) as total
         FROM transactions
-        WHERE user_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) IN (?, ?)
+        WHERE wallet_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) IN (?, ?)
         GROUP BY m, type
     ");
-    $stmt->execute([$userId, $month, $prevMonth]);
+    $stmt->execute([$walletId, $month, $prevMonth]);
     $rows = $stmt->fetchAll();
 
     $res = [
@@ -283,16 +296,17 @@ function getComparisonData($userId) {
 }
 
 function getTrendsData($userId) {
+    global $walletId;
     $db = getDB();
     $stmt = $db->prepare("
         SELECT (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) as month, SUM(amount) as expense
         FROM transactions
-        WHERE user_id = ? AND type = 'expense'
+        WHERE wallet_id = ? AND type = 'expense'
         GROUP BY month
         ORDER BY month DESC
         LIMIT 6
     ");
-    $stmt->execute([$userId]);
+    $stmt->execute([$walletId]);
     $rows = array_reverse($stmt->fetchAll());
     
     foreach ($rows as &$r) $r['expense'] = (float)$r['expense'];
@@ -301,6 +315,7 @@ function getTrendsData($userId) {
 }
 
 function getDashboardData($userId) {
+    global $walletId;
     $db = getDB();
     $month = $_GET['month'] ?? date('Y-m');
     $limit = (int)($_GET['limit'] ?? 20);
@@ -309,10 +324,10 @@ function getDashboardData($userId) {
     $stmt = $db->prepare("
         SELECT type, COALESCE(SUM(amount), 0) as total
         FROM transactions
-        WHERE user_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
+        WHERE wallet_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
         GROUP BY type
     ");
-    $stmt->execute([$userId, $month]);
+    $stmt->execute([$walletId, $month]);
     $summaryRows = $stmt->fetchAll();
     
     $income = 0;
@@ -327,10 +342,10 @@ function getDashboardData($userId) {
     $stmt = $db->prepare("
         SELECT type, COALESCE(SUM(amount), 0) as total
         FROM transactions
-        WHERE user_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
+        WHERE wallet_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
         GROUP BY type
     ");
-    $stmt->execute([$userId, $lastMonth]);
+    $stmt->execute([$walletId, $lastMonth]);
     $lastRows = $stmt->fetchAll();
     
     $lastIncome = 0;
@@ -345,13 +360,13 @@ function getDashboardData($userId) {
         SELECT c.name as category_name, COALESCE(SUM(t.amount), 0) as total, c.color, c.emoji
         FROM transactions t
         JOIN categories c ON t.category_id = c.id
-        WHERE t.user_id = ? 
+        WHERE t.wallet_id = ? 
         AND t.type = 'expense'
         AND (CASE WHEN DAY(t.transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(t.transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(t.transaction_date, '%Y-%m') END) = ?
         GROUP BY c.id, c.name, c.color, c.emoji
         ORDER BY total DESC
     ");
-    $stmt->execute([$userId, $month]);
+    $stmt->execute([$walletId, $month]);
     $chartRows = $stmt->fetchAll();
     foreach ($chartRows as &$r) {
         $r['total'] = (float)$r['total'];
@@ -363,11 +378,11 @@ function getDashboardData($userId) {
             FROM transactions t
             JOIN categories c ON t.category_id = c.id
             LEFT JOIN categories pc ON c.parent_id = pc.id
-            WHERE t.user_id = ?
+            WHERE t.wallet_id = ?
             AND (CASE WHEN DAY(t.transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(t.transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(t.transaction_date, '%Y-%m') END) = ?
             ORDER BY t.transaction_date DESC, t.created_at DESC LIMIT " . $limit;
     $stmt = $db->prepare($sql);
-    $stmt->execute([$userId, $month]);
+    $stmt->execute([$walletId, $month]);
     $transactions = $stmt->fetchAll();
     foreach ($transactions as &$t) {
         $t['amount'] = (float)$t['amount'];

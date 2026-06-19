@@ -276,6 +276,11 @@ try {
         echo json_encode(['step' => 'Categories already seeded, skipped']) . "\n";
     }
 
+    // Run SaaS Migration for the new tables and relationships
+    ob_start();
+    require_once __DIR__ . '/migrate_saas.php';
+    ob_end_clean();
+
     echo json_encode(['success' => true, 'message' => 'Database initialized successfully! 🚀']) . "\n";
 
 } catch (PDOException $e) {

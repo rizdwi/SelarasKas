@@ -186,3 +186,35 @@ function jsonResponse($data, $code = 200) {
 function getInput() {
     return json_decode(file_get_contents('php://input'), true) ?? [];
 }
+
+function requireActiveWallet($userId) {
+    if (isset($_SESSION['active_wallet_id'])) {
+        $db = getDB();
+        $stmt = $db->prepare("SELECT wallet_id FROM wallet_members WHERE wallet_id = ? AND user_id = ?");
+        $stmt->execute([$_SESSION['active_wallet_id'], $userId]);
+        if ($stmt->fetch()) {
+            return $_SESSION['active_wallet_id'];
+        }
+    }
+    
+    $db = getDB();
+    $stmt = $db->prepare("
+        SELECT w.id 
+        FROM wallets w
+        JOIN wallet_members wm ON w.id = wm.wallet_id
+        WHERE wm.user_id = ?
+        ORDER BY w.type ASC, w.id ASC
+        LIMIT 1
+    ");
+    $stmt->execute([$userId]);
+    $wallet = $stmt->fetch();
+    
+    if ($wallet) {
+        $_SESSION['active_wallet_id'] = $wallet['id'];
+        return $wallet['id'];
+    }
+    
+    http_response_code(403);
+    echo json_encode(['error' => 'Tidak ada dompet yang aktif.']);
+    exit;
+}

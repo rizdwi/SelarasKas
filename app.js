@@ -433,7 +433,7 @@
         checkBiometricAvailability();
     }
 
-    function showApp(user) {
+    async function showApp(user) {
         currentUser = user;
         document.getElementById('authScreen').classList.remove('active');
         document.getElementById('mainApp').classList.add('active');
@@ -442,6 +442,7 @@
         
         applyTheme(user.theme || 'dark');
 
+        await loadWallets();
         loadDashboard();
         setTimeout(() => lucide.createIcons(), 50);
     }
@@ -1017,6 +1018,160 @@
         });
     }
 
+    // ===== WALLETS =====
+    async function loadWallets() {
+        try {
+            const data = await api('wallets.php?action=list');
+            if (data && data.wallets) {
+                const switcher = document.getElementById('walletSwitcher');
+                if (switcher) {
+                    switcher.innerHTML = '';
+                    let activeName = 'Dompet';
+                    data.wallets.forEach(w => {
+                        const opt = document.createElement('option');
+                        opt.value = w.id;
+                        let typeIcon = w.type === 'shared' ? '👥 ' : '👤 ';
+                        let roleIcon = w.role === 'owner' ? '👑 ' : '';
+                        opt.textContent = typeIcon + roleIcon + w.name;
+                        if (w.is_active) {
+                            opt.selected = true;
+                            activeName = w.name;
+                        }
+                        switcher.appendChild(opt);
+                    });
+                    
+                    switcher.onchange = async (e) => {
+                        const newWalletId = e.target.value;
+                        if (!newWalletId) return;
+                        try {
+                            const res = await api('wallets.php?action=switch', {
+                                method: 'POST',
+                                body: JSON.stringify({ wallet_id: newWalletId })
+                            });
+                            if (res && res.success) {
+                                loadDashboard();
+                                const activePage = document.querySelector('.nav-item.active').dataset.page;
+                                if (activePage === 'analytics') loadAnalytics();
+                                if (activePage === 'budget') loadBudgets();
+                                if (activePage === 'savings') loadSavings();
+                            } else {
+                                alert(res.error || 'Gagal pindah dompet');
+                            }
+                        } catch (err) {
+                            alert('Terjadi kesalahan saat pindah dompet');
+                        }
+                    };
+                }
+            }
+        } catch (err) {
+            console.error('Wallet load error:', err);
+        }
+    }
+
+    // ===== GAMIFICATION & AI CHAT =====
+    async function loadGamification() {
+        try {
+            const data = await api('gamification.php?action=status');
+            if (data && data.success) {
+                const fill = document.getElementById('healthBarFill');
+                const val = document.getElementById('healthScoreValue');
+                const pts = document.getElementById('pointsValue');
+                
+                if (fill && val && pts) {
+                    fill.style.width = data.health_score + '%';
+                    val.textContent = data.health_score + '/100';
+                    pts.textContent = data.points;
+                    
+                    if (data.health_score < 40) {
+                        fill.style.background = 'linear-gradient(90deg, #ef4444, #f87171)';
+                        val.style.color = '#ef4444';
+                    } else if (data.health_score < 70) {
+                        fill.style.background = 'linear-gradient(90deg, #f59e0b, #fbbf24)';
+                        val.style.color = '#f59e0b';
+                    } else {
+                        fill.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
+                        val.style.color = '#10b981';
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Gamification error:', err);
+        }
+    }
+
+    function initAIChat() {
+        const fab = document.getElementById('aiChatFab');
+        const panel = document.getElementById('aiChatPanel');
+        const closeBtn = document.getElementById('aiChatClose');
+        const form = document.getElementById('aiChatForm');
+        const input = document.getElementById('aiChatInput');
+        const messages = document.getElementById('aiChatMessages');
+
+        if (!fab || !panel) return;
+
+        fab.addEventListener('click', () => {
+            panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+            if (panel.style.display === 'flex') {
+                input.focus();
+                messages.scrollTop = messages.scrollHeight;
+            }
+        });
+
+        closeBtn.addEventListener('click', () => {
+            panel.style.display = 'none';
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = input.value.trim();
+            if (!text) return;
+
+            // Simple tier check for AI Chat
+            if (currentUser && currentUser.subscription_tier === 'free') {
+                showToast('Fitur SelarasAI eksklusif untuk pengguna Premium/Pro. Silakan upgrade!');
+                return;
+            }
+
+            const userMsg = document.createElement('div');
+            userMsg.className = 'user-message';
+            userMsg.style.cssText = 'background: #f59e0b; color: #fff; padding: 10px 14px; border-radius: 12px; border-top-right-radius: 4px; font-size: 14px; align-self: flex-end; max-width: 85%;';
+            userMsg.textContent = text;
+            messages.appendChild(userMsg);
+            
+            input.value = '';
+            input.disabled = true;
+            messages.scrollTop = messages.scrollHeight;
+
+            try {
+                const res = await api('ai_chat.php?action=chat', {
+                    method: 'POST',
+                    body: JSON.stringify({ message: text })
+                });
+
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'ai-message';
+                aiMsg.style.cssText = 'background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); padding: 10px 14px; border-radius: 12px; border-top-left-radius: 4px; color: #e2e8f0; font-size: 14px; align-self: flex-start; max-width: 85%;';
+                
+                if (res && res.reply) {
+                    aiMsg.textContent = res.reply;
+                } else {
+                    aiMsg.textContent = 'Maaf, terjadi kesalahan saat menghubungi AI.';
+                }
+                messages.appendChild(aiMsg);
+            } catch (err) {
+                const errMsg = document.createElement('div');
+                errMsg.className = 'ai-message';
+                errMsg.style.cssText = 'background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px 14px; border-radius: 12px; border-top-left-radius: 4px; color: #e2e8f0; font-size: 14px; align-self: flex-start; max-width: 85%;';
+                errMsg.textContent = 'Gagal mengirim pesan.';
+                messages.appendChild(errMsg);
+            }
+
+            input.disabled = false;
+            input.focus();
+            messages.scrollTop = messages.scrollHeight;
+        });
+    }
+
     // ===== DASHBOARD =====
     async function loadDashboard() {
         try {
@@ -1028,6 +1183,8 @@
             renderBalance(data.summary);
             renderSpendingChart(data.chart);
             renderTransactions(document.getElementById('transactionsList'), data.transactions);
+            
+            await loadGamification();
         } catch (err) {
             console.error('Dashboard error:', err);
         }
@@ -1155,7 +1312,7 @@
                 html += `<div class="transaction-date-header">${dateLabel}</div>`;
             }
             const isIncome = tx.type === 'income';
-            const catName = tx.parent_category_name ? tx.parent_category_name : tx.category_name;
+            const catName = tx.parent_category_name || tx.category_name || 'Lainnya';
             const iconName = tx.emoji || 'box';
             const iconColor = tx.color || '#94a3b8';
             const bg = tx.color ? tx.color + '18' : 'rgba(148,163,184,0.1)';
@@ -1165,7 +1322,7 @@
                     <div class="transaction-content">
                         <div class="transaction-icon" style="background:${bg}; display:flex; align-items:center; justify-content:center;">${renderEmojiOrIcon(iconName, '20px', iconColor)}</div>
                         <div class="transaction-details">
-                            <span class="transaction-name">${escapeHTML(tx.description || tx.category_name)}</span>
+                            <span class="transaction-name">${escapeHTML(tx.description || tx.category_name || 'Transaksi')}</span>
                             <span class="transaction-category">${escapeHTML(catName)}</span>
                         </div>
                         <div class="transaction-amount-col">
@@ -1670,6 +1827,11 @@
     async function exportAnalyticsAsPng() {
         const btn = document.getElementById('exportReportBtn');
         if (!btn) return;
+
+        if (currentUser && currentUser.subscription_tier === 'free') {
+            showToast('Export Laporan eksklusif untuk Premium/Pro. Upgrade sekarang!');
+            return;
+        }
 
         if (typeof html2canvas === 'undefined') {
             showToast('Library export belum termuat. Coba refresh halaman.');
@@ -2204,6 +2366,7 @@
         initOfflineMode();
         loadAuthConfig();
         initProfileFeatures();
+        initAIChat();
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').then(reg => {

@@ -6,6 +6,7 @@ require_once __DIR__ . '/config.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $userId = requireAuth();
+$walletId = requireActiveWallet($userId);
 
 switch ($method) {
     case 'GET':
@@ -26,8 +27,8 @@ switch ($method) {
 
 function getSavings($userId) {
     $db = getDB();
-    $stmt = $db->prepare("SELECT * FROM savings_goals WHERE user_id = ? ORDER BY created_at DESC");
-    $stmt->execute([$userId]);
+    $stmt = $db->prepare("SELECT * FROM savings_goals WHERE wallet_id = ? ORDER BY created_at DESC");
+    $stmt->execute([$walletId]);
     $goals = $stmt->fetchAll();
 
     // Calculate total saved
@@ -56,10 +57,10 @@ function createSaving($userId) {
 
     $db = getDB();
     $stmt = $db->prepare("
-        INSERT INTO savings_goals (user_id, title, emoji, target_amount, current_amount, deadline, color)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO savings_goals (user_id, wallet_id, title, emoji, target_amount, current_amount, deadline, color)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$userId, $title, $emoji, $target, $current, $deadline, $color]);
+    $stmt->execute([$userId, $walletId, $title, $emoji, $target, $current, $deadline, $color]);
 
     jsonResponse(['success' => true, 'id' => (int)$db->lastInsertId()], 201);
 }
@@ -73,8 +74,8 @@ function updateSaving($userId) {
     $db = getDB();
 
     // Check ownership
-    $stmt = $db->prepare("SELECT * FROM savings_goals WHERE id = ? AND user_id = ?");
-    $stmt->execute([$id, $userId]);
+    $stmt = $db->prepare("SELECT * FROM savings_goals WHERE id = ? AND wallet_id = ?");
+    $stmt->execute([$id, $walletId]);
     $goal = $stmt->fetch();
 
     if (!$goal) jsonResponse(['error' => 'Goal not found'], 404);
@@ -94,9 +95,9 @@ function updateSaving($userId) {
 
     $stmt = $db->prepare("
         UPDATE savings_goals SET title=?, emoji=?, target_amount=?, current_amount=?, deadline=?, color=?
-        WHERE id=? AND user_id=?
+        WHERE id=? AND wallet_id=?
     ");
-    $stmt->execute([$title, $emoji, $target, $current, $deadline, $color, $id, $userId]);
+    $stmt->execute([$title, $emoji, $target, $current, $deadline, $color, $id, $walletId]);
 
     jsonResponse(['success' => true]);
 }
@@ -106,8 +107,8 @@ function deleteSaving($userId) {
     if (!$id) jsonResponse(['error' => 'ID required'], 400);
 
     $db = getDB();
-    $stmt = $db->prepare("DELETE FROM savings_goals WHERE id = ? AND user_id = ?");
-    $stmt->execute([$id, $userId]);
+    $stmt = $db->prepare("DELETE FROM savings_goals WHERE id = ? AND wallet_id = ?");
+    $stmt->execute([$id, $walletId]);
 
     if ($stmt->rowCount() === 0) {
         jsonResponse(['error' => 'Goal not found'], 404);
