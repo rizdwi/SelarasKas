@@ -15,12 +15,12 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS
     exit;
 }
 
-// Database Configuration (Supports Environment Variables for Vercel/Cloud Deployments)
-define('DB_HOST', getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? 'mysql-dbas-jkt-001.sumobase.my.id'));
-define('DB_PORT', getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '63306'));
-define('DB_NAME', getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'dbca8d8138feed42c6'));
-define('DB_USER', getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'uqWmml0iC7aDfCZmw'));
-define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : ($_ENV['DB_PASS'] ?? '07726fa720454a1dbb2a4648'));
+// Database Configuration — Hardcoded for SumoPod
+define('DB_HOST', 'mysql-dbas-jkt-001.sumobase.my.id');
+define('DB_PORT', '63306');
+define('DB_NAME', 'dbca8d8138feed42c6');
+define('DB_USER', 'uqWmml0iC7aDfCZmw');
+define('DB_PASS', '07726fa720454a1dbb2a4648');
 
 // OAuth Credentials (Supports Environment Variables)
 define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: '261568703120-i2p77mrsoo9o5iore6l6jqhraer48hpt.apps.googleusercontent.com');
