@@ -50,14 +50,6 @@ function getDB() {
                 PDO::ATTR_PERSISTENT => true,
             ];
 
-            // Enable SSL for cloud databases (like TiDB Serverless)
-            if (defined('PDO::MYSQL_ATTR_SSL_CA') && DB_HOST !== 'localhost' && DB_HOST !== '127.0.0.1') {
-                $options[PDO::MYSQL_ATTR_SSL_CA] = true;
-                if (defined('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')) {
-                    $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
-                }
-            }
-
             $pdo = new PDO(
                 "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4",
                 DB_USER,
