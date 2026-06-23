@@ -2847,7 +2847,7 @@
         },
         contactAdmin: function(type) {
             const adminWA = '6281385084327';
-            const adminEmail = 'rizkidwisandy@gmail.com';
+            const adminEmail = 'rizkidwisandy1@gmail.com';
             
             if (type === 'wa') {
                 const msg = 'Halo Admin SelarasKas, saya butuh bantuan.';
