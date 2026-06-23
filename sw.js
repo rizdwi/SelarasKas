@@ -1,10 +1,9 @@
-const CACHE_NAME = 'selaraskas-v36';
+const CACHE_NAME = 'selaraskas-v38';
 const STATIC_ASSETS = [
     './',
     './index.html',
     './manifest.json',
-    'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap',
-    'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf'
+    // ponytail: removed Google Fonts - system fonts instead
 ];
 
 self.addEventListener('install', event => {
@@ -72,5 +71,41 @@ self.addEventListener('fetch', event => {
                 return res;
             })
             .catch(() => caches.match(req))
+    );
+});
+
+// Handle incoming push notifications
+self.addEventListener('push', event => {
+    const data = event.data ? event.data.json() : {};
+    const title = data.title || 'SelarasKas';
+    const options = {
+        body: data.body || 'Ada notifikasi baru',
+        icon: './icons/icon-192x192.png',
+        badge: './icons/icon-192x192.png',
+        vibrate: [100, 50, 100],
+        data: {
+            url: data.url || './',
+            dateOfArrival: Date.now()
+        },
+        actions: data.actions || []
+    };
+    event.waitUntil(
+        self.registration.showNotification(title, options)
+    );
+});
+
+// Handle notification click
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+    const url = event.notification.data?.url || './';
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+            for (const client of windowClients) {
+                if (client.url.includes(self.location.origin) && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            return clients.openWindow(url);
+        })
     );
 });

@@ -22,6 +22,7 @@
     const SAVINGS_COLORS = ['#818cf8','#34d399','#fbbf24','#ff6b6b','#f472b6','#38bdf8','#a78bfa','#fb923c'];
 
     let csrfToken = null;
+    let vapidPublicKey = null;
 
     // ===== API CLIENT =====
     async function api(endpoint, options = {}) {
@@ -118,84 +119,38 @@
         return name;
     }
 
-    const LUCIDE_SVGs = {
-        'house': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>`,
-        'zap': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>`,
-        'droplets': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-droplets"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/></svg>`,
-        'wifi': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wifi"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></svg>`,
-        'key': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg>`,
-        'trash-2': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
-        'wrench': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wrench"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></svg>`,
-        'hammer': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hammer"><path d="m15 12-9.373 9.373a1 1 0 0 1-3.001-3L12 9"/><path d="m18 15 4-4"/><path d="m21.5 11.5-1.914-1.914A2 2 0 0 1 19 8.172v-.344a2 2 0 0 0-.586-1.414l-1.657-1.657A6 6 0 0 0 12.516 3H9l1.243 1.243A6 6 0 0 1 12 8.485V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5"/></svg>`,
-        'baby': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-baby"><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/><path d="M15 12h.01"/><path d="M19.38 6.813A9 9 0 0 1 20.8 10.2a2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"/><path d="M9 12h.01"/></svg>`,
-        'book-open': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>`,
-        'pen-tool': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pen-tool"><path d="M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z"/><path d="m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18"/><path d="m2.3 2.3 7.286 7.286"/><circle cx="11" cy="11" r="2"/></svg>`,
-        'book': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/></svg>`,
-        'shirt': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shirt"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>`,
-        'toy-brick': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-toy-brick"><rect width="18" height="12" x="3" y="8" rx="1"/><path d="M10 8V5c0-.6-.4-1-1-1H6a1 1 0 0 0-1 1v3"/><path d="M19 8V5c0-.6-.4-1-1-1h-3a1 1 0 0 0-1 1v3"/></svg>`,
-        'stethoscope': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-stethoscope"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg>`,
-        'utensils-crossed': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-utensils-crossed"><path d="m16 2-2.3 2.3a3 3 0 0 0 0 4.2l1.8 1.8a3 3 0 0 0 4.2 0L22 8"/><path d="M15 15 3.3 3.3a4.2 4.2 0 0 0 0 6l7.3 7.3c.7.7 2 .7 2.8 0L15 15Zm0 0 7 7"/><path d="m2.1 21.8 6.4-6.3"/><path d="m19 5-7 7"/></svg>`,
-        'carrot': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-carrot"><path d="M2.27 21.7s9.87-3.5 12.73-6.36a4.5 4.5 0 0 0-6.36-6.37C5.77 11.84 2.27 21.7 2.27 21.7zM8.64 14l-2.05-2.04M15.34 15l-2.46-2.46"/><path d="M22 9s-1.33-2-3.5-2C16.86 7 15 9 15 9s1.33 2 3.5 2S22 9 22 9z"/><path d="M15 2s-2 1.33-2 3.5S15 9 15 9s2-1.84 2-3.5C17 3.33 15 2 15 2z"/></svg>`,
-        'drumstick': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-drumstick"><path d="M15.4 15.63a7.875 6 135 1 1 6.23-6.23 4.5 3.43 135 0 0-6.23 6.23"/><path d="m8.29 12.71-2.6 2.6a2.5 2.5 0 1 0-1.65 4.65A2.5 2.5 0 1 0 8.7 18.3l2.59-2.59"/></svg>`,
-        'flame': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flame"><path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"/></svg>`,
-        'wheat': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wheat"><path d="M2 22 16 8"/><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z"/><path d="M11.47 17.47 13 19l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L5 19l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/><path d="M15.47 13.47 17 15l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L9 15l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/><path d="M19.47 9.47 21 11l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L13 11l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/></svg>`,
-        'cup-soda': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cup-soda"><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"/><path d="M5 8h14"/><path d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0"/><path d="m12 8 1-6h2"/></svg>`,
-        'car': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-car"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>`,
-        'fuel': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-fuel"><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0v-6.998a2 2 0 0 0-.59-1.42L18 5"/><path d="M14 21V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16"/><path d="M2 21h13"/><path d="M3 9h11"/></svg>`,
-        'circle-parking': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-parking"><circle cx="12" cy="12" r="10"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>`,
-        'navigation': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-navigation"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>`,
-        'bus': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bus"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>`,
-        'pizza': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pizza"><path d="m12 14-1 1"/><path d="m13.75 18.25-1.25 1.42"/><path d="M17.775 5.654a15.68 15.68 0 0 0-12.121 12.12"/><path d="M18.8 9.3a1 1 0 0 0 2.1 7.7"/><path d="M21.964 20.732a1 1 0 0 1-1.232 1.232l-18-5a1 1 0 0 1-.695-1.232A19.68 19.68 0 0 1 15.732 2.037a1 1 0 0 1 1.232.695z"/></svg>`,
-        'coffee': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-coffee"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/></svg>`,
-        'soup': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-soup"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z"/><path d="M7 21h10"/><path d="M19.5 12 22 6"/><path d="M16.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.73 1.62"/><path d="M11.25 3c.27.1.8.53.74 1.36-.05.83-.93 1.2-.98 2.02-.06.78.33 1.24.72 1.62"/><path d="M6.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.74 1.62"/></svg>`,
-        'utensils': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-utensils"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>`,
-        'glass-water': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-glass-water"><path d="M5.116 4.104A1 1 0 0 1 6.11 3h11.78a1 1 0 0 1 .994 1.105L17.19 20.21A2 2 0 0 1 15.2 22H8.8a2 2 0 0 1-2-1.79z"/><path d="M6 12a5 5 0 0 1 6 0 5 5 0 0 0 6 0"/></svg>`,
-        'cookie': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cookie"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/><path d="M11 17v.01"/><path d="M7 14v.01"/></svg>`,
-        'heart-pulse': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart-pulse"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/><path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg>`,
-        'hospital': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hospital"><path d="M12 7v4"/><path d="M14 21v-3a2 2 0 0 0-4 0v3"/><path d="M14 9h-4"/><path d="M18 11h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h2"/><path d="M18 21V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16"/></svg>`,
-        'pill': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pill"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>`,
-        'activity': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-activity"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>`,
-        'landmark': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-landmark"><path d="M10 18v-7"/><path d="M11.119 2.205a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949z"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M3 22h18"/><path d="M6 18v-7"/></svg>`,
-        'dumbbell': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dumbbell"><path d="M17.596 12.768a2 2 0 1 0 2.829-2.829l-1.768-1.767a2 2 0 0 0 2.828-2.829l-2.828-2.828a2 2 0 0 0-2.829 2.828l-1.767-1.768a2 2 0 1 0-2.829 2.829z"/><path d="m2.5 21.5 1.4-1.4"/><path d="m20.1 3.9 1.4-1.4"/><path d="M5.343 21.485a2 2 0 1 0 2.829-2.828l1.767 1.768a2 2 0 1 0 2.829-2.829l-6.364-6.364a2 2 0 1 0-2.829 2.829l1.768 1.767a2 2 0 0 0-2.828 2.829z"/><path d="m9.6 14.4 4.8-4.8"/></svg>`,
-        'party-popper': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-party-popper"><path d="M5.8 11.3 2 22l10.7-3.79"/><path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/><path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/><path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17"/><path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7"/><path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z"/></svg>`,
-        'film': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-film"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg>`,
-        'tv': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tv"><path d="m17 2-5 5-5-5"/><rect width="20" height="15" x="2" y="7" rx="2"/></svg>`,
-        'gamepad-2': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gamepad-2"><line x1="6" x2="10" y1="11" y2="11"/><line x1="8" x2="8" y1="9" y2="13"/><line x1="15" x2="15.01" y1="12" y2="12"/><line x1="18" x2="18.01" y1="10" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/></svg>`,
-        'plane': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plane"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>`,
-        'palette': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-palette"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"/><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/></svg>`,
-        'footprints': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-footprints"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/></svg>`,
-        'watch': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-watch"><path d="M12 10v2.2l1.6 1"/><path d="m16.13 7.66-.81-4.05a2 2 0 0 0-2-1.61h-2.68a2 2 0 0 0-2 1.61l-.78 4.05"/><path d="m7.88 16.36.8 4a2 2 0 0 0 2 1.61h2.72a2 2 0 0 0 2-1.61l.81-4.05"/><circle cx="12" cy="12" r="6"/></svg>`,
-        'washing-machine': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-washing-machine"><path d="M3 6h3"/><path d="M17 6h.01"/><rect width="18" height="20" x="3" y="2" rx="2"/><circle cx="12" cy="13" r="5"/><path d="M12 18a2.5 2.5 0 0 0 0-5 2.5 2.5 0 0 1 0-5"/></svg>`,
-        'box': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-box"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`,
-        'heart-handshake': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart-handshake"><path d="M19.414 14.414C21 12.828 22 11.5 22 9.5a5.5 5.5 0 0 0-9.591-3.676.6.6 0 0 1-.818.001A5.5 5.5 0 0 0 2 9.5c0 2.3 1.5 4 3 5.5l5.535 5.362a2 2 0 0 0 2.879.052 2.12 2.12 0 0 0-.004-3 2.124 2.124 0 1 0 3-3 2.124 2.124 0 0 0 3.004 0 2 2 0 0 0 0-2.828l-1.881-1.882a2.41 2.41 0 0 0-3.409 0l-1.71 1.71a2 2 0 0 1-2.828 0 2 2 0 0 1 0-2.828l2.823-2.762"/></svg>`,
-        'gift': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gift"><path d="M12 7v14"/><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"/><rect x="3" y="7" width="18" height="4" rx="1"/></svg>`,
-        'help-circle': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-help"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>`,
-        'wallet': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wallet"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>`,
-        'coins': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-coins"><path d="M13.744 17.736a6 6 0 1 1-7.48-7.48"/><path d="M15 6h1v4"/><path d="m6.134 14.768.866-.5 2 3.464"/><circle cx="16" cy="8" r="6"/></svg>`,
-        'laptop': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-laptop"><path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"/><path d="M20.054 15.987H3.946"/></svg>`,
-        'trending-up': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trending-up"><path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/></svg>`,
-        'target': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-target"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
-        'trophy': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trophy"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/><path d="M12 2a6 6 0 0 1 6 6v3a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z"/></svg>`,
-        'smartphone': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-smartphone"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>`,
-        'heart': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`,
-        'banknote': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-banknote"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>`,
-        'tag': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tag"><path d="M12.586 3h1.172a2 2 0 0 1 1.414.586l6.242 6.242a2 2 0 0 1 0 2.828l-6.242 6.242a2 2 0 0 1-2.828 0L6.002 12.65a2 2 0 0 1-.586-1.414V10.06a8 8 0 0 1 8-8z"/><circle cx="10" cy="10" r="1"/></svg>`,
-        'file-text': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
-        'calendar': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>`,
-        'flag': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flag"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>`,
-        'plus-circle': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus-circle"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>`,
-        'eye': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>`,
-        'eye-off': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`,
-        'piggy-bank': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-piggy-bank"><path d="M19 5c-1.5 0-2.8 1.4-3 2-1-.6-2.5-.5-3-1l-1.5 1.5c.5.5.4 2 .9 3-.6.2-2 1.5-2 3"/><path d="M9 19c-.5 0-1-.5-1-1v-2c0-.5.5-1 1-1h2v3Z"/><path d="M15 19c-.5 0-1-.5-1-1v-2c0-.5.5-1 1-1h2v3Z"/><path d="M20 9v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4Z"/><path d="M6 10h.01"/></svg>`
+        const LUCIDE_SVGs = {
+        // ponytail: minimal SVG set, emoji fallback handles the rest
+        'box': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>',
+        'eye': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>',
+        'eye-off': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>',
+        'home': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+        'wallet': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>',
+'banknote': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>',
+'tag': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.586 3h1.172a2 2 0 0 1 1.414.586l6.242 6.242a2 2 0 0 1 0 2.828l-6.242 6.242a2 2 0 0 1-2.828 0L6.002 12.65a2 2 0 0 1-.586-1.414V10.06a8 8 0 0 1 8-8z"/><circle cx="10" cy="10" r="1"/></svg>',
+'plus-circle': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>',
+'trash-2': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+'calendar': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>',
+'help-circle': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>',
+'file-text': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
+'flag': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>',
+'trending-up': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/></svg>',
+'piggy-bank': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 5c-1.5 0-2.8 1.4-3 2-1-.6-2.5-.5-3-1l-1.5 1.5c.5.5.4 2 .9 3-.6.2-2 1.5-2 3"/><path d="M9 19c-.5 0-1-.5-1-1v-2c0-.5.5-1 1-1h2v3Z"/><path d="M15 19c-.5 0-1-.5-1-1v-2c0-.5.5-1 1-1h2v3Z"/><path d="M20 9v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4Z"/><path d="M6 10h.01"/></svg>',
+'target': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+'trophy': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/><path d="M12 2a6 6 0 0 1 6 6v3a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z"/></svg>',
+'heart': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>',
+'gift': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 7v14"/><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"/><rect x="3" y="7" width="18" height="4" rx="1"/></svg>',
+'key': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg>',
+'wifi': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></svg>',
+'zap': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>',
+'coins': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13.744 17.736a6 6 0 1 1-7.48-7.48"/><path d="M15 6h1v4"/><path d="m6.134 14.768.866-.5 2 3.464"/><circle cx="16" cy="8" r="6"/></svg>',
+'plane': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>',
+'car': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>',
+'house': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+'laptop': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"/><path d="M20.054 15.987H3.946"/></svg>',
+'smartphone': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>'
     };
-
-    // Aliases
     LUCIDE_SVGs['home'] = LUCIDE_SVGs['house'];
-    LUCIDE_SVGs['Rumah Tangga'] = LUCIDE_SVGs['house'];
-
-    // Emoji Fallback Mappings for Maximum DB Compatibility
-    LUCIDE_SVGs['🏠'] = LUCIDE_SVGs['house'];
-    LUCIDE_SVGs['💡'] = LUCIDE_SVGs['zap'];
     LUCIDE_SVGs['💧'] = LUCIDE_SVGs['droplets'];
     LUCIDE_SVGs['📶'] = LUCIDE_SVGs['wifi'];
     LUCIDE_SVGs['🔑'] = LUCIDE_SVGs['key'];
@@ -879,6 +834,7 @@
                     // Save email for biometric login
                     localStorage.setItem('selaraskas_last_email', loginEmail);
                     showApp(data.user);
+                    promptPushNotification();
                 }
             } catch (err) {
                 // Check if server says needs verification (403)
@@ -1027,6 +983,7 @@
                 if (switcher) {
                     switcher.innerHTML = '';
                     let activeName = 'Dompet';
+                    let myWalletRole = '';
                     data.wallets.forEach(w => {
                         const opt = document.createElement('option');
                         opt.value = w.id;
@@ -1036,9 +993,16 @@
                         if (w.is_active) {
                             opt.selected = true;
                             activeName = w.name;
+                            myWalletRole = w.role;
                         }
                         switcher.appendChild(opt);
                     });
+                    
+                    // Sembunyikan tombol kelola jika bukan owner
+                    const manageBtn = document.getElementById('manageWalletBtn');
+                    if (manageBtn) {
+                        manageBtn.style.display = (myWalletRole === 'owner') ? 'flex' : 'none';
+                    }
                     
                     switcher.onchange = async (e) => {
                         const newWalletId = e.target.value;
@@ -1842,9 +1806,14 @@
             return;
         }
 
+        // ponytail: load html2canvas on demand instead of at page load
         if (typeof html2canvas === 'undefined') {
-            showToast('Library export belum termuat. Coba refresh halaman.');
-            return;
+            await new Promise((resolve, reject) => {
+                var s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+                s.onload = resolve; s.onerror = reject;
+                document.head.appendChild(s);
+            });
         }
 
         btn.classList.add('loading');
@@ -1984,9 +1953,22 @@
             return;
         }
 
-        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
-            showToast('Library export belum termuat. Coba refresh halaman.');
-            return;
+        // ponytail: load html2canvas + jsPDF on demand
+        if (typeof html2canvas === 'undefined') {
+            await new Promise((resolve, reject) => {
+                var s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+                s.onload = resolve; s.onerror = reject;
+                document.head.appendChild(s);
+            });
+        }
+        if (typeof window.jspdf === 'undefined') {
+            await new Promise((resolve, reject) => {
+                var s = document.createElement('script');
+                s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                s.onload = resolve; s.onerror = reject;
+                document.head.appendChild(s);
+            });
         }
 
         btn.classList.add('loading');
@@ -2307,12 +2289,16 @@
                 const file = e.target.files[0];
                 const formData = new FormData();
                 formData.append('avatar', file);
+                formData.append('csrf_token', csrfToken);
                 
                 showToast('Mengupload foto...');
                 try {
                     // Bypass API function because we need multipart/form-data
                     const res = await fetch(`${API}/profile.php?action=upload_photo`, {
                         method: 'POST',
+                        headers: {
+                            'X-CSRF-Token': csrfToken
+                        },
                         body: formData
                     });
                     const data = await res.json();
@@ -2393,6 +2379,27 @@
             });
         }
 
+        // Support Modal
+        const btnSupport = document.getElementById('settingSupport');
+        if (btnSupport) {
+            btnSupport.addEventListener('click', () => {
+                if (window.Selaraskas && window.Selaraskas.openSupportModal) {
+                    window.Selaraskas.openSupportModal();
+                }
+            });
+        }
+        
+        const supportInput = document.getElementById('supportChatInput');
+        if (supportInput) {
+            supportInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    if (window.Selaraskas && window.Selaraskas.sendSupportMessage) {
+                        window.Selaraskas.sendSupportMessage();
+                    }
+                }
+            });
+        }
+
         // Biometric Settings Toggle & Buttons
         const bioItem = document.getElementById('settingBiometric');
         const bioToggle = document.getElementById('biometricToggleBtn');
@@ -2443,6 +2450,167 @@
         }
     }
 
+    // ===== PUSH NOTIFICATIONS =====
+
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
+    function updatePushToggleUI(isActive) {
+        const toggleBtn = document.getElementById('pushNotifToggleBtn');
+        const label = document.getElementById('pushNotifLabel');
+        if (toggleBtn) {
+            if (isActive) {
+                toggleBtn.classList.add('active');
+                toggleBtn.style.background = '#22c55e';
+                const knob = toggleBtn.querySelector('.toggle-knob');
+                if (knob) knob.style.transform = 'translateX(20px)';
+            } else {
+                toggleBtn.classList.remove('active');
+                toggleBtn.style.background = 'rgba(255,255,255,0.1)';
+                const knob = toggleBtn.querySelector('.toggle-knob');
+                if (knob) knob.style.transform = 'translateX(0)';
+            }
+        }
+        if (label) {
+            label.textContent = isActive ? 'Aktif' : 'Tidak Aktif';
+        }
+    }
+
+    async function initPushNotification() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            const item = document.getElementById('settingPushNotif');
+            if (item) item.style.display = 'none';
+            return;
+        }
+
+        try {
+            const vapidData = await api('push.php?action=vapid_public_key');
+            vapidPublicKey = vapidData.public_key;
+        } catch (err) {
+            console.error('Failed to fetch VAPID key:', err);
+            return;
+        }
+
+        try {
+            const statusData = await api('push.php?action=status');
+            updatePushToggleUI(statusData.subscribed === true);
+        } catch (err) {
+            console.error('Failed to check push status:', err);
+        }
+
+        // Toggle event handler
+        const pushItem = document.getElementById('settingPushNotif');
+        const pushToggle = document.getElementById('pushNotifToggleBtn');
+
+        async function handlePushToggle() {
+            const isActive = pushToggle && pushToggle.classList.contains('active');
+            if (isActive) {
+                await unsubscribePush();
+            } else {
+                await subscribePush();
+            }
+        }
+
+        if (pushItem) {
+            pushItem.addEventListener('click', (e) => {
+                if (e.target.closest('.push-notif-toggle')) return;
+                handlePushToggle();
+            });
+        }
+        if (pushToggle) {
+            pushToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                handlePushToggle();
+            });
+        }
+    }
+
+    async function subscribePush() {
+        if (!('Notification' in window)) {
+            showToast('Browser tidak mendukung notifikasi');
+            return;
+        }
+
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                showToast('Izin notifikasi ditolak');
+                return;
+            }
+
+            const reg = await navigator.serviceWorker.ready;
+            const subscription = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+            });
+
+            const subJSON = subscription.toJSON();
+            await api('push.php?action=subscribe', {
+                method: 'POST',
+                body: JSON.stringify({
+                    endpoint: subJSON.endpoint,
+                    keys: {
+                        p256dh: subJSON.keys.p256dh,
+                        auth: subJSON.keys.auth
+                    }
+                })
+            });
+
+            updatePushToggleUI(true);
+            showToast('Notifikasi berhasil diaktifkan! \uD83D\uDD14');
+        } catch (err) {
+            console.error('Push subscribe error:', err);
+            showToast(err.message || 'Gagal mengaktifkan notifikasi');
+        }
+    }
+
+    async function unsubscribePush() {
+        try {
+            const reg = await navigator.serviceWorker.ready;
+            const subscription = await reg.pushManager.getSubscription();
+            if (subscription) {
+                const endpoint = subscription.endpoint;
+                await subscription.unsubscribe();
+                await api('push.php?action=unsubscribe', {
+                    method: 'POST',
+                    body: JSON.stringify({ endpoint: endpoint })
+                });
+            }
+
+            updatePushToggleUI(false);
+            showToast('Notifikasi dinonaktifkan');
+        } catch (err) {
+            console.error('Push unsubscribe error:', err);
+            showToast(err.message || 'Gagal menonaktifkan notifikasi');
+        }
+    }
+
+    function promptPushNotification() {
+        if (localStorage.getItem('pushPromptShown')) return;
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        if (Notification.permission === 'granted') {
+            localStorage.setItem('pushPromptShown', '1');
+            return;
+        }
+        if (Notification.permission === 'denied') {
+            localStorage.setItem('pushPromptShown', '1');
+            return;
+        }
+
+        setTimeout(() => {
+            localStorage.setItem('pushPromptShown', '1');
+            showToast('\uD83D\uDD14 Aktifkan Push Notifikasi di Profil untuk menerima update transaksi!');
+        }, 3000);
+    }
+
     async function loadAuthConfig() {
         try {
             const data = await api('auth.php?action=config');
@@ -2471,6 +2639,7 @@
         initOfflineMode();
         loadAuthConfig();
         initProfileFeatures();
+        initPushNotification();
         initAIChat();
 
         if ('serviceWorker' in navigator) {
@@ -2511,6 +2680,88 @@
         // Expose for inline onclick
         window.Selaraskas = {
         showBudgetForm, deleteTransaction, deleteSaving, deleteBudget, showAddToSaving, showScanReceiptForm, registerBiometric,
+        openWalletMembers: async function() {
+            const walletId = document.getElementById('walletSwitcher').value;
+            if (!walletId) return;
+            const html = `
+                <div style="display:flex; gap:8px; margin-bottom:16px;">
+                    <input type="email" id="inviteEmail" class="form-input" placeholder="Email teman..." style="flex:1">
+                    <button class="btn btn-primary" onclick="window.Selaraskas.inviteWalletMember(${walletId})">Undang</button>
+                </div>
+                <div id="walletMembersList" style="display:flex; flex-direction:column; gap:12px;">
+                    <div style="text-align:center; color:var(--text-secondary); padding:20px;">Memuat anggota...</div>
+                </div>
+            `;
+            openModal('Kelola Anggota Dompet', html);
+            window.Selaraskas.loadWalletMembers(walletId);
+        },
+        loadWalletMembers: async function(walletId) {
+            const listDiv = document.getElementById('walletMembersList');
+            if (!listDiv) return;
+            try {
+                const res = await api('wallets.php?action=list_members&wallet_id=' + walletId);
+                if (res && res.success && res.members) {
+                    listDiv.innerHTML = '';
+                    res.members.forEach(m => {
+                        let roleBadge = m.role === 'owner' ? '<span style="background:var(--color-primary); color:#fff; font-size:10px; padding:2px 6px; border-radius:12px;">Owner</span>' : '<span style="background:rgba(255,255,255,0.1); font-size:10px; padding:2px 6px; border-radius:12px;">' + escapeHTML(m.role) + '</span>';
+                        let deleteBtn = (res.my_role === 'owner' && m.id !== window.currentUserId) ? 
+                            `<button onclick="window.Selaraskas.removeWalletMember(${parseInt(walletId)}, ${parseInt(m.id)})" style="background:var(--color-danger); color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:12px; cursor:pointer;">Hapus</button>` : '';
+                        
+                        listDiv.innerHTML += `
+                            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px;">
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div class="avatar" style="width:32px; height:32px; font-size:14px;"><span>${escapeHTML(m.avatar_initial || '?')}</span></div>
+                                    <div>
+                                        <div style="font-size:14px; font-weight:600;">${escapeHTML(m.name)} ${roleBadge}</div>
+                                        <div style="font-size:12px; color:var(--text-secondary);">${escapeHTML(m.email)}</div>
+                                    </div>
+                                </div>
+                                ${deleteBtn}
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {
+                listDiv.innerHTML = `<div style="color:var(--color-danger); text-align:center;">Gagal memuat: ${err.message}</div>`;
+            }
+        },
+        inviteWalletMember: async function(walletId) {
+            const emailInput = document.getElementById('inviteEmail');
+            const email = emailInput.value.trim();
+            if (!email) return alert('Masukkan email');
+            try {
+                const res = await api('wallets.php?action=invite', {
+                    method: 'POST',
+                    body: JSON.stringify({ wallet_id: walletId, email: email })
+                });
+                if (res && res.success) {
+                    showToast('Berhasil mengundang anggota');
+                    emailInput.value = '';
+                    window.Selaraskas.loadWalletMembers(walletId);
+                } else {
+                    alert(res.error || 'Gagal mengundang');
+                }
+            } catch (err) {
+                alert(err.message || 'Gagal mengundang anggota');
+            }
+        },
+        removeWalletMember: async function(walletId, userId) {
+            if (!confirm('Yakin ingin mengeluarkan anggota ini dari dompet?')) return;
+            try {
+                const res = await api('wallets.php?action=remove_member', {
+                    method: 'POST',
+                    body: JSON.stringify({ wallet_id: walletId, user_id: userId })
+                });
+                if (res && res.success) {
+                    showToast('Anggota dikeluarkan');
+                    window.Selaraskas.loadWalletMembers(walletId);
+                } else {
+                    alert(res.error || 'Gagal mengeluarkan');
+                }
+            } catch (err) {
+                alert(err.message || 'Gagal mengeluarkan anggota');
+            }
+        },
         deleteBiometricCred: async function(id) {
             if (!confirm('Hapus sidik jari ini?')) return;
             try {
@@ -2522,6 +2773,87 @@
                 loadBiometricSettings();
             } catch (err) {
                 showToast(err.message || 'Gagal menghapus');
+            }
+        },
+        openSupportModal: function() {
+            document.getElementById('modalSupport').classList.add('active');
+            setTimeout(() => {
+                document.getElementById('supportChatInput').focus();
+            }, 100);
+        },
+        closeSupportModal: function() {
+            document.getElementById('modalSupport').classList.remove('active');
+        },
+        sendSupportMessage: async function() {
+            const input = document.getElementById('supportChatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const chatArea = document.getElementById('supportChatArea');
+            chatArea.innerHTML += `
+                <div class="chat-message user-message" style="display:flex; gap:10px; align-items:flex-end; justify-content:flex-end;">
+                    <div class="chat-bubble" style="background:var(--color-primary); color:white; padding:10px 14px; border-radius:12px 12px 0 12px; font-size:14px; line-height:1.4; box-shadow:0 2px 5px rgba(0,0,0,0.1); max-width:85%;">
+                        ${escapeHTML(msg)}
+                    </div>
+                </div>
+            `;
+            input.value = '';
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            const typingId = 'typing-' + Date.now();
+            chatArea.innerHTML += `
+                <div id="${typingId}" class="chat-message ai-message" style="display:flex; gap:10px; align-items:flex-start;">
+                    <div class="chat-avatar" style="width:30px; height:30px; border-radius:50%; background:var(--color-primary); display:flex; align-items:center; justify-content:center; color:white; font-size:14px; flex-shrink:0;">🤖</div>
+                    <div class="chat-bubble" style="background:var(--bg-card); padding:10px 14px; border-radius:0 12px 12px 12px; font-size:14px; color:var(--text-muted); font-style:italic;">
+                        Mengetik...
+                    </div>
+                </div>
+            `;
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            try {
+                const res = await api('ai_chat.php?action=support', {
+                    method: 'POST',
+                    body: JSON.stringify({ message: msg })
+                });
+                
+                const typingEl = document.getElementById(typingId);
+                if (typingEl) typingEl.remove();
+                if (res.error) throw new Error(res.error);
+                
+                let replyHtml = escapeHTML(res.reply).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                
+                chatArea.innerHTML += `
+                    <div class="chat-message ai-message" style="display:flex; gap:10px; align-items:flex-start;">
+                        <div class="chat-avatar" style="width:30px; height:30px; border-radius:50%; background:var(--color-primary); display:flex; align-items:center; justify-content:center; color:white; font-size:14px; flex-shrink:0;">🤖</div>
+                        <div class="chat-bubble" style="background:var(--bg-card); padding:10px 14px; border-radius:0 12px 12px 12px; font-size:14px; line-height:1.4; box-shadow:0 2px 5px rgba(0,0,0,0.05); color:var(--text-color);">
+                            ${replyHtml}
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                const typingEl = document.getElementById(typingId);
+                if (typingEl) typingEl.remove();
+                chatArea.innerHTML += `
+                    <div class="chat-message ai-message" style="display:flex; gap:10px; align-items:flex-start;">
+                        <div class="chat-avatar" style="width:30px; height:30px; border-radius:50%; background:var(--danger-color); display:flex; align-items:center; justify-content:center; color:white; font-size:14px; flex-shrink:0;">⚠️</div>
+                        <div class="chat-bubble" style="background:var(--bg-card); padding:10px 14px; border-radius:0 12px 12px 12px; font-size:14px; color:var(--danger-color);">
+                            ${escapeHTML(err.message || 'Gagal menghubungi server')}
+                        </div>
+                    </div>
+                `;
+            }
+            chatArea.scrollTop = chatArea.scrollHeight;
+        },
+        contactAdmin: function(type) {
+            const adminWA = '6281385084327';
+            const adminEmail = 'rizkidwisandy@gmail.com';
+            
+            if (type === 'wa') {
+                const msg = 'Halo Admin SelarasKas, saya butuh bantuan.';
+                window.open(`https://wa.me/${adminWA}?text=${encodeURIComponent(msg)}`, '_blank');
+            } else if (type === 'email') {
+                window.location.href = `mailto:${adminEmail}?subject=Bantuan SelarasKas`;
             }
         }
         };
@@ -2678,7 +3010,11 @@
         document.getElementById('budgetTotalAmount').textContent = formatRp(data.total_budget);
         const remainEl = document.getElementById('budgetTotalRemain');
         const remain = data.total_budget - data.total_spent;
-        remainEl.textContent = 'Sisa: ' + formatRp(remain);
+        if (remain < 0) {
+            remainEl.innerHTML = 'Melebihi: ' + formatRp(Math.abs(remain)) + ' <span style="font-weight:bold;color:var(--color-danger)">!</span>';
+        } else {
+            remainEl.textContent = 'Sisa: ' + formatRp(remain);
+        }
         
         let pct = data.total_budget > 0 ? (data.total_spent / data.total_budget) * 100 : 0;
         pct = Math.min(100, Math.max(0, pct));
@@ -2705,12 +3041,17 @@
             if (itemPct >= 100) color = 'var(--color-danger)';
             else if (itemPct >= 80) color = 'var(--color-warning)';
             
+            let remainText = 'Sisa ' + formatRp(b.amount - b.spent, true);
+            if (b.amount - b.spent < 0) {
+                remainText = 'Melebihi ' + formatRp(Math.abs(b.amount - b.spent), true) + ' <span style="font-weight:bold;color:var(--color-danger)">!</span>';
+            }
+            
             return `
             <div class="budget-item fade-in-up" onclick="window.Selaraskas.showBudgetForm(${b.category_id}, ${b.amount})" style="cursor:pointer">
                 <div class="budget-item-top">
                     <div class="budget-item-icon" style="background:${b.category_color}18; display:flex; align-items:center; justify-content:center;">${renderEmojiOrIcon(b.category_emoji, '20px', b.category_color)}</div>
                     <div class="budget-item-info">
-                        <span class="budget-item-title">${b.category_name}</span>
+                        <span class="budget-item-title">${escapeHTML(b.category_name)}</span>
                         <span class="budget-item-amounts">${formatRp(b.spent, true)} / ${formatRp(b.amount, true)}</span>
                     </div>
                     <button class="budget-item-delete" onclick="event.stopPropagation(); window.Selaraskas.deleteBudget(${b.id})">
@@ -2722,7 +3063,7 @@
                 </div>
                 <div class="budget-progress-row">
                     <span class="budget-progress-text" style="color:${color}">${itemPct.toFixed(0)}%</span>
-                    <span class="budget-remain-text">Sisa ${formatRp(b.amount - b.spent, true)}</span>
+                    <span class="budget-remain-text">${remainText}</span>
                 </div>
             </div>`;
         }).join('');
@@ -3424,7 +3765,7 @@
                     });
                     html += '</optgroup>';
                 } else {
-                    html += `<option value="${cat.id}" ${cat.id == guessedCatId ? 'selected' : ''}>${cat.name}</option>`;
+                    html += `<option value="${parseInt(cat.id)}" ${cat.id == guessedCatId ? 'selected' : ''}>${escapeHTML(cat.name)}</option>`;
                 }
             });
             return html;
@@ -3439,7 +3780,7 @@
                 return `
                     <div class="ocr-item-row" data-index="${idx}">
                         <input type="checkbox" class="ocr-item-check" checked id="check_${idx}">
-                        <input type="text" class="ocr-item-desc" value="${item.description}" placeholder="Nama barang" id="desc_${idx}">
+                        <input type="text" class="ocr-item-desc" value="${escapeHTML(item.description)}" placeholder="Nama barang" id="desc_${idx}">
                         <input type="text" class="ocr-item-amount" value="Rp ${item.amount.toLocaleString('id-ID')}" placeholder="Rp 0" id="amount_${idx}">
                         <select class="ocr-item-cat" id="cat_${idx}">
                             ${buildCategoryOptions(guessedCatId)}
@@ -3848,7 +4189,7 @@
                     list.innerHTML = creds.map(c => `
                         <div class="biometric-cred-item">
                             <div class="biometric-cred-info">
-                                <div class="biometric-cred-name">🔑 ${c.device_name}</div>
+                                <div class="biometric-cred-name">🔑 ${escapeHTML(c.device_name)}</div>
                                 <div class="biometric-cred-date">${new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                             </div>
                             <button class="biometric-cred-delete" onclick="window.Selaraskas.deleteBiometricCred(${c.id})">Hapus</button>
@@ -3888,8 +4229,8 @@
     let selectedUpgradePlan = null;
 
     const PRICING = {
-        pro:     { monthly: 75000, yearly: 540000 },
-        premium: { monthly: 135000, yearly: 972000 },
+        pro:     { monthly: 15000, yearly: 119000 },
+        premium: { monthly: 29000, yearly: 249000 },
     };
 
     function formatRupiah(n) {
@@ -3905,6 +4246,8 @@
         document.getElementById('pricingCards').style.display = '';
         document.getElementById('paymentStep').style.display = 'none';
         document.getElementById('payment-notice') && (document.getElementById('payment-notice').style.display = '');
+        const billingWrap = document.querySelector('.billing-toggle-wrap');
+        if (billingWrap) billingWrap.style.display = 'flex';
         
         // Update current plan badge
         updateUpgradeModalBadge();
@@ -3982,75 +4325,39 @@
         document.getElementById('pricingCards').style.display = 'none';
         const payNotice = document.querySelector('.payment-notice');
         if (payNotice) payNotice.style.display = 'none';
+        const billingWrap = document.querySelector('.billing-toggle-wrap');
+        if (billingWrap) billingWrap.style.display = 'none';
         document.getElementById('paymentStep').style.display = 'flex';
     }
 
-    async function confirmPayment() {
+    function confirmPayment() {
         if (!selectedUpgradePlan) return;
+        
         const billing = isYearlyBilling ? 'yearly' : 'monthly';
+        const planLabel = selectedUpgradePlan === 'premium' ? 'Premium 💎' : 'Pro 🚀';
+        const billingLabel = billing === 'yearly' ? 'Tahunan' : 'Bulanan';
         
         const btn = document.getElementById('confirmPayBtn');
-        btn.textContent = 'Memproses...';
+        btn.textContent = 'Membuka WhatsApp...';
         btn.classList.add('loading');
 
-        try {
-            const data = await api('subscription.php?action=upgrade', {
-                method: 'POST',
-                body: JSON.stringify({
-                    tier: selectedUpgradePlan,
-                    billing
-                })
-            });
+        // Nomor WhatsApp Anda (Ganti dengan nomor Anda, format 628...)
+        const adminWA = '6281385084327'; 
+        
+        const msg = `Halo Admin, saya ingin konfirmasi pembayaran upgrade SelarasKas.\n\n` +
+                    `Nama: ${currentUser?.name || 'User'}\n` +
+                    `Email: ${currentUser?.email || '-'}\n` +
+                    `Paket: ${planLabel} (${billingLabel})\n\n` +
+                    `Berikut saya lampirkan bukti transfernya. Terima kasih!`;
 
-            if (data.success && data.snap_token) {
-                // Open Midtrans Snap Popup
-                if (typeof window.snap !== 'undefined') {
-                    window.snap.pay(data.snap_token, {
-                        onSuccess: function(result) {
-                            showToast('Pembayaran berhasil! Status akun Anda sedang diperbarui...');
-                            
-                            // Update currentUser tier locally & close modal
-                            if (currentUser) currentUser.subscription_tier = selectedUpgradePlan;
-                            closeUpgradeModal();
-                            updateSubscriptionStatusCard();
-                            
-                            // Sync with database after a short delay
-                            setTimeout(async () => {
-                                try {
-                                    const status = await api('subscription.php?action=status');
-                                    if (status.success && currentUser) {
-                                        currentUser.subscription_tier = status.tier;
-                                        updateSubscriptionStatusCard();
-                                    }
-                                } catch (e) {}
-                            }, 2500);
-                        },
-                        onPending: function(result) {
-                            showToast('Menunggu pembayaran... Silakan selesaikan pembayaran Anda.');
-                            closeUpgradeModal();
-                        },
-                        onError: function(result) {
-                            showToast('Pembayaran gagal. Silakan coba kembali.');
-                            btn.textContent = 'Bayar Sekarang (via Midtrans)';
-                            btn.classList.remove('loading');
-                        },
-                        onClose: function() {
-                            showToast('Proses pembayaran dibatalkan.');
-                            btn.textContent = 'Bayar Sekarang (via Midtrans)';
-                            btn.classList.remove('loading');
-                        }
-                    });
-                } else {
-                    showToast('Sistem pembayaran Midtrans gagal dimuat. Coba refresh halaman.');
-                    btn.textContent = 'Bayar Sekarang (via Midtrans)';
-                    btn.classList.remove('loading');
-                }
-            }
-        } catch (err) {
-            showToast(err.message || 'Gagal memproses upgrade');
-            btn.textContent = 'Bayar Sekarang (via Midtrans)';
+        const waUrl = `https://wa.me/${adminWA}?text=${encodeURIComponent(msg)}`;
+        window.open(waUrl, '_blank');
+        
+        setTimeout(() => {
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Konfirmasi ke WhatsApp Admin';
             btn.classList.remove('loading');
-        }
+            closeUpgradeModal();
+        }, 2000);
     }
 
     function updateSubscriptionStatusCard() {
@@ -4068,14 +4375,14 @@
             card.classList.add('is-premium');
             if (icon) icon.textContent = '💎';
             if (name) name.textContent = 'Paket Premium';
-            if (desc) desc.textContent = 'Semua fitur eksklusif aktif ✓';
-            if (btn)  { btn.textContent = '✓ Aktif'; btn.classList.add('is-active'); btn.disabled = true; }
+            if (desc) desc.textContent = 'Semua fitur Premium aktif ✓';
+            if (btn)  { btn.textContent = 'Lihat Paket'; btn.classList.remove('is-active'); btn.disabled = false; }
         } else if (tier === 'pro') {
             card.classList.add('is-pro');
             if (icon) icon.textContent = '🚀';
             if (name) name.textContent = 'Paket Pro';
-            if (desc) desc.textContent = 'Semua fitur Pro aktif ✓';
-            if (btn)  { btn.textContent = '✓ Aktif'; btn.classList.add('is-active'); btn.disabled = true; }
+            if (desc) desc.textContent = 'Upgrade Premium untuk fitur penuh';
+            if (btn)  { btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg> Upgrade Premium ✨'; btn.classList.remove('is-active'); btn.disabled = false; }
         } else {
             if (icon) icon.textContent = '🆓';
             if (name) name.textContent = 'Paket Free';
@@ -4097,10 +4404,22 @@
         if (e.target === document.getElementById('upgradeOverlay')) closeUpgradeModal();
     });
 
-    // Billing toggle
-    document.getElementById('billingToggle')?.addEventListener('click', () => {
-        isYearlyBilling = !isYearlyBilling;
+    // Billing toggle — handle clicks on toggle, knob, and both labels
+    function switchBilling(forceYearly) {
+        if (typeof forceYearly === 'boolean') {
+            isYearlyBilling = forceYearly;
+        } else {
+            isYearlyBilling = !isYearlyBilling;
+        }
         updateBillingUI();
+    }
+    document.getElementById('billingToggle')?.addEventListener('click', () => switchBilling());
+    document.getElementById('billingKnob')?.addEventListener('click', (e) => { e.stopPropagation(); switchBilling(); });
+    document.getElementById('lblMonthly')?.addEventListener('click', () => switchBilling(false));
+    document.getElementById('lblYearly')?.addEventListener('click', () => switchBilling(true));
+    document.querySelector('.billing-toggle-wrap')?.addEventListener('click', (e) => {
+        if (e.target.closest('#billingToggle') || e.target.id === 'lblMonthly' || e.target.id === 'lblYearly') return;
+        switchBilling();
     });
 
     // Plan buttons
@@ -4121,6 +4440,8 @@
         document.getElementById('pricingCards').style.display = '';
         const payNotice = document.querySelector('.payment-notice');
         if (payNotice) payNotice.style.display = '';
+        const billingWrap = document.querySelector('.billing-toggle-wrap');
+        if (billingWrap) billingWrap.style.display = 'flex';
         document.getElementById('paymentStep').style.display = 'none';
         selectedUpgradePlan = null;
     });
