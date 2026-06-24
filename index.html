@@ -6,7 +6,7 @@
     <title>Selaraskas — Personal Finance</title>
     <meta name="description" content="Selaraskas - Kelola keuangan pribadi, atur pemasukan, pengeluaran, dan target nabung.">
     
-    <link rel="stylesheet" href="index.css?v=39">
+    <link rel="stylesheet" href="index.css?v=40">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a0e1a">
     <!-- iOS PWA Support -->
@@ -569,7 +569,13 @@
                 <header class="page-header"><h1>Profil</h1></header>
 
                 <div class="profile-header-card">
-                    
+                    <div class="profile-cover" id="profileCover" style="cursor:pointer;">
+                        <input type="file" id="coverUpload" accept="image/*" hidden>
+                        <div class="cover-edit-hint" id="coverEditHint">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            <span>Ubah Cover</span>
+                        </div>
+                    </div>
                     <div class="profile-avatar" id="avatarContainer" style="cursor: pointer; position: relative;">
                         <span id="profileInitial">R</span>
                         <input type="file" id="avatarUpload" accept="image/*" hidden>
@@ -577,7 +583,6 @@
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                         </div>
                     </div>
-
                     <h2 class="profile-name" id="profileName">User</h2>
                     <p class="profile-email" id="profileEmail">user@email.com</p>
                 </div>
@@ -612,8 +617,8 @@
                                 <span class="settings-item-title">Push Notifikasi</span>
                                 <span class="settings-item-subtitle" id="pushNotifLabel">Tidak Aktif</span>
                             </div>
-                            <div class="push-notif-toggle" id="pushNotifToggleBtn" aria-label="Toggle push notifications" style="width:44px;height:24px;border-radius:12px;background:rgba(255,255,255,0.1);position:relative;cursor:pointer;transition:background 0.3s;">
-                                <div class="toggle-knob" style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform 0.3s,background 0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>
+                            <div class="push-notif-toggle biometric-toggle" id="pushNotifToggleBtn" aria-label="Toggle push notifications">
+                                <div class="toggle-knob"></div>
                             </div>
                         </div>
                         <div class="settings-item" id="settingSupport">
@@ -994,8 +999,9 @@
         </div>
     </div>
 
-    <script src="app.js?v=39" defer></script>
+    <script src="app.js?v=40" defer></script>
 </body>
 </html>
+
 
 

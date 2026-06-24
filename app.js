@@ -2469,14 +2469,8 @@
         if (toggleBtn) {
             if (isActive) {
                 toggleBtn.classList.add('active');
-                toggleBtn.style.background = '#22c55e';
-                const knob = toggleBtn.querySelector('.toggle-knob');
-                if (knob) knob.style.transform = 'translateX(20px)';
             } else {
                 toggleBtn.classList.remove('active');
-                toggleBtn.style.background = 'rgba(255,255,255,0.1)';
-                const knob = toggleBtn.querySelector('.toggle-knob');
-                if (knob) knob.style.transform = 'translateX(0)';
             }
         }
         if (label) {
@@ -2493,7 +2487,7 @@
 
         try {
             const vapidData = await api('push.php?action=vapid_public_key');
-            vapidPublicKey = vapidData.public_key;
+            vapidPublicKey = vapidData.publicKey || vapidData.public_key;
         } catch (err) {
             console.error('Failed to fetch VAPID key:', err);
             return;

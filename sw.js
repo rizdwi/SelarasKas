@@ -1,4 +1,4 @@
-const CACHE_NAME = 'selaraskas-v39';
+const CACHE_NAME = 'selaraskas-v40';
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -109,4 +109,5 @@ self.addEventListener('notificationclick', event => {
         })
     );
 });
+
 
