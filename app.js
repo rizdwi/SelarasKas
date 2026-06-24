@@ -431,6 +431,29 @@
             }
         }
 
+        const globalGreetingEl = document.getElementById('globalGreeting');
+        if (globalGreetingEl) globalGreetingEl.textContent = getGreeting();
+        
+        const globalAvatarInitial = document.getElementById('globalAvatarInitial');
+        if (globalAvatarInitial) globalAvatarInitial.textContent = currentUser.avatar_initial || 'U';
+        
+        const globalAvatar = document.getElementById('globalAvatar');
+        if (globalAvatar) {
+            if (currentUser.avatar_url) {
+                let imgUrl = currentUser.avatar_url;
+                if (!imgUrl.startsWith('data:')) {
+                    imgUrl = `${API}/../${imgUrl}`;
+                }
+                globalAvatar.style.backgroundImage = `url("${imgUrl}")`;
+                globalAvatar.style.backgroundSize = 'cover';
+                globalAvatar.style.backgroundPosition = 'center';
+                if (globalAvatarInitial) globalAvatarInitial.style.display = 'none';
+            } else {
+                globalAvatar.style.backgroundImage = 'none';
+                if (globalAvatarInitial) globalAvatarInitial.style.display = 'inline-block';
+            }
+        }
+
         const profileNameEl = document.getElementById('profileName');
         if (profileNameEl) profileNameEl.textContent = currentUser.name;
         
@@ -927,6 +950,10 @@
         document.documentElement.setAttribute('data-theme', theme);
         const label = document.getElementById('themeLabel');
         if (label) label.textContent = theme === 'dark' ? 'Dark Mode' : 'Light Mode';
+        const toggle = document.getElementById('themeToggleCheckbox');
+        if (toggle) {
+            toggle.checked = (theme === 'dark');
+        }
     }
 
     function initTheme() {
@@ -979,7 +1006,7 @@
         try {
             const data = await api('wallets.php?action=list');
             if (data && data.wallets) {
-                const switcher = document.getElementById('walletSwitcher');
+                const switcher = document.getElementById('walletSwitcherGlobal');
                 if (switcher) {
                     switcher.innerHTML = '';
                     let activeName = 'Dompet';
@@ -2701,7 +2728,7 @@
         window.Selaraskas = {
         showBudgetForm, deleteTransaction, deleteSaving, deleteBudget, showAddToSaving, showScanReceiptForm, registerBiometric,
         openWalletMembers: async function() {
-            const walletId = document.getElementById('walletSwitcher').value;
+            const walletId = document.getElementById('walletSwitcherGlobal').value;
             if (!walletId) return;
             const html = `
                 <div style="display:flex; gap:8px; margin-bottom:16px;">

@@ -638,7 +638,7 @@ input, select, textarea { font-family: inherit; }
 
 /* ===== MAIN APP ===== */
 .main-app { display: none; height: 100%; position: relative; }
-.main-app.active { display: block; }
+.main-app.active { display: flex; }
 
 /* ===== STATUS BAR ===== */
 .status-bar {
@@ -2594,10 +2594,13 @@ button:active, .card:active, .wallet-card:active, .category-item:active, .action
 
 /* ===== MAIN APP LAYOUT ===== */
 .main-app {
-    flex: 1; display: flex; flex-direction: column; overflow: hidden;
+    flex: 1; overflow: hidden;
+}
+.main-app.active {
+    display: flex; flex-direction: column;
 }
 @media (min-width: 768px) {
-    .main-app { flex-direction: row; }
+    .main-app.active { flex-direction: row; }
 }
 .content-wrapper {
     flex: 1; display: flex; flex-direction: column; overflow: hidden;
