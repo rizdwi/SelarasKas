@@ -930,7 +930,7 @@
     }
 
     function initTheme() {
-        const toggle = document.getElementById('themeToggle');
+        const toggle = document.getElementById('themeToggleCheckbox');
         const switchBtn = document.getElementById('themeSwitchBtn');
 
         async function toggleTheme() {
@@ -949,7 +949,7 @@
 
     // ===== NAVIGATION =====
     function initNavigation() {
-        const navItems = document.querySelectorAll('#bottomNav .nav-item');
+        const navItems = document.querySelectorAll('#mainNav .nav-item');
         const pages = document.querySelectorAll('.page');
 
         navItems.forEach(item => {
@@ -2498,17 +2498,9 @@
     }
 
     function updatePushToggleUI(isActive) {
-        const toggleBtn = document.getElementById('pushNotifToggleBtn');
-        const label = document.getElementById('pushNotifLabel');
+        const toggleBtn = document.getElementById('pushNotifToggleCheckbox');
         if (toggleBtn) {
-            if (isActive) {
-                toggleBtn.classList.add('active');
-            } else {
-                toggleBtn.classList.remove('active');
-            }
-        }
-        if (label) {
-            label.textContent = isActive ? 'Aktif' : 'Tidak Aktif';
+            toggleBtn.checked = isActive;
         }
     }
 
@@ -2536,10 +2528,10 @@
 
         // Toggle event handler
         const pushItem = document.getElementById('settingPushNotif');
-        const pushToggle = document.getElementById('pushNotifToggleBtn');
+        const pushToggle = document.getElementById('pushNotifToggleCheckbox');
 
         async function handlePushToggle() {
-            const isActive = pushToggle && pushToggle.classList.contains('active');
+            const isActive = pushToggle && pushToggle.checked;
             if (isActive) {
                 await unsubscribePush();
             } else {
@@ -2554,7 +2546,7 @@
             });
         }
         if (pushToggle) {
-            pushToggle.addEventListener('click', (e) => {
+            pushToggle.addEventListener('change', (e) => {
                 e.stopPropagation();
                 handlePushToggle();
             });
