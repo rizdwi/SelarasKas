@@ -93,8 +93,6 @@ input, select, textarea { font-family: inherit; }
     }
 }
 
-}
-
 /* ===== AUTH SCREEN ===== */
 .auth-screen {
     position: absolute; inset: 0; z-index: 500;
@@ -1589,9 +1587,7 @@ input, select, textarea { font-family: inherit; }
     .nav-item { padding: 6px 10px; }
 }
 
-@media (min-width: 768px) {
-    .app-container { max-width: 430px; margin: 0 auto; }
-}
+
 
 /* ===== ESTETIK & WHITE ICON OVERRIDES FOR TRANSACTIONS, BUDGETS, GOALS & ANALYTICS ===== */
 .transaction-icon i, .transaction-icon svg,
