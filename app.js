@@ -2294,24 +2294,24 @@
                 showToast('Mengupload foto...');
                 try {
                     // Bypass API function because we need multipart/form-data
-                    const res = await fetch(`${API/profile.php?action=upload_photo`, {
+                    const res = await fetch(`${API}/profile.php?action=upload_photo`, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-Token': csrfToken
-                        ,
+                        },
                         body: formData
-                    );
+                    });
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error || 'Upload gagal');
                     
                     currentUser.avatar_url = data.avatar_url;
                     showApp(currentUser); // Refresh UI
                     showToast('Foto berhasil diperbarui!');
-                 catch(err) {
+                } catch(err) {
                     showToast(err.message);
-                
-            );
                 }
+            });
+        }
 
         // Cover Photo Upload
         const coverEl = document.getElementById('profileCover');
