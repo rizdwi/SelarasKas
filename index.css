@@ -4,7 +4,7 @@
     --bg-secondary: #111827;
     --bg-card: #1a1f35;
     --bg-card-hover: #212845;
-    --bg-elevated: rgba(30, 37, 65, 0.92);
+    --bg-elevated: #1a1f35;
     --bg-input: #151b2e;
     --accent-coral: #ff6b6b;
     --accent-coral-light: #ff8787;
@@ -20,9 +20,9 @@
     --text-muted: #64748b;
     --border-subtle: rgba(148, 163, 184, 0.08);
     --border-light: rgba(148, 163, 184, 0.15);
-    --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.3);
-    --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 2px 4px rgba(0,0,0,0.05);
+    --shadow-lg: 0 4px 6px rgba(0,0,0,0.05);
 }
 
 /* ===== LIGHT THEME ===== */
@@ -31,16 +31,16 @@
     --bg-secondary: #f1f5f9;
     --bg-card: #ffffff;
     --bg-card-hover: #f1f5f9;
-    --bg-elevated: rgba(255, 255, 255, 0.95);
+    --bg-elevated: #ffffff;
     --bg-input: #f1f5f9;
     --text-primary: #0f172a;
     --text-secondary: #475569;
     --text-muted: #94a3b8;
     --border-subtle: rgba(15, 23, 42, 0.06);
     --border-light: rgba(15, 23, 42, 0.1);
-    --shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-    --shadow-lg: 0 8px 24px rgba(0,0,0,0.1);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 2px 4px rgba(0,0,0,0.05);
+    --shadow-lg: 0 4px 6px rgba(0,0,0,0.05);
 }
 
 /* ===== RESET ===== */
@@ -566,80 +566,57 @@ input, select, textarea { font-family: inherit; }
     display: none !important;
 }
 
-/* Biometric Toggle Switch */
-.biometric-toggle {
+/* Clean Biometric Toggle */
+.biometric-toggle, .day-night-toggle {
     position: relative;
-    width: 56px;
-    height: 30px;
-    border-radius: 15px;
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
-    background: linear-gradient(145deg, #1e293b, #334155);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
     display: inline-block;
     vertical-align: middle;
     flex-shrink: 0;
+    overflow: hidden;
 }
-.biometric-toggle:hover { transform: scale(1.06); }
-.biometric-toggle:active { transform: scale(0.95); }
-.biometric-toggle.active {
-    background: linear-gradient(145deg, #059669, #10b981);
-    border-color: rgba(16, 185, 129, 0.25);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), 0 0 16px rgba(16,185,129,0.2);
+.biometric-toggle:active, .day-night-toggle:active { transform: scale(0.95); }
+.biometric-toggle.active, [data-theme="light"] .day-night-toggle {
+    background: var(--color-success);
+    border-color: var(--color-success);
 }
-
-/* Biometric Knob */
-.biometric-toggle .toggle-knob {
+.biometric-toggle .toggle-knob, .day-night-toggle .toggle-knob {
     position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 24px;
-    height: 24px;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-    background: linear-gradient(145deg, #64748b, #475569);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    background: #fff;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2;
 }
-.biometric-toggle.active .toggle-knob {
-    left: 29px;
-    background: linear-gradient(145deg, #ffffff, #f1f5f9);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+.biometric-toggle.active .toggle-knob, [data-theme="light"] .day-night-toggle .toggle-knob {
+    left: 22px;
 }
 .biometric-toggle .toggle-knob-icon {
-    width: 13px; height: 13px;
-    color: #94a3b8;
-    transition: all 0.4s ease;
-    opacity: 0.7;
+    width: 10px;
+    height: 10px;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    opacity: 0;
 }
 .biometric-toggle.active .toggle-knob-icon {
-    color: #059669;
+    color: var(--color-success);
     opacity: 1;
 }
-
-/* Light mode biometric toggle */
-[data-theme="light"] .biometric-toggle {
-    background: linear-gradient(145deg, #e2e8f0, #cbd5e1);
-    border-color: rgba(0,0,0,0.06);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
-}
-[data-theme="light"] .biometric-toggle .toggle-knob {
-    background: linear-gradient(145deg, #94a3b8, #64748b);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-}
-[data-theme="light"] .biometric-toggle .toggle-knob-icon { color: #e2e8f0; }
-[data-theme="light"] .biometric-toggle.active {
-    background: linear-gradient(145deg, #10b981, #34d399);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.06), 0 0 14px rgba(16,185,129,0.15);
-}
-[data-theme="light"] .biometric-toggle.active .toggle-knob {
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
+/* Remove complex day/night animations */
+.toggle-stars, .shooting-star, .toggle-clouds, .sun-rays { display: none; }
 
 /* ===== MAIN APP ===== */
 .main-app { display: none; height: 100%; position: relative; }
@@ -1157,7 +1134,7 @@ input, select, textarea { font-family: inherit; }
     position:absolute; bottom:0; left:0; right:0;
     display:flex; justify-content:space-around; padding:6px 0;
     padding-bottom:max(10px, env(safe-area-inset-bottom));
-    background:var(--bg-elevated); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    background:var(--bg-elevated);  -webkit-
     border-top:1px solid var(--border-subtle); z-index:200;
     transition: background 0.3s ease;
 }
@@ -1180,7 +1157,7 @@ input, select, textarea { font-family: inherit; }
 /* ===== MODAL / BOTTOM SHEET ===== */
 .modal-overlay {
     position:absolute; inset:0; z-index:400;
-    background:rgba(0,0,0,0.5); backdrop-filter:blur(4px);
+    background:rgba(0,0,0,0.5); 
     display:none; opacity:0; transition:opacity 0.25s ease;
 }
 .modal-overlay.active { display:flex; opacity:1; align-items:flex-end; }
@@ -1302,7 +1279,7 @@ input, select, textarea { font-family: inherit; }
 .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
 .toast-content {
     display:flex; align-items:center; gap:8px; background:var(--bg-elevated);
-    backdrop-filter:blur(12px); padding:12px 20px; border-radius:14px;
+     padding:12px 20px; border-radius:14px;
     border:1px solid var(--border-light); box-shadow:var(--shadow-lg);
     color:var(--color-success); font-size:13px; font-weight:600; white-space:nowrap;
 }
@@ -1914,8 +1891,8 @@ button:focus-visible,
     border: 1px solid var(--control-border);
     background: var(--control-surface);
     box-shadow: var(--control-shadow-soft);
-    backdrop-filter: blur(18px) saturate(1.18);
-    -webkit-backdrop-filter: blur(18px) saturate(1.18);
+    
+    -webkit-
     transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
 }
 
@@ -2009,8 +1986,8 @@ button:focus-visible,
     background: linear-gradient(135deg, #101828 0%, #27304f 100%);
     border: 1px solid var(--control-border);
     box-shadow: var(--control-shadow-soft);
-    backdrop-filter: blur(20px) saturate(1.2);
-    -webkit-backdrop-filter: blur(20px) saturate(1.2);
+    
+    -webkit-
 }
 
 .day-night-toggle:hover {
@@ -2168,8 +2145,8 @@ button:focus-visible,
     inset: 0;
     z-index: 9999;
     background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    
+    -webkit-
     align-items: center;
     justify-content: center;
     padding: 16px;
@@ -2571,3 +2548,6 @@ button:focus-visible,
 }
 .upgrade-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 18px rgba(99,102,241,0.5); }
 .upgrade-cta-btn.is-active { background: rgba(255,255,255,0.1); box-shadow: none; cursor: default; }
+
+/* UI/UX Pro Max Clean */
+button:active, .card:active, .wallet-card:active, .category-item:active, .action-btn:active { transform: scale(0.96) !important; } .bottom-nav { background: var(--bg-card) !important; border-top: 1px solid var(--border-subtle); box-shadow: none !important; } .modal-content, .bottom-sheet { background: var(--bg-card) !important; border: 1px solid var(--border-light); box-shadow: var(--shadow-lg) !important; }
