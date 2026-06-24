@@ -1094,32 +1094,32 @@ input, select, textarea { font-family: inherit; }
     background:var(--bg-card); border-radius:16px;
     margin-bottom:24px; border:1px solid var(--border-subtle);
     position:relative; overflow:hidden; transition: background 0.3s ease;
-    padding-top: 0;
-}
-.profile-cover {
-    width: 100%; height: 100px; position: relative;
-    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card-hover));
+    padding: 32px 20px 20px;
     background-size: cover; background-position: center;
-    cursor: pointer; transition: opacity 0.2s ease;
 }
-.profile-cover:hover { opacity: 0.85; }
+.profile-header-card::before {
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.7));
+    z-index: 0; pointer-events: none;
+}
 .cover-edit-hint {
-    position: absolute; bottom: 8px; right: 8px;
+    position: absolute; top: 12px; right: 12px; z-index: 2;
     display: flex; align-items: center; gap: 4px;
     background: rgba(0,0,0,0.5); color: #fff;
-    padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 500;
-    opacity: 0; transition: opacity 0.2s ease;
+    padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s ease;
+    border: 1px solid rgba(255,255,255,0.1);
 }
-.profile-cover:hover .cover-edit-hint { opacity: 1; }
+.cover-edit-hint:hover { background: rgba(0,0,0,0.7); }
 .profile-avatar {
     width:64px; height:64px; border-radius:50%; background:var(--accent-gradient);
     display:flex; align-items:center; justify-content:center;
     font-size:24px; font-weight:800; color:white; margin-bottom:12px;
     box-shadow: 0 2px 8px rgba(52,211,153,0.2); position:relative; z-index:1;
-    margin-top: -32px; border: 3px solid var(--bg-card);
+    border: 3px solid var(--bg-card);
 }
-.profile-name { font-size:20px; font-weight:800; letter-spacing:-0.3px; margin-bottom:2px; position:relative; z-index:1; }
-.profile-email { font-size:13px; color:var(--text-muted); font-weight:500; position:relative; z-index:1; padding-bottom: 20px; }
+.profile-name { font-size:20px; font-weight:800; letter-spacing:-0.3px; margin-bottom:2px; position:relative; z-index:1; color: #fff; }
+.profile-email { font-size:13px; color:rgba(255,255,255,0.7); font-weight:500; position:relative; z-index:1; padding-bottom: 0px; }
 
 .settings-list { display:flex; flex-direction:column; gap:20px; }
 .settings-group-title { font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; padding-left:12px; margin-bottom:6px; }
@@ -2565,3 +2565,5 @@ button:focus-visible,
 /* UI/UX Pro Max Clean */
 button:active, .card:active, .wallet-card:active, .category-item:active, .action-btn:active { transform: scale(0.96) !important; } .bottom-nav { background: var(--bg-card) !important; border-top: 1px solid var(--border-subtle); box-shadow: none !important; } .modal-content, .bottom-sheet { background: var(--bg-card) !important; border: 1px solid var(--border-light); box-shadow: var(--shadow-lg) !important; }
 
+
+.preset-cover:hover { border-color: var(--accent-coral) !important; opacity: 0.9; }

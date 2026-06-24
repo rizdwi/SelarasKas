@@ -6,7 +6,7 @@
     <title>Selaraskas — Personal Finance</title>
     <meta name="description" content="Selaraskas - Kelola keuangan pribadi, atur pemasukan, pengeluaran, dan target nabung.">
     
-    <link rel="stylesheet" href="index.css?v=41">
+    <link rel="stylesheet" href="index.css?v=42">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a0e1a">
     <!-- iOS PWA Support -->
@@ -568,13 +568,10 @@
             <div id="page-profile" class="page">
                 <header class="page-header"><h1>Profil</h1></header>
 
-                <div class="profile-header-card">
-                    <div class="profile-cover" id="profileCover" style="cursor:pointer;">
-                        <input type="file" id="coverUpload" accept="image/*" hidden>
-                        <div class="cover-edit-hint" id="coverEditHint">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                            <span>Ubah Cover</span>
-                        </div>
+                <div class="profile-header-card" id="profileHeaderCard">
+                    <div class="cover-edit-hint" id="coverEditHint">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        <span>Background</span>
                     </div>
                     <div class="profile-avatar" id="avatarContainer" style="cursor: pointer; position: relative;">
                         <span id="profileInitial">R</span>
@@ -999,9 +996,10 @@
         </div>
     </div>
 
-    <script src="app.js?v=41" defer></script>
+    <script src="app.js?v=42" defer></script>
 </body>
 </html>
+
 
 
 

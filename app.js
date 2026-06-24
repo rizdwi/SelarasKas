@@ -2313,38 +2313,37 @@
             });
         }
 
-        // Cover Photo Upload
-        const coverEl = document.getElementById('profileCover');
-        const coverUpload = document.getElementById('coverUpload');
-        if (coverEl && coverUpload) {
+        // Cover Photo Options
+        const cardEl = document.getElementById('profileHeaderCard');
+        const coverHint = document.getElementById('coverEditHint');
+        if (cardEl && coverHint) {
             const savedCover = localStorage.getItem('profileCover');
             if (savedCover) {
-                coverEl.style.backgroundImage = `url(${savedCover})`;
-                coverEl.style.backgroundSize = 'cover';
-                coverEl.style.backgroundPosition = 'center';
+                cardEl.style.backgroundImage = `url(${savedCover})`;
             }
-            coverEl.addEventListener('click', (e) => {
-                if (e.target.closest('.cover-edit-hint') || e.target === coverEl) {
-                    coverUpload.click();
-                }
-            });
-            coverUpload.addEventListener('change', (e) => {
-                if (!e.target.files.length) return;
-                const file = e.target.files[0];
-                if (file.size > 2 * 1024 * 1024) {
-                    showToast('Ukuran file maksimal 2MB');
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const dataUrl = ev.target.result;
-                    coverEl.style.backgroundImage = `url(${dataUrl})`;
-                    coverEl.style.backgroundSize = 'cover';
-                    coverEl.style.backgroundPosition = 'center';
-                    localStorage.setItem('profileCover', dataUrl);
-                    showToast('Cover berhasil diperbarui! 🎨');
-                };
-                reader.readAsDataURL(file);
+            
+            coverHint.addEventListener('click', () => {
+                const html = `
+                    <p style="margin-bottom:15px;font-size:14px;color:var(--text-muted)">Pilih variasi desain background profil Anda:</p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                        <div class="preset-cover" data-bg="assets/covers/flower.png" style="height:80px; border-radius:8px; background:url('assets/covers/flower.png') center/cover; cursor:pointer; border:2px solid transparent; transition:all 0.2s;"></div>
+                        <div class="preset-cover" data-bg="assets/covers/doodle.png" style="height:80px; border-radius:8px; background:url('assets/covers/doodle.png') center/cover; cursor:pointer; border:2px solid transparent; transition:all 0.2s;"></div>
+                        <div class="preset-cover" data-bg="assets/covers/mountain.png" style="height:80px; border-radius:8px; background:url('assets/covers/mountain.png') center/cover; cursor:pointer; border:2px solid transparent; transition:all 0.2s;"></div>
+                    </div>
+                `;
+                openModal('Pilih Background', html);
+                
+                setTimeout(() => {
+                    document.querySelectorAll('.preset-cover').forEach(el => {
+                        el.addEventListener('click', (e) => {
+                            const bg = e.target.dataset.bg;
+                            cardEl.style.backgroundImage = `url(${bg})`;
+                            localStorage.setItem('profileCover', bg);
+                            showToast('Background berhasil diubah! 🎨');
+                            closeModal();
+                        });
+                    });
+                }, 100);
             });
         }
 
