@@ -1,6 +1,6 @@
-<?php
+﻿<?php
 // ============================================
-// SelarasKas — Wallets API (Multiplayer)
+// SelarasKas â€” Wallets API (Multiplayer)
 // ============================================
 require_once __DIR__ . '/config.php';
 
@@ -10,6 +10,9 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($action) {
     case 'list':
         handleListWallets();
+        break;
+    case 'list_members':
+        handleListMembers();
         break;
     case 'create':
         if ($method !== 'POST') jsonResponse(['error' => 'Method not allowed'], 405);
@@ -194,6 +197,41 @@ function handleInviteMember() {
     }
 }
 
+
+function handleListMembers() {
+    $userId = requireAuth();
+    $walletId = $_GET['wallet_id'] ?? null;
+
+    if (!$walletId) {
+        jsonResponse(['error' => 'Wallet ID diperlukan'], 400);
+    }
+
+    $db = getDB();
+
+    // Check if user belongs to this wallet
+    $stmt = $db->prepare("SELECT role FROM wallet_members WHERE wallet_id = ? AND user_id = ?");
+    $stmt->execute([$walletId, $userId]);
+    $myRole = $stmt->fetchColumn();
+    if (!$myRole) {
+        jsonResponse(['error' => 'Anda tidak memiliki akses ke dompet ini'], 403);
+    }
+
+    $stmt = $db->prepare("
+        SELECT u.id, u.name, u.email, wm.role, UPPER(LEFT(u.name, 1)) as avatar_initial
+        FROM wallet_members wm
+        JOIN users u ON u.id = wm.user_id
+        WHERE wm.wallet_id = ?
+        ORDER BY wm.role = 'owner' DESC, u.name ASC
+    ");
+    $stmt->execute([$walletId]);
+    $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    jsonResponse([
+        'success' => true,
+        'members' => $members,
+        'my_role' => $myRole
+    ]);
+}
 function handleRemoveMember() {
     $userId = requireAuth();
     $input = getInput();
