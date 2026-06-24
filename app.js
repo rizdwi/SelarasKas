@@ -2294,22 +2294,57 @@
                 showToast('Mengupload foto...');
                 try {
                     // Bypass API function because we need multipart/form-data
-                    const res = await fetch(`${API}/profile.php?action=upload_photo`, {
+                    const res = await fetch(`${API/profile.php?action=upload_photo`, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-Token': csrfToken
-                        },
+                        ,
                         body: formData
-                    });
+                    );
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error || 'Upload gagal');
                     
                     currentUser.avatar_url = data.avatar_url;
                     showApp(currentUser); // Refresh UI
                     showToast('Foto berhasil diperbarui!');
-                } catch(err) {
+                 catch(err) {
                     showToast(err.message);
+                
+            );
                 }
+
+        // Cover Photo Upload
+        const coverEl = document.getElementById('profileCover');
+        const coverUpload = document.getElementById('coverUpload');
+        if (coverEl && coverUpload) {
+            const savedCover = localStorage.getItem('profileCover');
+            if (savedCover) {
+                coverEl.style.backgroundImage = `url(${savedCover})`;
+                coverEl.style.backgroundSize = 'cover';
+                coverEl.style.backgroundPosition = 'center';
+            }
+            coverEl.addEventListener('click', (e) => {
+                if (e.target.closest('.cover-edit-hint') || e.target === coverEl) {
+                    coverUpload.click();
+                }
+            });
+            coverUpload.addEventListener('change', (e) => {
+                if (!e.target.files.length) return;
+                const file = e.target.files[0];
+                if (file.size > 2 * 1024 * 1024) {
+                    showToast('Ukuran file maksimal 2MB');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const dataUrl = ev.target.result;
+                    coverEl.style.backgroundImage = `url(${dataUrl})`;
+                    coverEl.style.backgroundSize = 'cover';
+                    coverEl.style.backgroundPosition = 'center';
+                    localStorage.setItem('profileCover', dataUrl);
+                    showToast('Cover berhasil diperbarui! 🎨');
+                };
+                reader.readAsDataURL(file);
             });
         }
 
