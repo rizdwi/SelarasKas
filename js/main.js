@@ -236,3 +236,6 @@
         // Check session
         checkSession();
     }
+
+
+init();

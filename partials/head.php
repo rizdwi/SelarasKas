@@ -20,6 +20,7 @@
     <!-- Android Chrome -->
     <meta name="mobile-web-app-capable" content="yes">
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     </head>
 <body>
     <div id="app" class="app-container">
