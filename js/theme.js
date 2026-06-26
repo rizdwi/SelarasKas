@@ -23,6 +23,6 @@
             }
         }
 
-        toggle.addEventListener('click', toggleTheme);
+        if (toggle) toggle.addEventListener('click', toggleTheme);
         if (switchBtn) switchBtn.addEventListener('click', toggleTheme);
     }
