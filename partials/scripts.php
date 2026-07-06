@@ -1,23 +1,23 @@
     </div>
 
-<script src="js/config.js?v=51" defer></script>
-<script src="js/api.js?v=51" defer></script>
-<script src="js/utils.js?v=51" defer></script>
-<script src="js/auth.js?v=51" defer></script>
-<script src="js/theme.js?v=51" defer></script>
-<script src="js/nav.js?v=51" defer></script>
-<script src="js/wallets.js?v=51" defer></script>
-<script src="js/gamification.js?v=51" defer></script>
-<script src="js/dashboard.js?v=51" defer></script>
-<script src="js/transactions.js?v=51" defer></script>
-<script src="js/analytics.js?v=51" defer></script>
-<script src="js/savings.js?v=51" defer></script>
-<script src="js/modals.js?v=51" defer></script>
-<script src="js/profile.js?v=51" defer></script>
-<script src="js/notifications.js?v=51" defer></script>
-<script src="js/ui_helpers.js?v=51" defer></script>
-<script src="js/budgeting.js?v=51" defer></script>
-<script src="js/camera.js?v=51" defer></script>
-<script src="js/main.js?v=51" defer></script>
+<script src="js/config.js?v=52" defer></script>
+<script src="js/api.js?v=52" defer></script>
+<script src="js/utils.js?v=52" defer></script>
+<script src="js/auth.js?v=52" defer></script>
+<script src="js/theme.js?v=52" defer></script>
+<script src="js/nav.js?v=52" defer></script>
+<script src="js/wallets.js?v=52" defer></script>
+<script src="js/gamification.js?v=52" defer></script>
+<script src="js/dashboard.js?v=52" defer></script>
+<script src="js/transactions.js?v=52" defer></script>
+<script src="js/analytics.js?v=52" defer></script>
+<script src="js/savings.js?v=52" defer></script>
+<script src="js/modals.js?v=52" defer></script>
+<script src="js/profile.js?v=52" defer></script>
+<script src="js/notifications.js?v=52" defer></script>
+<script src="js/ui_helpers.js?v=52" defer></script>
+<script src="js/budgeting.js?v=52" defer></script>
+<script src="js/camera.js?v=52" defer></script>
+<script src="js/main.js?v=52" defer></script>
 </body>
 </html>
