@@ -140,7 +140,7 @@ function callGeminiAPI($prompt) {
         return "Maaf, fitur AI belum dikonfigurasi (API Key tidak ditemukan).";
     }
 
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . GEMINI_API_KEY;
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . GEMINI_API_KEY;
     
     $data = [
         "contents" => [
