@@ -1,5 +1,8 @@
 <?php
 // Unified Serverless Entrypoint for Vercel
+ini_set('display_errors', '0');
+error_reporting(0);
+
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
 // Handle API requests
