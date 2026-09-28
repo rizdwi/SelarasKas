@@ -1,8 +1,7 @@
 {
   "version": 2,
-  "framework": null,
   "functions": {
-    "api/**/*.php": {
+    "api/index.php": {
       "runtime": "vercel-php@0.9.0"
     }
   },
@@ -19,7 +18,47 @@
   ],
   "rewrites": [
     {
+      "source": "/assets/(.*)",
+      "destination": "/assets/$1"
+    },
+    {
+      "source": "/css/(.*)",
+      "destination": "/css/$1"
+    },
+    {
+      "source": "/icons/(.*)",
+      "destination": "/icons/$1"
+    },
+    {
+      "source": "/js/(.*)",
+      "destination": "/js/$1"
+    },
+    {
+      "source": "/(.*\\.html)",
+      "destination": "/$1"
+    },
+    {
+      "source": "/(.*\\.json)",
+      "destination": "/$1"
+    },
+    {
+      "source": "/(.*\\.js)",
+      "destination": "/$1"
+    },
+    {
+      "source": "/(.*\\.css)",
+      "destination": "/$1"
+    },
+    {
+      "source": "/(.*\\.jpeg)",
+      "destination": "/$1"
+    },
+    {
       "source": "/api/(.*)",
+      "destination": "/api/index.php"
+    },
+    {
+      "source": "/(.*)",
       "destination": "/api/index.php"
     }
   ]
