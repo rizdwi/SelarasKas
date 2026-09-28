@@ -1,0 +1,510 @@
+{
+  "project": "SelarasKas",
+  "audit_date": "2026-09-28",
+  "total_files_audited": 25,
+  "summary": {
+    "critical": 8,
+    "high": 8,
+    "medium": 28,
+    "low": 18,
+    "total_issues": 62
+  },
+  "findings": [
+    {
+      "id": 1,
+      "file": "config.php",
+      "issue_type": "Information Disclosure / Hardcoded Credentials",
+      "severity": "critical",
+      "line_description": "Lines 19-23: Database host, port, name, username, and password are hardcoded as fallback defaults (DB_HOST='mysql-dbas-jkt-001.sumobase.my.id', DB_USER='uqWmml0iC7aDfCZmw', DB_PASS='07726fa720454a1dbb2a4648'). These are production/cloud credentials visible in source code.",
+      "fix_recommendation": "Remove all hardcoded credential defaults. Require environment variables and fail with a clear error if they are not set. Use a secrets manager or .env file that is gitignored."
+    },
+    {
+      "id": 2,
+      "file": "config.php",
+      "issue_type": "Information Disclosure / Hardcoded API Keys",
+      "severity": "critical",
+      "line_description": "Lines 26, 28, 38-39: Google Client ID, Facebook App ID, and Midtrans sandbox server/client keys are hardcoded as fallback defaults. The Midtrans server key 'SB-Mid-server-yUtg-Z8a3mCj4wS8QyQ9Fk9a' grants payment API access.",
+      "fix_recommendation": "Move all API keys/secrets to environment variables only. Remove fallback defaults from source code. OAuth client IDs can be less sensitive but server keys must never be in code."
+    },
+    {
+      "id": 3,
+      "file": "config.php",
+      "issue_type": "CORS Misconfiguration",
+      "severity": "high",
+      "line_description": "Line 9: Access-Control-Allow-Origin set to '*', allowing any origin to make authenticated requests. Combined with session cookies, this weakens CSRF protections.",
+      "fix_recommendation": "Set Access-Control-Allow-Origin to the specific frontend domain(s). Use Access-Control-Allow-Credentials: true only with explicit origins, never with wildcard."
+    },
+    {
+      "id": 4,
+      "file": "config.php",
+      "issue_type": "SSL Verification Disabled",
+      "severity": "high",
+      "line_description": "Lines 56-58: PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT is set to false for all non-localhost database connections, allowing MITM attacks on the database connection.",
+      "fix_recommendation": "Enable SSL certificate verification. Provide a proper CA certificate file via PDO::MYSQL_ATTR_SSL_CA with an actual path to the CA bundle."
+    },
+    {
+      "id": 5,
+      "file": "config.php",
+      "issue_type": "Information Disclosure / Error Handling",
+      "severity": "medium",
+      "line_description": "Line 69: Database connection error message ($e->getMessage()) is returned directly to the client, potentially leaking database host, port, credentials path, or driver details.",
+      "fix_recommendation": "Log the detailed error server-side. Return a generic 'Database connection failed' message to clients without the PDOException details."
+    },
+    {
+      "id": 6,
+      "file": "config.php",
+      "issue_type": "Session Security",
+      "severity": "medium",
+      "line_description": "Lines 85, 122-133: Session lifetime is set to 30 days in the DB handler but cookie lifetime is 0 (session cookie). 30-day session persistence in database-backed sessions means sessions survive indefinitely if the session ID is stolen.",
+      "fix_recommendation": "Implement session rotation on login. Add session timeout checking server-side. Consider reducing the 30-day session window to a shorter period."
+    },
+    {
+      "id": 7,
+      "file": "config.php",
+      "issue_type": "Session Cookie Security",
+      "severity": "medium",
+      "line_description": "Line 129: 'secure' flag is only set when HTTPS is detected. On HTTP deployments, session cookies are sent over plaintext, enabling session hijacking.",
+      "fix_recommendation": "Force HTTPS for production deployments. Always set the secure flag to true in production. Consider HSTS headers."
+    },
+    {
+      "id": 8,
+      "file": "auth.php",
+      "issue_type": "Authentication Bypass / OAuth Trust",
+      "severity": "critical",
+      "line_description": "Lines 480-534 (handleGoogleLogin) and 536-590 (handleFacebookLogin): The server blindly trusts client-provided google_id/facebook_id and email without server-side token verification. An attacker can send any google_id + any email to log in as any user or create accounts.",
+      "fix_recommendation": "Verify the Google ID token server-side using Google's tokeninfo endpoint or a JWT library. Verify Facebook access tokens via the Facebook Graph API (/me endpoint). Never trust client-provided social IDs."
+    },
+    {
+      "id": 9,
+      "file": "auth.php",
+      "issue_type": "CSRF on Auth Endpoints",
+      "severity": "medium",
+      "line_description": "Lines 38-108: All auth actions (register, login, google_login, facebook_login, forgot_password, reset_password) are POST endpoints but do NOT call requireAuth(), so CSRF tokens are not verified. Pre-auth endpoints need alternative CSRF protection.",
+      "fix_recommendation": "Implement CSRF protection for pre-auth forms using either double-submit cookies, SameSite cookie attribute enforcement, or Origin/Referer header checking."
+    },
+    {
+      "id": 10,
+      "file": "auth.php",
+      "issue_type": "Brute Force / Rate Limiting",
+      "severity": "high",
+      "line_description": "Lines 366-430 (handleLogin): No rate limiting on login attempts. An attacker can brute-force passwords without throttling. Also applies to handleVerifyEmail (line 268), handleVerifyResetCode (line 650), and handleResetPassword (line 687).",
+      "fix_recommendation": "Implement IP-based and account-based rate limiting for login attempts (e.g., max 5 attempts per 15 minutes). Lock accounts temporarily after repeated failures. Add CAPTCHA for suspicious activity."
+    },
+    {
+      "id": 11,
+      "file": "auth.php",
+      "issue_type": "Weak Verification Code",
+      "severity": "medium",
+      "line_description": "Lines 277, 659: Verification/reset codes are 6-digit numeric (000000-999999 = 1M possibilities). With no rate limiting, an attacker can brute-force all codes within the 15-minute window.",
+      "fix_recommendation": "Add strict rate limiting on code verification attempts (max 3-5 attempts). Invalidate the code after N failed attempts. Consider longer alphanumeric codes."
+    },
+    {
+      "id": 12,
+      "file": "auth.php",
+      "issue_type": "Timing Attack on Code Verification",
+      "severity": "low",
+      "line_description": "Lines 291, 672, 711: Verification codes are compared using !== (string comparison), which may leak timing information about the correct code.",
+      "fix_recommendation": "Use hash_equals() for constant-time comparison of verification codes."
+    },
+    {
+      "id": 13,
+      "file": "auth.php",
+      "issue_type": "WebAuthn Implementation Incomplete",
+      "severity": "high",
+      "line_description": "Lines 797-826 (handleWebAuthnRegister) and 874-933 (handleWebAuthnLogin): The server stores credential_id and public_key from the client but does NOT cryptographically verify the WebAuthn attestation or assertion. The challenge is checked for existence but the response signature is never validated against the stored public key.",
+      "fix_recommendation": "Implement full WebAuthn server-side verification: parse and validate the authenticatorData, verify the clientDataJSON.challenge matches the issued challenge, verify the signature using the stored public key. Use a well-tested WebAuthn library."
+    },
+    {
+      "id": 14,
+      "file": "auth.php",
+      "issue_type": "Information Disclosure",
+      "severity": "low",
+      "line_description": "Lines 69-72 (action='config'): Publicly exposes GOOGLE_CLIENT_ID and FACEBOOK_APP_ID without authentication. While client IDs are semi-public, exposing them makes phishing attacks easier.",
+      "fix_recommendation": "Consider whether this endpoint is necessary. If so, add rate limiting. These values should be in frontend config, not served dynamically."
+    },
+    {
+      "id": 15,
+      "file": "auth.php",
+      "issue_type": "Password Policy",
+      "severity": "low",
+      "line_description": "Lines 198, 697: Minimum password length is only 6 characters with no complexity requirements (no uppercase, number, or special character requirements).",
+      "fix_recommendation": "Enforce stronger password policy: minimum 8 characters with mixed character types, or use a passphrase-based approach with minimum 12 characters."
+    },
+    {
+      "id": 16,
+      "file": "auth.php",
+      "issue_type": "Email Enumeration",
+      "severity": "medium",
+      "line_description": "Lines 220-244 (register), 286-288 (verify_email), 336-338 (resend_code): Different error messages reveal whether an email is registered vs. unverified, enabling email enumeration.",
+      "fix_recommendation": "Return generic messages that don't distinguish between 'email exists' and 'email not found' states. The forgot_password handler (line 614) correctly implements this pattern."
+    },
+    {
+      "id": 17,
+      "file": "admin.php",
+      "issue_type": "Authorization Bypass / Hardcoded Admin",
+      "severity": "critical",
+      "line_description": "Line 11: Admin authorization is hardcoded to user_id == 1. If the first registered user changes or an attacker gains user_id 1, they get admin access. No role-based check.",
+      "fix_recommendation": "Use a proper role/permissions system. Check a 'role' column in the users table (already exists from migrate_saas.php) instead of hardcoding user IDs."
+    },
+    {
+      "id": 18,
+      "file": "make_admin.php",
+      "issue_type": "Authentication Bypass / Unauthenticated Admin Escalation",
+      "severity": "critical",
+      "line_description": "Lines 1-17: Entire file is publicly accessible with no authentication. Anyone can call /api/make_admin.php?email=victim@email.com to grant admin privileges to any account. The file's own comment says 'HARAP HAPUS FILE INI' (please delete this file).",
+      "fix_recommendation": "DELETE this file immediately from the production server. It should never exist in a deployed codebase. If admin creation is needed, use a CLI-only tool with authentication."
+    },
+    {
+      "id": 19,
+      "file": "make_premium.php",
+      "issue_type": "Authentication Bypass / Unauthenticated Privilege Escalation",
+      "severity": "critical",
+      "line_description": "Lines 1-18: Publicly accessible without authentication. Grants permanent premium subscription (expires 2099-12-31) to a hardcoded email 'rizkidwisandy@gmail.com'. Also reveals the developer's personal email.",
+      "fix_recommendation": "DELETE this file immediately. Use a proper admin panel or CLI tool for subscription management. The hardcoded email is also a PII leak."
+    },
+    {
+      "id": 20,
+      "file": "make_premium.php",
+      "issue_type": "Information Disclosure / PII",
+      "severity": "medium",
+      "line_description": "Line 4: Developer's personal email 'rizkidwisandy@gmail.com' is hardcoded in the source code.",
+      "fix_recommendation": "Remove personal information from source code."
+    },
+    {
+      "id": 21,
+      "file": "init_db.php",
+      "issue_type": "Unauthenticated Database Initialization",
+      "severity": "critical",
+      "line_description": "Lines 1-291: The entire database initialization/seeding script is publicly accessible via HTTP with no authentication. An attacker can re-initialize the database, potentially dropping or corrupting data.",
+      "fix_recommendation": "Restrict to CLI-only execution (add php_sapi_name() !== 'cli' check like backup_db.php does). Or add authentication and an environment check."
+    },
+    {
+      "id": 22,
+      "file": "init_db.php",
+      "issue_type": "Information Disclosure",
+      "severity": "medium",
+      "line_description": "Line 290: Database errors ($e->getMessage()) are returned directly to the client, potentially leaking schema details, table names, and connection info.",
+      "fix_recommendation": "Log errors server-side, return generic error message to client."
+    },
+    {
+      "id": 23,
+      "file": "migrate_saas.php",
+      "issue_type": "Unauthenticated Database Migration",
+      "severity": "critical",
+      "line_description": "Lines 1-132: Migration script is publicly accessible via HTTP with no authentication. Can alter table structures and modify data.",
+      "fix_recommendation": "Restrict to CLI-only execution or add admin authentication."
+    },
+    {
+      "id": 24,
+      "file": "migrate_saas.php",
+      "issue_type": "SQL Injection",
+      "severity": "high",
+      "line_description": "Lines 104-107: User data is interpolated directly into SQL strings: `UPDATE transactions SET wallet_id = $walletId WHERE user_id = $userId`. Although $walletId and $userId come from the database, this violates the principle of using prepared statements consistently.",
+      "fix_recommendation": "Use prepared statements with parameterized queries for all SQL operations, even when values come from trusted sources."
+    },
+    {
+      "id": 25,
+      "file": "migrate_auth.php",
+      "issue_type": "Unauthenticated Database Migration",
+      "severity": "high",
+      "line_description": "Lines 1-42: Migration script is publicly accessible via HTTP with no authentication. Can create/modify database tables.",
+      "fix_recommendation": "Restrict to CLI-only execution or add admin authentication."
+    },
+    {
+      "id": 26,
+      "file": "transactions.php",
+      "issue_type": "SQL Injection (Partial)",
+      "severity": "medium",
+      "line_description": "Line 64: $limit is cast to int but then concatenated directly into SQL string: 'LIMIT ' . $limit. While the int cast prevents injection, this pattern is fragile and violates best practices.",
+      "fix_recommendation": "Bind $limit as a parameter in the prepared statement, or validate it against a whitelist of allowed values."
+    },
+    {
+      "id": 27,
+      "file": "transactions.php",
+      "issue_type": "Input Validation",
+      "severity": "medium",
+      "line_description": "Line 201: transaction_date from user input is not validated as a proper date format before being used in SQL. Malformed dates could cause errors or unexpected behavior.",
+      "fix_recommendation": "Validate transaction_date against Y-m-d format using DateTime::createFromFormat() or a regex check."
+    },
+    {
+      "id": 28,
+      "file": "transactions.php",
+      "issue_type": "Input Validation",
+      "severity": "low",
+      "line_description": "Line 46: $_GET['month'] is used directly in SQL without format validation. While it goes through a prepared statement, invalid formats could return unexpected results.",
+      "fix_recommendation": "Validate month parameter matches Y-m format (e.g., preg_match('/^\\d{4}-\\d{2}$/', $month))."
+    },
+    {
+      "id": 29,
+      "file": "transactions.php",
+      "issue_type": "Missing Update Operation",
+      "severity": "low",
+      "line_description": "Lines 13-41: No PUT/PATCH method handler for updating existing transactions. Users must delete and recreate to modify a transaction, which may cause data integrity issues.",
+      "fix_recommendation": "Implement a PUT handler for transaction updates."
+    },
+    {
+      "id": 30,
+      "file": "categories.php",
+      "issue_type": "Missing Write Operations",
+      "severity": "low",
+      "line_description": "Lines 9-10: Only GET method is allowed. Users cannot create custom categories through the API despite the schema supporting user_id-scoped categories.",
+      "fix_recommendation": "Consider adding POST/PUT/DELETE endpoints for custom category management if the feature is intended."
+    },
+    {
+      "id": 31,
+      "file": "budget.php",
+      "issue_type": "Error Handling / Information Disclosure",
+      "severity": "low",
+      "line_description": "Line 104: Exception messages are returned directly to the client via jsonResponse. While most are user-friendly strings, PDOExceptions could leak schema details.",
+      "fix_recommendation": "Catch PDOException separately and return generic error messages."
+    },
+    {
+      "id": 32,
+      "file": "savings.php",
+      "issue_type": "Input Validation",
+      "severity": "low",
+      "line_description": "Lines 53-54: deadline and color inputs are not validated. A malicious color value (e.g., XSS payload) could be stored and reflected if rendered in HTML without escaping.",
+      "fix_recommendation": "Validate deadline as a date format and color as a hex color code (preg_match('/^#[0-9a-fA-F]{6}$/', $color))."
+    },
+    {
+      "id": 33,
+      "file": "savings.php",
+      "issue_type": "Race Condition",
+      "severity": "medium",
+      "line_description": "Lines 116-118: The add_amount increment mode reads current_amount and then updates in separate operations without a transaction or atomic UPDATE. Concurrent requests could cause lost updates.",
+      "fix_recommendation": "Use an atomic SQL UPDATE: SET current_amount = current_amount + ? WHERE id = ? AND wallet_id = ?"
+    },
+    {
+      "id": 34,
+      "file": "ai_chat.php",
+      "issue_type": "Prompt Injection",
+      "severity": "high",
+      "line_description": "Lines 54-60: User message is directly interpolated into the AI prompt without sanitization: '\"Pesan Pengguna: \"$message\"'. An attacker could inject instructions to override system prompts and extract financial data context.",
+      "fix_recommendation": "Sanitize user input before including in prompts. Use the AI API's structured message format (system/user roles) instead of string concatenation. Limit what financial data is included in the context."
+    },
+    {
+      "id": 35,
+      "file": "ai_chat.php",
+      "issue_type": "SSL Verification Disabled",
+      "severity": "medium",
+      "line_description": "Lines 162-165: SSL peer verification is disabled ('verify_peer' => false, 'verify_peer_name' => false) when calling the Gemini API, enabling MITM attacks that could intercept the API key and user financial data.",
+      "fix_recommendation": "Enable SSL verification. Ensure the server has a proper CA certificate bundle installed."
+    },
+    {
+      "id": 36,
+      "file": "ai_chat.php",
+      "issue_type": "Information Disclosure",
+      "severity": "medium",
+      "line_description": "Lines 95-136: getFinancialContext() includes full income/expense totals and top spending categories in the AI prompt. If the AI service logs prompts, user financial data is exposed to a third party.",
+      "fix_recommendation": "Review the Gemini API's data retention policies. Consider anonymizing financial data or using percentages instead of exact amounts."
+    },
+    {
+      "id": 37,
+      "file": "ocr.php",
+      "issue_type": "Input Validation / Large Payload",
+      "severity": "medium",
+      "line_description": "Lines 9-10: Memory limit set to 256M and upload size to 20M. Base64-encoded images are received in JSON body (line 67), which means the actual image data + base64 overhead could consume significant memory. No validation of base64 content correctness.",
+      "fix_recommendation": "Validate that the base64 string is valid before processing. Implement file size limits on the decoded data, not just the raw input. Consider using multipart/form-data uploads instead of base64 in JSON."
+    },
+    {
+      "id": 38,
+      "file": "ocr.php",
+      "issue_type": "Information Disclosure",
+      "severity": "medium",
+      "line_description": "Line 223: debug_raw field returns up to 500 chars of raw AI response to the client, which could contain unexpected content from the AI model.",
+      "fix_recommendation": "Remove debug_raw from production responses or restrict it to authenticated admin/debug mode."
+    },
+    {
+      "id": 39,
+      "file": "ocr.php",
+      "issue_type": "Input Validation / MIME Type",
+      "severity": "low",
+      "line_description": "Line 68: mimeType is accepted from user input without validation. While it's only used in the Gemini API request, a malicious value could cause unexpected behavior.",
+      "fix_recommendation": "Validate mimeType against an allowed list: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']."
+    },
+    {
+      "id": 40,
+      "file": "profile.php",
+      "issue_type": "File Upload / Stored XSS via Base64",
+      "severity": "medium",
+      "line_description": "Lines 46-58: Avatar images are converted to base64 data URLs and stored directly in the database. While file extension is checked, the actual content is not validated. A malicious file with a .jpg extension but SVG/HTML content could be stored and served as a data URL.",
+      "fix_recommendation": "Validate actual image content using getimagesize() or finfo_file() to verify the MIME type matches the extension. Consider using an image processing library to re-encode the image."
+    },
+    {
+      "id": 41,
+      "file": "profile.php",
+      "issue_type": "Path Traversal",
+      "severity": "low",
+      "line_description": "Lines 39-43: Old avatar deletion uses string matching on 'uploads/' prefix and constructs file path with __DIR__ . '/../' . $oldAvatar. While the current code is safe because new avatars are stored as base64, a legacy path could be manipulated.",
+      "fix_recommendation": "Use realpath() to resolve the path and verify it's within the expected upload directory before deletion."
+    },
+    {
+      "id": 42,
+      "file": "wallets.php",
+      "issue_type": "Input Validation / Role Whitelist",
+      "severity": "medium",
+      "line_description": "Line 142: The 'role' parameter for handleInviteMember defaults to 'editor' but doesn't validate against allowed values. A user could send role='owner' and potentially escalate privileges.",
+      "fix_recommendation": "Validate role against a whitelist: if (!in_array($role, ['editor', 'viewer'])) $role = 'editor';"
+    },
+    {
+      "id": 43,
+      "file": "wallets.php",
+      "issue_type": "Information Disclosure",
+      "severity": "low",
+      "line_description": "Line 113: Error message includes PDOException details ($e->getMessage()) returned to client.",
+      "fix_recommendation": "Return generic error message, log details server-side."
+    },
+    {
+      "id": 44,
+      "file": "subscription.php",
+      "issue_type": "Information Disclosure",
+      "severity": "medium",
+      "line_description": "Lines 127, 133: Error messages include internal details ($e->getMessage()). Line 133 exposes the MIDTRANS_CLIENT_KEY to the client response.",
+      "fix_recommendation": "The client key exposure is necessary for Midtrans Snap integration but ensure server key is never exposed. Sanitize error messages."
+    },
+    {
+      "id": 45,
+      "file": "subscription.php",
+      "issue_type": "Race Condition",
+      "severity": "medium",
+      "line_description": "Lines 64-138 (handleUpgrade): No duplicate order prevention. A user could rapidly submit multiple upgrade requests creating multiple pending orders and Midtrans tokens.",
+      "fix_recommendation": "Add a check for existing pending orders for the same user before creating a new one. Use database-level locking or unique constraints."
+    },
+    {
+      "id": 46,
+      "file": "subscription.php",
+      "issue_type": "Weak Order ID",
+      "severity": "low",
+      "line_description": "Line 96: Order ID uses rand(1000, 9999) which is predictable. Combined with known user_id and timestamp, order IDs are guessable.",
+      "fix_recommendation": "Use random_bytes() or a UUID for the random component of order IDs."
+    },
+    {
+      "id": 47,
+      "file": "midtrans-webhook.php",
+      "issue_type": "Replay Attack",
+      "severity": "medium",
+      "line_description": "Lines 1-101: No idempotency check or replay protection. The same webhook notification could be replayed to re-trigger subscription upgrades if the order status is already 'paid'.",
+      "fix_recommendation": "Check if the order status is already 'paid' before processing. Add idempotency by checking if the transition has already occurred."
+    },
+    {
+      "id": 48,
+      "file": "midtrans-webhook.php",
+      "issue_type": "Missing CSRF/Session Protection",
+      "severity": "low",
+      "line_description": "Lines 1-12: The webhook endpoint loads config.php which starts a session and sets CORS headers. Webhooks should not involve sessions. While not exploitable since POST is required with valid signature, it's unnecessary overhead.",
+      "fix_recommendation": "Consider a minimal config that only loads database connection without session/CORS handling for the webhook endpoint."
+    },
+    {
+      "id": 49,
+      "file": "push_worker.php",
+      "issue_type": "Unauthenticated Endpoint",
+      "severity": "high",
+      "line_description": "Lines 13-17, 33-35: When accessed via HTTP (not CLI), the push_worker.php can be triggered by anyone with ?action=check-budget|daily-summary|weekly-summary, sending push notifications to all users without authentication.",
+      "fix_recommendation": "Add authentication for HTTP access, or restrict to CLI-only like backup_db.php. Use a shared secret/token for cron job HTTP triggers."
+    },
+    {
+      "id": 50,
+      "file": "send_email.php",
+      "issue_type": "SSL Verification Disabled",
+      "severity": "medium",
+      "line_description": "Lines 34-37 and 144-147: SSL peer verification is disabled when calling the Resend API, enabling MITM attacks that could intercept the API key and email contents.",
+      "fix_recommendation": "Enable SSL verification. Ensure proper CA certificates are installed."
+    },
+    {
+      "id": 51,
+      "file": "send_email.php",
+      "issue_type": "Email Header Injection (Mitigated)",
+      "severity": "low",
+      "line_description": "Lines 19, 129: Verification/reset codes are included in email subject lines. While codes are numeric-only, the pattern of interpolating user-influenced data into email fields should be reviewed.",
+      "fix_recommendation": "Codes are already validated as 6-digit numbers, so the risk is minimal. Maintain this validation upstream."
+    },
+    {
+      "id": 52,
+      "file": "gamification.php",
+      "issue_type": "Race Condition",
+      "severity": "low",
+      "line_description": "Lines 22-23: Points are added with a non-atomic UPDATE gamification_points = gamification_points + ?. While MySQL handles this atomically, the subsequent checkBadges() reads the points separately, creating a TOCTOU race.",
+      "fix_recommendation": "Wrap addGamificationPoints and checkBadges in a single transaction or use SELECT ... FOR UPDATE when reading points for badge evaluation."
+    },
+    {
+      "id": 53,
+      "file": "index.php",
+      "issue_type": "Path Traversal",
+      "severity": "medium",
+      "line_description": "Lines 9-19: The entrypoint uses basename($path) to determine the target PHP file, then constructs $targetFile = __DIR__ . '/' . $script. While basename() prevents directory traversal, the file inclusion pattern with require $targetFile could include unexpected .php files in the api/ directory.",
+      "fix_recommendation": "Use an explicit whitelist of allowed API scripts instead of dynamic file inclusion: $allowed = ['auth.php', 'transactions.php', ...]; if (!in_array($script, $allowed)) { 404; }"
+    },
+    {
+      "id": 54,
+      "file": "index.php",
+      "issue_type": "XSS",
+      "severity": "low",
+      "line_description": "Line 25: htmlspecialchars($script) is used in the JSON error response. While JSON Content-Type mitigates XSS in modern browsers, this is good practice.",
+      "fix_recommendation": "No action needed — already properly escaped."
+    },
+    {
+      "id": 55,
+      "file": "backup_db.php",
+      "issue_type": "Command Injection (Mitigated)",
+      "severity": "low",
+      "line_description": "Lines 17-18, 33: DB credentials are passed through escapeshellarg() which is correct. However, the $host and $port are NOT escaped (line 33), creating potential command injection if these values were user-controlled.",
+      "fix_recommendation": "Apply escapeshellarg() to $host and $port as well for defense in depth."
+    },
+    {
+      "id": 56,
+      "file": "backup_db.php",
+      "issue_type": "Backup Security",
+      "severity": "medium",
+      "line_description": "Lines 21-28: Backups are stored in a predictable location (../backups/) that may be web-accessible. If the web server serves files from the parent directory, backup SQL files containing all user data could be downloaded.",
+      "fix_recommendation": "Store backups outside the web root. Add .htaccess or server config to deny access to the backup directory. Encrypt backups at rest."
+    },
+    {
+      "id": 57,
+      "file": "CROSS-CUTTING",
+      "issue_type": "XSS (Stored/Reflected)",
+      "severity": "medium",
+      "line_description": "Multiple files return user-supplied data in JSON responses (user names, descriptions, categories, AI chat messages) without output encoding. While JSON Content-Type header provides some protection, if any frontend renders these values as HTML without escaping, stored XSS is possible.",
+      "fix_recommendation": "Ensure all frontend rendering escapes HTML entities. Consider adding output encoding in the API responses for HTML-sensitive fields."
+    },
+    {
+      "id": 58,
+      "file": "CROSS-CUTTING",
+      "issue_type": "Missing Security Headers",
+      "severity": "medium",
+      "line_description": "config.php only sets Content-Type and CORS headers. Missing: X-Content-Type-Options, X-Frame-Options, Content-Security-Policy, Strict-Transport-Security, X-XSS-Protection.",
+      "fix_recommendation": "Add security headers: X-Content-Type-Options: nosniff, X-Frame-Options: DENY, Strict-Transport-Security for HTTPS, Content-Security-Policy."
+    },
+    {
+      "id": 59,
+      "file": "CROSS-CUTTING",
+      "issue_type": "No Request Size Limits",
+      "severity": "medium",
+      "line_description": "Most endpoints read php://input without size limits (getInput() in config.php line 191-193). An attacker can send extremely large JSON payloads to cause memory exhaustion.",
+      "fix_recommendation": "Add content-length checks before reading php://input. Set php.ini post_max_size appropriately. Validate input sizes."
+    },
+    {
+      "id": 60,
+      "file": "CROSS-CUTTING",
+      "issue_type": "No Audit Logging",
+      "severity": "medium",
+      "line_description": "No audit trail for security-sensitive operations: login attempts, password changes, subscription upgrades, admin actions, wallet member additions/removals.",
+      "fix_recommendation": "Implement an audit log table that records timestamps, user IDs, actions, IP addresses, and results for security-critical operations."
+    },
+    {
+      "id": 61,
+      "file": "CROSS-CUTTING",
+      "issue_type": "Inconsistent Authorization",
+      "severity": "medium",
+      "line_description": "admin.php checks user_id == 1 for admin access, but the database has a 'role' column (from migrate_saas.php). These two systems are inconsistent. make_admin.php sets role='admin' but admin.php doesn't check the role column.",
+      "fix_recommendation": "Unify authorization: use the 'role' column consistently. Create a requireAdmin() helper function that checks the role column."
+    },
+    {
+      "id": 62,
+      "file": "CROSS-CUTTING",
+      "issue_type": "Dead Code / Inconsistency",
+      "severity": "low",
+      "line_description": "user.php and profile.php both handle user profile operations with overlapping functionality. profile.php handles upload_photo, update_profile, change_password. user.php handles GET profile and PUT profile (name/theme). This creates confusion about which endpoint to use.",
+      "fix_recommendation": "Consolidate profile management into a single API endpoint to avoid confusion and inconsistent validation."
+    }
+  ]
+}

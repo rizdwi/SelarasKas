@@ -8,7 +8,11 @@ $method = $_SERVER['REQUEST_METHOD'];
 $userId = requireAuth();
 
 // Simple auth check for admin. Let's assume user ID 1 is admin.
-if ($userId != 1) {
+$db = getDB();
+$stmt = $db->prepare("SELECT role FROM users WHERE id = ?");
+$stmt->execute([$userId]);
+$userRole = $stmt->fetchColumn();
+if ($userRole !== 'admin') {
     jsonResponse(['error' => 'Akses ditolak'], 403);
 }
 

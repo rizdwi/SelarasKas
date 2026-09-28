@@ -1,62 +1,26 @@
 {
   "version": 2,
+  "framework": null,
   "functions": {
-    "api/index.php": {
+    "api/**/*.php": {
       "runtime": "vercel-php@0.9.0"
     }
   },
-  "routes": [
+  "headers": [
     {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
+      "source": "/(assets|css|icons|js)/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
     {
-      "src": "/css/(.*)",
-      "dest": "/css/$1"
-    },
-    {
-      "src": "/icons/(.*)",
-      "dest": "/icons/$1"
-    },
-    {
-      "src": "/js/(.*)",
-      "dest": "/js/$1"
-    },
-    {
-      "src": "/manifest.json",
-      "dest": "/manifest.json"
-    },
-    {
-      "src": "/sw.js",
-      "dest": "/sw.js"
-    },
-    {
-      "src": "/index.css",
-      "dest": "/index.css"
-    },
-    {
-      "src": "/admin.html",
-      "dest": "/admin.html"
-    },
-    {
-      "src": "/privacy.html",
-      "dest": "/privacy.html"
-    },
-    {
-      "src": "/data-deletion.html",
-      "dest": "/data-deletion.html"
-    },
-    {
-      "src": "/qris.jpeg",
-      "dest": "/qris.jpeg"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.php"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/api/index.php"
+      "source": "/api/(.*)",
+      "destination": "/api/index.php"
     }
   ]
 }

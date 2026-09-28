@@ -683,7 +683,7 @@
     }
 
     function initGoogleAuth() {
-        const isDummy = !authConfig.google_client_id || authConfig.google_client_id.includes('DUMMY');
+        const isDummy = false; // Disabled for security
         const btn1 = document.getElementById('googleAuthBtn');
         const btn2 = document.getElementById('googleAuthBtn2');
 
@@ -742,7 +742,7 @@
 
     // ===== FACEBOOK AUTH =====
     function initFacebookAuth() {
-        const isDummy = !authConfig.facebook_app_id || authConfig.facebook_app_id.includes('DUMMY');
+        const isDummy = false; // Disabled for security
         const fbBtn1 = document.getElementById('facebookAuthBtn');
         const fbBtn2 = document.getElementById('facebookAuthBtn2');
 

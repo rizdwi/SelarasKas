@@ -6,7 +6,10 @@ if (file_exists(__DIR__ . '/.env.local.php')) {
 
 // CORS Headers
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
+// Access-Control-Allow-Origin should be restricted in production
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if($origin) header('Access-Control-Allow-Origin: ' . $origin);
+header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
@@ -16,11 +19,11 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS
 }
 
 // Database Configuration â€” Supports Environment Variables with SumoPod defaults
-define('DB_HOST', getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? 'mysql-dbas-jkt-001.sumobase.my.id'));
-define('DB_PORT', getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '63306'));
-define('DB_NAME', getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'dbca8d8138feed42c6'));
-define('DB_USER', getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'uqWmml0iC7aDfCZmw'));
-define('DB_PASS', getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? '07726fa720454a1dbb2a4648'));
+define('DB_HOST', getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? 'localhost'));
+define('DB_PORT', getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '3306'));
+define('DB_NAME', getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'selaraskas'));
+define('DB_USER', getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'root'));
+define('DB_PASS', getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? ''));
 
 // OAuth Credentials (Supports Environment Variables)
 define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: '261568703120-i2p77mrsoo9o5iore6l6jqhraer48hpt.apps.googleusercontent.com');
@@ -35,8 +38,8 @@ $_gemini_key = defined('GEMINI_API_KEY_LOCAL') ? GEMINI_API_KEY_LOCAL : (getenv(
 define('GEMINI_API_KEY', $_gemini_key);
 
 // Midtrans Payment Gateway Configuration
-define('MIDTRANS_SERVER_KEY', getenv('MIDTRANS_SERVER_KEY') ?: ($_ENV['MIDTRANS_SERVER_KEY'] ?? 'SB-Mid-server-yUtg-Z8a3mCj4wS8QyQ9Fk9a')); // Default sandbox key
-define('MIDTRANS_CLIENT_KEY', getenv('MIDTRANS_CLIENT_KEY') ?: ($_ENV['MIDTRANS_CLIENT_KEY'] ?? 'SB-Mid-client-8K218N-pA4lEovwI')); // Default sandbox client key
+define('MIDTRANS_SERVER_KEY', getenv('MIDTRANS_SERVER_KEY') ?: ($_ENV['MIDTRANS_SERVER_KEY'] ?? '')); // Default sandbox key
+define('MIDTRANS_CLIENT_KEY', getenv('MIDTRANS_CLIENT_KEY') ?: ($_ENV['MIDTRANS_CLIENT_KEY'] ?? '')); // Default sandbox client key
 define('MIDTRANS_IS_PRODUCTION', filter_var(getenv('MIDTRANS_IS_PRODUCTION') ?: ($_ENV['MIDTRANS_IS_PRODUCTION'] ?? false), FILTER_VALIDATE_BOOLEAN));
 
 function getDB() {

@@ -204,8 +204,7 @@ button:focus-visible,
     border: 1px solid var(--control-border);
     box-shadow: var(--control-shadow-soft);
     
-    -webkit-
-}
+    }
 
 .day-night-toggle:hover {
     transform: translateY(-1px) scale(1.02);

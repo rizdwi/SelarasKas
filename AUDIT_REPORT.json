@@ -1,0 +1,532 @@
+{
+  "project": "SelarasKas",
+  "audit_date": "2026-09-28",
+  "total_files_audited": 20,
+  "files_audited": [
+    "js/analytics.js",
+    "js/api.js",
+    "js/auth.js",
+    "js/budgeting.js",
+    "js/camera.js",
+    "js/config.js",
+    "js/dashboard.js",
+    "js/gamification.js",
+    "js/main.js",
+    "js/modals.js",
+    "js/nav.js",
+    "js/notifications.js",
+    "js/profile.js",
+    "js/savings.js",
+    "js/theme.js",
+    "js/transactions.js",
+    "js/ui_helpers.js",
+    "js/utils.js",
+    "js/wallets.js",
+    "sw.js"
+  ],
+  "summary": {
+    "critical": 0,
+    "high": 7,
+    "medium": 20,
+    "low": 26,
+    "info": 2,
+    "total_findings": 55
+  },
+  "findings": [
+    {
+      "id": "XSS-001",
+      "filename": "js/analytics.js",
+      "line_numbers": "88-107",
+      "issue_type": "XSS",
+      "severity": "HIGH",
+      "description": "renderTopSpending() uses innerHTML with unsanitized server data. `item.category_name`, `item.name`, `item.color`, and `item.emoji` are interpolated directly into HTML template literals without escaping. If a category name contains malicious HTML/JS (e.g., via a compromised API or shared wallet), it executes in the user's browser.",
+      "fix_recommendation": "Use escapeHTML() on `catLabel` and validate `item.color` against a hex-color regex before interpolation. The code already has escapeHTML() available but doesn't use it here."
+    },
+    {
+      "id": "XSS-002",
+      "filename": "js/analytics.js",
+      "line_numbers": "7",
+      "issue_type": "XSS",
+      "severity": "LOW",
+      "description": "innerHTML assignment with hardcoded skeleton HTML. No dynamic data involved — safe, but contributes to innerHTML usage pattern.",
+      "fix_recommendation": "No immediate action needed. Consider using DOM APIs or a template element for consistency."
+    },
+    {
+      "id": "XSS-003",
+      "filename": "js/dashboard.js",
+      "line_numbers": "79-90",
+      "issue_type": "XSS",
+      "severity": "HIGH",
+      "description": "renderSpendingChart() interpolates `item.category_name`, `item.name`, `item.color`, and `item.emoji` directly into innerHTML without escaping. An attacker who controls category data (e.g., via shared wallets) can inject scripts.",
+      "fix_recommendation": "Apply escapeHTML() to all user/server-derived text. Validate color values with a regex like /^#[0-9a-fA-F]{6}$/."
+    },
+    {
+      "id": "XSS-004",
+      "filename": "js/budgeting.js",
+      "line_numbers": "54",
+      "issue_type": "XSS",
+      "severity": "MEDIUM",
+      "description": "In renderBudgets(), `remainText` uses innerHTML with a hardcoded `<span>` tag containing dynamic `formatRp()` output, but `b.category_color` is interpolated unsanitized into a style attribute, which could allow CSS injection if the API returns a malicious color value like `red;background-image:url(evil)`.",
+      "fix_recommendation": "Validate b.category_color against /^#[0-9a-fA-F]{3,8}$/ before interpolation."
+    },
+    {
+      "id": "XSS-005",
+      "filename": "js/profile.js",
+      "line_numbers": "44",
+      "issue_type": "XSS",
+      "severity": "MEDIUM",
+      "description": "Cover photo URL from localStorage is injected directly into `style.backgroundImage` without sanitization: `cardEl.style.backgroundImage = url(${savedCover})`. If localStorage is tampered with, it could inject malicious CSS. Also line 62: user-selected `bg` from dataset attribute is set without validation.",
+      "fix_recommendation": "Validate cover image paths against an allowlist or sanitize the URL (ensure it matches expected asset paths)."
+    },
+    {
+      "id": "XSS-006",
+      "filename": "js/profile.js",
+      "line_numbers": "79",
+      "issue_type": "XSS",
+      "severity": "HIGH",
+      "description": "Edit profile form injects `currentUser.name` directly into an HTML template literal as an input value attribute: `value=\"${currentUser.name}\"`. If the user's name contains double quotes or HTML, it breaks out of the attribute and allows HTML/JS injection.",
+      "fix_recommendation": "Use escapeHTML(currentUser.name) in the template literal, or build the input with DOM APIs and set .value programmatically."
+    },
+    {
+      "id": "XSS-007",
+      "filename": "js/auth.js",
+      "line_numbers": "618-638",
+      "issue_type": "XSS",
+      "severity": "MEDIUM",
+      "description": "showMockOAuthDialog() builds HTML with hardcoded account data via template literals, then sets it via openModal(). While the data is currently static, the pattern of building HTML with string interpolation from data-attributes (line 625: `data-name`, `data-email`) means any future dynamic source would be vulnerable.",
+      "fix_recommendation": "Use escapeHTML() on all interpolated values in the mock OAuth dialog template, even for currently-static data, as defense in depth."
+    },
+    {
+      "id": "XSS-008",
+      "filename": "js/main.js",
+      "line_numbers": "85-96, 168-219",
+      "issue_type": "XSS",
+      "severity": "MEDIUM",
+      "description": "loadWalletMembers() uses innerHTML += in a loop to build member cards. While escapeHTML() is used on some fields (m.name, m.email), the pattern of `innerHTML +=` is inefficient and each iteration re-parses the entire container, potentially removing event listeners. sendSupportMessage() line 199 uses innerHTML with a regex-based markdown parser `replyHtml.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')` — this re-introduces HTML after escapeHTML(), which could be exploited if the AI response contains crafted markdown-like patterns.",
+      "fix_recommendation": "For wallet members: build elements with DOM APIs or collect HTML in an array and set innerHTML once. For support chat: use a proper markdown sanitizer library (e.g., DOMPurify) after markdown parsing, or use textContent and DOM-based formatting."
+    },
+    {
+      "id": "DATA-001",
+      "filename": "js/main.js",
+      "line_numbers": "224-225",
+      "issue_type": "SENSITIVE_DATA_EXPOSURE",
+      "severity": "MEDIUM",
+      "description": "Admin WhatsApp number (6281385084327) and email (rizkidwisandy1@gmail.com) are hardcoded in client-side JavaScript. These are exposed to any user who inspects the source code.",
+      "fix_recommendation": "Move contact information to server-side configuration and expose only through an API endpoint, or accept this as intentional for a contact feature."
+    },
+    {
+      "id": "DATA-002",
+      "filename": "js/modals.js",
+      "line_numbers": "139",
+      "issue_type": "SENSITIVE_DATA_EXPOSURE",
+      "severity": "MEDIUM",
+      "description": "Admin WhatsApp number duplicated in modals.js (confirmPayment function). Same hardcoded phone number as in main.js.",
+      "fix_recommendation": "Centralize admin contact info in config.js or fetch from server."
+    },
+    {
+      "id": "DATA-003",
+      "filename": "js/auth.js",
+      "line_numbers": "587-598",
+      "issue_type": "SENSITIVE_DATA_EXPOSURE",
+      "severity": "HIGH",
+      "description": "handleCredentialResponse() decodes the Google JWT on the client side using atob() and sends the payload (sub, email, name, picture) to the backend. The JWT signature is NOT verified client-side. A malicious actor could craft a fake JWT payload and send it to google_login endpoint with arbitrary google_id, email, name. The backend MUST verify the JWT signature server-side, but the client code doesn't enforce or indicate this.",
+      "fix_recommendation": "Send the raw `response.credential` JWT token to the server and verify it server-side using Google's public keys. Do NOT decode and re-package the JWT client-side."
+    },
+    {
+      "id": "DATA-004",
+      "filename": "js/config.js",
+      "line_numbers": "11-12",
+      "issue_type": "SENSITIVE_DATA_EXPOSURE",
+      "severity": "LOW",
+      "description": "csrfToken and vapidPublicKey are stored as global variables. While CSRF tokens are meant for client use, storing them as globals makes them accessible to any injected script. The VAPID public key is intended to be public.",
+      "fix_recommendation": "Acceptable pattern for CSRF tokens. Consider using closure/module scope to limit exposure."
+    },
+    {
+      "id": "DATA-005",
+      "filename": "js/notifications.js",
+      "line_numbers": "161",
+      "issue_type": "SENSITIVE_DATA_EXPOSURE",
+      "severity": "LOW",
+      "description": "Offline queue is stored in localStorage (OFFLINE_QUEUE_KEY = 'selaraskas_offline_queue'). Queued API requests (including POST bodies with financial data) persist in plaintext localStorage, readable by any script on the same origin.",
+      "fix_recommendation": "Consider encrypting queued data or using IndexedDB with more controlled access. At minimum, clear the queue on logout."
+    },
+    {
+      "id": "API-001",
+      "filename": "js/api.js",
+      "line_numbers": "12-16",
+      "issue_type": "INSECURE_API",
+      "severity": "LOW",
+      "description": "API endpoint uses relative path 'api/' which is good. credentials: 'include' is set correctly for session cookies. CSRF token is attached for state-changing methods. This is well-implemented.",
+      "fix_recommendation": "No action needed — this is a positive finding."
+    },
+    {
+      "id": "API-002",
+      "filename": "js/profile.js",
+      "line_numbers": "17-26",
+      "issue_type": "INSECURE_API",
+      "severity": "MEDIUM",
+      "description": "Avatar upload bypasses the api() wrapper and uses raw fetch() without credentials: 'include'. This means session cookies may not be sent in cross-origin scenarios. The CSRF token is sent both as a form field AND as a header, which is good, but the missing credentials: 'include' is inconsistent.",
+      "fix_recommendation": "Add `credentials: 'include'` to the fetch options for avatar upload to match the api() wrapper behavior."
+    },
+    {
+      "id": "API-003",
+      "filename": "js/api.js",
+      "line_numbers": "17",
+      "issue_type": "INSECURE_API",
+      "severity": "MEDIUM",
+      "description": "The API client always calls res.json() even on error responses. If the server returns non-JSON (e.g., a 500 HTML error page), this will throw a confusing JSON parse error instead of showing the actual server error.",
+      "fix_recommendation": "Check Content-Type header before parsing JSON, or wrap res.json() in a try/catch with a user-friendly fallback message."
+    },
+    {
+      "id": "API-004",
+      "filename": "js/camera.js",
+      "line_numbers": "162-165",
+      "issue_type": "INSECURE_API",
+      "severity": "MEDIUM",
+      "description": "OCR endpoint sends base64-encoded image data in a JSON POST body. For large images (even after compression), this could be a very large request payload (2-4MB+). No client-side size limit check before sending.",
+      "fix_recommendation": "Add a client-side file size check (e.g., reject files > 5MB after compression) and show a user-friendly error. Consider using multipart/form-data instead of JSON for large binary payloads."
+    },
+    {
+      "id": "INPUT-001",
+      "filename": "js/transactions.js",
+      "line_numbers": "174-186",
+      "issue_type": "MISSING_INPUT_SANITIZATION",
+      "severity": "LOW",
+      "description": "Transaction form validates amount > 0 and requires categoryId, but does not validate or sanitize the description field. While server-side validation should handle this, there's no max-length check client-side.",
+      "fix_recommendation": "Add a maxlength attribute to the description input and trim/validate before sending."
+    },
+    {
+      "id": "INPUT-002",
+      "filename": "js/budgeting.js",
+      "line_numbers": "188-206",
+      "issue_type": "MISSING_INPUT_SANITIZATION",
+      "severity": "LOW",
+      "description": "Budget form doesn't validate maximum amount. A user could enter absurdly large numbers. No negative number check beyond parseRupiah returning 0 for invalid input.",
+      "fix_recommendation": "Add reasonable max amount validation (e.g., < 999,999,999,999)."
+    },
+    {
+      "id": "INPUT-003",
+      "filename": "js/savings.js",
+      "line_numbers": "116-128",
+      "issue_type": "MISSING_INPUT_SANITIZATION",
+      "severity": "LOW",
+      "description": "Savings form doesn't validate title length or sanitize it before sending to the API. No max length constraint on the title input.",
+      "fix_recommendation": "Add maxlength attribute and validate title length client-side."
+    },
+    {
+      "id": "INPUT-004",
+      "filename": "js/main.js",
+      "line_numbers": "104-106",
+      "issue_type": "MISSING_INPUT_SANITIZATION",
+      "severity": "LOW",
+      "description": "Wallet member invite accepts email input but only checks for non-empty string. No email format validation before sending to API.",
+      "fix_recommendation": "Add basic email format validation (regex or input type='email' constraint)."
+    },
+    {
+      "id": "DEAD-001",
+      "filename": "js/camera.js",
+      "line_numbers": "212-346",
+      "issue_type": "DEAD_CODE",
+      "severity": "LOW",
+      "description": "parseReceiptText() function is defined but never called. The OCR flow now uses server-side Gemini AI parsing (runReceiptOcr → api('ocr.php')). The client-side text parsing function is dead code from a previous implementation.",
+      "fix_recommendation": "Remove parseReceiptText() to reduce bundle size and maintenance burden. If kept as fallback, document it."
+    },
+    {
+      "id": "DEAD-002",
+      "filename": "js/modals.js",
+      "line_numbers": "248",
+      "issue_type": "DEAD_CODE",
+      "severity": "LOW",
+      "description": "`const _origShowToast = window.__showToastFn;` captures a variable that is never used. The interceptor pattern was started but not completed.",
+      "fix_recommendation": "Remove the unused variable or complete the interceptor pattern if needed."
+    },
+    {
+      "id": "DEAD-003",
+      "filename": "js/modals.js",
+      "line_numbers": "262",
+      "issue_type": "DEAD_CODE",
+      "severity": "LOW",
+      "description": "`const _origShowApp = showApp;` captures showApp but never wraps/overrides it. The pattern suggests an intended wrapper (possibly to call updateSubscriptionStatusCard after showApp), but it was never completed.",
+      "fix_recommendation": "Either complete the wrapper pattern or remove the unused variable."
+    },
+    {
+      "id": "DEAD-004",
+      "filename": "js/utils.js",
+      "line_numbers": "48-51",
+      "issue_type": "DEAD_CODE",
+      "severity": "INFO",
+      "description": "safeIcon() function is defined but never used anywhere in the codebase. renderEmojiOrIcon() handles the same fallback logic internally.",
+      "fix_recommendation": "Remove safeIcon() or use it in renderEmojiOrIcon() for clarity."
+    },
+    {
+      "id": "DEAD-005",
+      "filename": "js/utils.js",
+      "line_numbers": "84-165",
+      "issue_type": "DEAD_CODE",
+      "severity": "INFO",
+      "description": "Many LUCIDE_SVGs emoji→SVG mappings reference undefined SVG keys (e.g., 'droplets', 'fuel', 'coffee', 'soup', 'hospital', 'pill', 'heart-pulse', 'landmark', 'dumbbell', 'party-popper', 'film', 'tv', 'gamepad-2', 'palette', 'footprints', 'watch', 'washing-machine', 'heart-handshake', 'baby', 'book-open', 'pen-tool', 'book', 'shirt', 'toy-brick', 'stethoscope', 'utensils-crossed', 'carrot', 'drumstick', 'flame', 'wheat', 'cup-soda', 'circle-parking', 'navigation', 'bus', 'pizza', 'soup', 'utensils', 'glass-water', 'cookie', 'activity', 'wrench', 'hammer'). These mappings resolve to `undefined`, causing the fallback to 'box' icon for many categories.",
+      "fix_recommendation": "Either add the missing SVG definitions to LUCIDE_SVGs or remove the broken mappings. This causes many category icons to display as a generic box instead of their intended icon."
+    },
+    {
+      "id": "PERF-001",
+      "filename": "js/main.js",
+      "line_numbers": "85-96",
+      "issue_type": "PERFORMANCE",
+      "severity": "MEDIUM",
+      "description": "loadWalletMembers() uses `innerHTML +=` in a forEach loop. Each iteration forces the browser to serialize the current DOM, concatenate, and re-parse the entire innerHTML. This destroys and recreates all existing DOM nodes, is O(n²), and removes any event listeners on existing elements.",
+      "fix_recommendation": "Build the full HTML string in a variable or array, then set innerHTML once: `listDiv.innerHTML = members.map(m => ...).join('');`"
+    },
+    {
+      "id": "PERF-002",
+      "filename": "js/utils.js",
+      "line_numbers": "234-263",
+      "issue_type": "PERFORMANCE",
+      "severity": "LOW",
+      "description": "renderEmojiOrIcon() performs string replacement on SVG strings every time it's called (width, height, style injection). This is called frequently during list rendering (transactions, budgets, categories). Each call creates new string allocations.",
+      "fix_recommendation": "Cache rendered SVGs by key (icon+size+color) or use template cloning. Low priority since string ops are fast."
+    },
+    {
+      "id": "PERF-003",
+      "filename": "Multiple files",
+      "line_numbers": "Various",
+      "issue_type": "PERFORMANCE",
+      "severity": "LOW",
+      "description": "lucide.createIcons() is called via setTimeout in many places (main.js, transactions.js, budgeting.js, savings.js, nav.js, dashboard.js). This global DOM scan for lucide icon elements runs repeatedly and unnecessarily since the app uses custom inline SVGs via renderEmojiOrIcon().",
+      "fix_recommendation": "Remove lucide.createIcons() calls if Lucide library is not actually used for rendering (the codebase uses inline SVGs). If Lucide is still needed for some elements, scope the calls: `lucide.createIcons({nodes: [container]})`."
+    },
+    {
+      "id": "PERF-004",
+      "filename": "js/dashboard.js",
+      "line_numbers": "39-52",
+      "issue_type": "PERFORMANCE",
+      "severity": "LOW",
+      "description": "animateNumber() uses Date.now() polling via requestAnimationFrame for 1 second. This is fine for a single element but could be wasteful if called on many elements simultaneously. The animation always starts from 0 regardless of previous value, causing a full recount on every dashboard reload.",
+      "fix_recommendation": "Consider starting from the currently displayed value to avoid jarring full-range animations on refresh."
+    },
+    {
+      "id": "PERF-005",
+      "filename": "js/camera.js",
+      "line_numbers": "588-593",
+      "issue_type": "PERFORMANCE",
+      "severity": "MEDIUM",
+      "description": "saveTransactions() sends individual API calls in a sequential for-loop for split transactions. With many receipt items (10+), this creates a waterfall of network requests.",
+      "fix_recommendation": "Add a batch endpoint on the server (e.g., transactions.php?action=batch) and send all transactions in a single request, or use Promise.all() for parallel submission."
+    },
+    {
+      "id": "A11Y-001",
+      "filename": "js/transactions.js",
+      "line_numbers": "28-45",
+      "issue_type": "ACCESSIBILITY",
+      "severity": "MEDIUM",
+      "description": "Transaction items with delete buttons use inline onclick handlers and SVG-only buttons without aria-labels. Screen readers cannot identify the purpose of the delete button. The transaction-item div has no role or aria attributes for interactive elements.",
+      "fix_recommendation": "Add aria-label='Hapus transaksi' to delete buttons. Add role='listitem' to transaction items and role='list' to the container."
+    },
+    {
+      "id": "A11Y-002",
+      "filename": "js/budgeting.js",
+      "line_numbers": "58",
+      "issue_type": "ACCESSIBILITY",
+      "severity": "MEDIUM",
+      "description": "Budget items use inline onclick on a div element for navigation (`onclick=\"window.Selaraskas.showBudgetForm(...)\"`). Divs are not keyboard-focusable by default, so keyboard users cannot interact with budget items.",
+      "fix_recommendation": "Add tabindex='0', role='button', and onkeydown handler for Enter/Space. Better: use a <button> element."
+    },
+    {
+      "id": "A11Y-003",
+      "filename": "js/savings.js",
+      "line_numbers": "41-46",
+      "issue_type": "ACCESSIBILITY",
+      "severity": "MEDIUM",
+      "description": "Savings goal action buttons (add/delete) use SVG-only content without aria-labels or title attributes. Screen readers announce these as empty buttons.",
+      "fix_recommendation": "Add aria-label='Tambah tabungan' and aria-label='Hapus target' to the respective buttons."
+    },
+    {
+      "id": "A11Y-004",
+      "filename": "js/auth.js",
+      "line_numbers": "167-200",
+      "issue_type": "ACCESSIBILITY",
+      "severity": "MEDIUM",
+      "description": "OTP input fields lack aria-label attributes. The 6-digit OTP input is a custom implementation without ARIA roles. Screen readers cannot communicate the purpose of each digit input. No live region announces errors.",
+      "fix_recommendation": "Add aria-label='Digit ${i+1} dari 6' to each OTP input. Use aria-live='polite' on error messages. Consider adding role='group' with aria-label='Kode verifikasi' to the container."
+    },
+    {
+      "id": "A11Y-005",
+      "filename": "js/modals.js",
+      "line_numbers": "2-17",
+      "issue_type": "ACCESSIBILITY",
+      "severity": "MEDIUM",
+      "description": "Modal implementation lacks focus trapping, aria-modal attribute, and proper role. When modal opens, focus is not moved to the modal. When closed, focus does not return to the triggering element. No Escape key handler.",
+      "fix_recommendation": "Add role='dialog', aria-modal='true', focus trap (cycle Tab within modal), auto-focus first focusable element on open, restore focus on close, and Escape key to close."
+    },
+    {
+      "id": "A11Y-006",
+      "filename": "js/nav.js",
+      "line_numbers": "2-20",
+      "issue_type": "ACCESSIBILITY",
+      "severity": "LOW",
+      "description": "Navigation items use click handlers on generic elements without ARIA roles or keyboard support (no role='tab', aria-selected, tabindex).",
+      "fix_recommendation": "Add role='tablist' to nav, role='tab' to items, aria-selected to active item, and role='tabpanel' to pages."
+    },
+    {
+      "id": "SW-001",
+      "filename": "sw.js",
+      "line_numbers": "52-63",
+      "issue_type": "PWA_SERVICE_WORKER",
+      "severity": "HIGH",
+      "description": "API GET responses are cached by the service worker (line 57: cache.put(req, resClone)). This means authenticated API responses containing financial data (transaction lists, balances, analytics) are stored in the browser cache. If a user logs out or shares the device, cached financial data from the previous user may be served from cache when the next user's request fails.",
+      "fix_recommendation": "Do NOT cache API responses, or add cache invalidation on logout. At minimum, include the session/user ID in the cache key, or use Cache-Control: no-store headers from the server for authenticated endpoints."
+    },
+    {
+      "id": "SW-002",
+      "filename": "sw.js",
+      "line_numbers": "2-7",
+      "issue_type": "PWA_SERVICE_WORKER",
+      "severity": "LOW",
+      "description": "STATIC_ASSETS array only includes './', './index.html', and './manifest.json'. The JS bundle (app.js), CSS (index.css), and icons are not precached. Lines 44-49 explicitly skip app.js and index.css for freshness, which is good, but icons and other assets aren't precached either.",
+      "fix_recommendation": "Add critical assets to STATIC_ASSETS for true offline support: icons, logo images. The current setup relies entirely on runtime caching."
+    },
+    {
+      "id": "SW-003",
+      "filename": "sw.js",
+      "line_numbers": "1",
+      "issue_type": "PWA_SERVICE_WORKER",
+      "severity": "LOW",
+      "description": "Cache version (v45) is hardcoded and must be manually bumped on every deploy. Easy to forget, leading to stale cache serving.",
+      "fix_recommendation": "Use a build tool to auto-inject cache version from git hash or timestamp. Or use a Workbox-based approach."
+    },
+    {
+      "id": "SW-004",
+      "filename": "sw.js",
+      "line_numbers": "78-95",
+      "issue_type": "PWA_SERVICE_WORKER",
+      "severity": "LOW",
+      "description": "Push notification handler calls event.data.json() without error handling. If the push payload is not valid JSON, the handler will throw and the notification won't be shown.",
+      "fix_recommendation": "Wrap event.data.json() in try/catch with a fallback notification message."
+    },
+    {
+      "id": "LOGIC-001",
+      "filename": "js/notifications.js",
+      "line_numbers": "47-54",
+      "issue_type": "LOGIC_BUG",
+      "severity": "HIGH",
+      "description": "Push notification toggle logic is INVERTED. handlePushToggle() checks `isActive = pushToggle.checked`, then if isActive calls unsubscribePush(), else calls subscribePush(). But the checkbox `checked` state at the time of the event has ALREADY been toggled by the browser's default behavior. So when user checks the box (turning ON), isActive=true, and the code calls unsubscribePush() — the opposite of what the user intended.",
+      "fix_recommendation": "Invert the logic: if (isActive) subscribePush(); else unsubscribePush(). Or use preventDefault() and manage the checked state manually based on API success."
+    },
+    {
+      "id": "LOGIC-002",
+      "filename": "js/notifications.js",
+      "line_numbers": "176-192",
+      "issue_type": "LOGIC_BUG",
+      "severity": "MEDIUM",
+      "description": "syncOfflineQueue() removes the queue from localStorage BEFORE attempting to sync (line 181). If any request fails, the failed tasks are lost permanently — they're logged to console.error but never re-queued.",
+      "fix_recommendation": "Keep the queue in localStorage during sync. Remove individual items only after successful API call. Re-save remaining items on failure."
+    },
+    {
+      "id": "LOGIC-003",
+      "filename": "js/modals.js",
+      "line_numbers": "262-267",
+      "issue_type": "LOGIC_BUG",
+      "severity": "MEDIUM",
+      "description": "The file captures `const _origShowApp = showApp` at module level, presumably to wrap showApp with updateSubscriptionStatusCard() call, but never actually overrides showApp. Also, init() is called at line 267 but is ALSO called at the bottom of main.js (line 241). If modals.js loads after main.js, init() runs twice. If modals.js loads before main.js, init() also runs from here — but the second call from main.js would re-initialize everything, potentially doubling event listeners.",
+      "fix_recommendation": "Remove the duplicate init() call from modals.js. Ensure init() is only called once from main.js. Complete or remove the _origShowApp wrapper."
+    },
+    {
+      "id": "LOGIC-004",
+      "filename": "js/analytics.js",
+      "line_numbers": "115-132, 271-287",
+      "issue_type": "LOGIC_BUG",
+      "severity": "LOW",
+      "description": "exportAnalyticsAsPng() and exportAnalyticsAsPdf() both dynamically load html2canvas from CDN. If both are called in sequence, the second will skip loading since html2canvas is already defined. However, if the CDN is unreachable, the promise rejects but the error isn't caught gracefully — it falls through to the catch block with a confusing error.",
+      "fix_recommendation": "Add specific error handling for script loading failures with a user-friendly message like 'Gagal memuat library export. Periksa koneksi internet.'"
+    },
+    {
+      "id": "LOGIC-005",
+      "filename": "js/analytics.js",
+      "line_numbers": "262",
+      "issue_type": "LOGIC_BUG",
+      "severity": "LOW",
+      "description": "exportAnalyticsAsPdf() checks `currentUser.subscription_tier !== 'premium'` to gate access, meaning only 'premium' users can export PDF. But exportAnalyticsAsPng() checks `currentUser.subscription_tier === 'free'`, meaning both 'pro' AND 'premium' can export PNG. This inconsistency means 'pro' users can export PNG but not PDF — this may be intentional but is not clearly documented.",
+      "fix_recommendation": "Clarify tier permissions. If intentional, add a comment. If not, align the checks."
+    },
+    {
+      "id": "LOGIC-006",
+      "filename": "js/auth.js",
+      "line_numbers": "738",
+      "issue_type": "LOGIC_BUG",
+      "severity": "LOW",
+      "description": "initGoogleAuth() has a recursive retry with setTimeout(initGoogleAuth, 500) when Google SDK isn't loaded yet. There's no retry limit, so if the Google SDK never loads (blocked by ad blocker, network issue), this creates an infinite retry loop polling every 500ms forever.",
+      "fix_recommendation": "Add a retry counter (max ~10 attempts) and give up with a console warning."
+    },
+    {
+      "id": "LOGIC-007",
+      "filename": "js/camera.js",
+      "line_numbers": "134",
+      "issue_type": "LOGIC_BUG",
+      "severity": "LOW",
+      "description": "compressImage() creates an object URL via URL.createObjectURL(file) but never revokes it with URL.revokeObjectURL(). This causes a memory leak, especially if users scan multiple receipts in a session.",
+      "fix_recommendation": "Add URL.revokeObjectURL(img.src) in the onload callback after the canvas drawing is complete."
+    },
+    {
+      "id": "LOGIC-008",
+      "filename": "js/savings.js",
+      "line_numbers": "29",
+      "issue_type": "LOGIC_BUG",
+      "severity": "LOW",
+      "description": "In renderSavingsGoals(), the escaped title for onclick uses a nested escaping approach: `escapeHTML(g.title.replace(/'/g, \"\\\\'\"))`. This double-escapes already-HTML-safe characters. If a title contains `&`, it becomes `&amp;` from escapeHTML, then the onclick attribute would pass the literal `&amp;` to showAddToSaving — the function receives HTML entities instead of the actual title.",
+      "fix_recommendation": "Use data attributes (data-id, data-title) and addEventListener instead of inline onclick with escaped strings. This avoids the double-encoding problem entirely."
+    },
+    {
+      "id": "LOGIC-009",
+      "filename": "js/transactions.js",
+      "line_numbers": "53-59",
+      "issue_type": "LOGIC_BUG",
+      "severity": "LOW",
+      "description": "categoriesCache is a module-level object that persists across sessions. If a user adds/edits categories on another device or via shared wallet, the cache serves stale data until page reload. No cache invalidation mechanism exists.",
+      "fix_recommendation": "Add a TTL to the cache (e.g., 5 minutes) or invalidate on relevant actions (page navigation, wallet switch)."
+    },
+    {
+      "id": "SEC-001",
+      "filename": "js/auth.js",
+      "line_numbers": "16",
+      "issue_type": "SECURITY",
+      "severity": "MEDIUM",
+      "description": "On showAuth(), currentUser is set to null, but no logout API call is made. If the auth screen is shown due to a session check failure, the client clears user state but the server session may still be valid. Conversely, on explicit logout (line 567), the API is called, which is correct.",
+      "fix_recommendation": "Ensure showAuth() is only called for display purposes and doesn't imply logout. Clearly separate 'display login screen' from 'end session'."
+    },
+    {
+      "id": "SEC-002",
+      "filename": "js/auth.js",
+      "line_numbers": "441-445",
+      "issue_type": "SECURITY",
+      "severity": "LOW",
+      "description": "Password reset only requires 6-character minimum. No complexity requirements (uppercase, numbers, special chars) are enforced client-side.",
+      "fix_recommendation": "Add password strength validation: minimum 8 characters, at least one number and one letter. Show a password strength indicator."
+    },
+    {
+      "id": "SEC-003",
+      "filename": "js/auth.js",
+      "line_numbers": "280-287",
+      "issue_type": "SECURITY",
+      "severity": "MEDIUM",
+      "description": "WebAuthn biometric login sends only credential_id to the server for verification (line 285). The authenticatorData and signature from the credential response are NOT sent, meaning the server cannot cryptographically verify the authentication assertion. This makes the biometric login as secure as a simple token lookup — any script that knows a credential_id could impersonate a login.",
+      "fix_recommendation": "Send the full assertion response to the server: authenticatorData, signature, clientDataJSON, and credential_id. The server must verify the signature against the stored public key."
+    },
+    {
+      "id": "SEC-004",
+      "filename": "js/auth.js",
+      "line_numbers": "19",
+      "issue_type": "SECURITY",
+      "severity": "LOW",
+      "description": "Last login email is stored in localStorage ('selaraskas_last_email'). This reveals the user's email to anyone with access to the browser's developer tools or same-origin scripts.",
+      "fix_recommendation": "Acceptable for UX purposes (pre-fill login). Consider using sessionStorage or clearing on explicit logout."
+    },
+    {
+      "id": "SEC-005",
+      "filename": "js/auth.js",
+      "line_numbers": "660-668",
+      "issue_type": "SECURITY",
+      "severity": "HIGH",
+      "description": "Mock OAuth dialog sends fabricated google_id/facebook_id (e.g., `mock_google_${btoa(email)}`) to the real API endpoints (google_login, facebook_login). If this code path is reachable in production (when authConfig contains 'DUMMY'), ANY user can log in as any mock account without real OAuth verification. The server must reject mock IDs in production.",
+      "fix_recommendation": "Ensure the mock OAuth flow is completely disabled in production. Add a server-side check that rejects social login requests when OAuth is not properly configured. Guard the mock dialog behind a development-only flag."
+    }
+  ]
+}

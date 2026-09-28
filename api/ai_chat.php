@@ -23,6 +23,7 @@ if ($action === 'insight') {
 
 function handleChat($userId, $walletId, $input) {
     $message = trim($input['message'] ?? '');
+    $message = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
     if (!$message) {
         jsonResponse(['error' => 'Pesan tidak boleh kosong'], 400);
     }
