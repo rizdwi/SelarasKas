@@ -28,11 +28,11 @@ $db = getDB();
 // Auto-migrate: create ocr_scans_log table if it doesn't exist
 try {
     $db->exec("CREATE TABLE IF NOT EXISTS `ocr_scans_log` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `id` SERIAL PRIMARY KEY,
         `user_id` INT NOT NULL,
         `scanned_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB");
+    ) ");
 } catch (Exception $e) {}
 
 // Check user subscription tier
@@ -45,7 +45,7 @@ if ($tier === 'free') {
 } elseif ($tier === 'pro') {
     // Count monthly scans
     $currentMonth = date('Y-m');
-    $stmtC = $db->prepare("SELECT COUNT(*) FROM ocr_scans_log WHERE user_id = ? AND DATE_FORMAT(scanned_at, '%Y-%m') = ?");
+    $stmtC = $db->prepare("SELECT COUNT(*) FROM ocr_scans_log WHERE user_id = ? AND TO_CHAR(scanned_at, 'YYYY-MM') = ?");
     $stmtC->execute([$userId, $currentMonth]);
     $scanCount = $stmtC->fetchColumn();
     if ($scanCount >= 10) {

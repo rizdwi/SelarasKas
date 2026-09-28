@@ -41,7 +41,7 @@ function handleChat($userId, $walletId, $input) {
         $currentMonth = date('Y-m');
         $stmtC = $db->prepare("
             SELECT COUNT(*) FROM chat_history 
-            WHERE user_id = ? AND sender = 'user' AND DATE_FORMAT(created_at, '%Y-%m') = ?
+            WHERE user_id = ? AND sender = 'user' AND TO_CHAR(created_at, 'YYYY-MM') = ?
         ");
         $stmtC->execute([$userId, $currentMonth]);
         $queryCount = $stmtC->fetchColumn();
@@ -101,7 +101,7 @@ function getFinancialContext($userId, $walletId) {
     $stmt = $db->prepare("
         SELECT type, COALESCE(SUM(amount), 0) as total
         FROM transactions
-        WHERE wallet_id = ? AND (CASE WHEN DAY(transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(transaction_date, '%Y-%m') END) = ?
+        WHERE wallet_id = ? AND (CASE WHEN EXTRACT(DAY FROM transaction_date) >= 25 THEN TO_CHAR(transaction_date + INTERVAL '1 month', 'YYYY-MM') ELSE TO_CHAR(transaction_date, 'YYYY-MM') END) = ?
         GROUP BY type
     ");
     $stmt->execute([$walletId, $month]);
@@ -117,7 +117,7 @@ function getFinancialContext($userId, $walletId) {
     $stmt = $db->prepare("
         SELECT c.name, SUM(t.amount) as total
         FROM transactions t JOIN categories c ON t.category_id = c.id
-        WHERE t.wallet_id = ? AND t.type = 'expense' AND (CASE WHEN DAY(t.transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(t.transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(t.transaction_date, '%Y-%m') END) = ?
+        WHERE t.wallet_id = ? AND t.type = 'expense' AND (CASE WHEN EXTRACT(DAY FROM t.transaction_date) >= 25 THEN TO_CHAR(t.transaction_date + INTERVAL '1 month', 'YYYY-MM') ELSE TO_CHAR(t.transaction_date, 'YYYY-MM') END) = ?
         GROUP BY c.id ORDER BY total DESC LIMIT 3
     ");
     $stmt->execute([$walletId, $month]);

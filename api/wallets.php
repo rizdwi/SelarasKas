@@ -96,7 +96,7 @@ function handleCreateWallet() {
 
         $stmt = $db->prepare("INSERT INTO wallets (name, owner_id, type) VALUES (?, ?, 'shared')");
         $stmt->execute([$name, $userId]);
-        $walletId = $db->lastInsertId();
+        $walletId = $db->lastInsertId('wallets_id_seq');
 
         $stmtM = $db->prepare("INSERT INTO wallet_members (wallet_id, user_id, role) VALUES (?, ?, 'owner')");
         $stmtM->execute([$walletId, $userId]);

@@ -9,26 +9,23 @@ require_once __DIR__ . '/send_email.php';
 try {
     $pdo = getDB();
     $pdo->exec("CREATE TABLE IF NOT EXISTS remember_tokens (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        token_hash VARCHAR(64) NOT NULL,
-        expires_at DATETIME NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        UNIQUE KEY idx_token_hash (token_hash)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash VARCHAR(64) UNIQUE NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
     $pdo->exec("CREATE TABLE IF NOT EXISTS webauthn_credentials (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         credential_id TEXT NOT NULL,
         public_key TEXT NOT NULL,
         sign_count INT DEFAULT 0,
         device_name VARCHAR(100) DEFAULT 'Perangkat',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    try { $pdo->exec("ALTER TABLE `users` ADD COLUMN `reset_code` VARCHAR(6) DEFAULT NULL"); } catch (Exception $e) { /* column exists */ }
-    try { $pdo->exec("ALTER TABLE `users` ADD COLUMN `reset_expires` TIMESTAMP NULL DEFAULT NULL"); } catch (Exception $e) { /* column exists */ }
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+    try { $pdo->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_code VARCHAR(6) DEFAULT NULL"); } catch (Exception $e) { /* column exists */ }
+    try { $pdo->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_expires TIMESTAMP NULL DEFAULT NULL"); } catch (Exception $e) { /* column exists */ }
 } catch (Exception $e) { /* tables already exist */ }
 
 $action = $_GET['action'] ?? '';
@@ -511,7 +508,7 @@ function handleGoogleLogin() {
         $stmt = $db->prepare("INSERT INTO users (name, email, password, avatar_initial, avatar_url, google_id, email_verified) VALUES (?, ?, ?, ?, ?, ?, 1)");
         $stmt->execute([$name, $email, $hash, $initial, $avatarUrl, $googleId]);
         
-        $userId = $db->lastInsertId();
+        $userId = $db->lastInsertId('users_id_seq');
         $theme = 'dark';
         $dbAvatar = $avatarUrl;
     }
@@ -567,7 +564,7 @@ function handleFacebookLogin() {
         $stmt = $db->prepare("INSERT INTO users (name, email, password, avatar_initial, avatar_url, facebook_id, email_verified) VALUES (?, ?, ?, ?, ?, ?, 1)");
         $stmt->execute([$name, $email, $hash, $initial, $avatarUrl, $facebookId]);
         
-        $userId = $db->lastInsertId();
+        $userId = $db->lastInsertId('users_id_seq');
         $theme = 'dark';
         $dbAvatar = $avatarUrl;
     }

@@ -15,7 +15,7 @@ try {
                    (SELECT COALESCE(SUM(t.amount), 0)
                     FROM transactions t
                     WHERE t.wallet_id = b.wallet_id 
-                      AND (CASE WHEN DAY(t.transaction_date) >= 25 THEN DATE_FORMAT(DATE_ADD(t.transaction_date, INTERVAL 1 MONTH), '%Y-%m') ELSE DATE_FORMAT(t.transaction_date, '%Y-%m') END) = b.month
+                      AND (CASE WHEN EXTRACT(DAY FROM t.transaction_date) >= 25 THEN TO_CHAR(t.transaction_date + INTERVAL '1 month', 'YYYY-MM') ELSE TO_CHAR(t.transaction_date, 'YYYY-MM') END) = b.month
                       AND t.type = 'expense'
                       AND (t.category_id = b.category_id OR 
                            t.category_id IN (SELECT id FROM categories WHERE parent_id = b.category_id))
@@ -77,7 +77,7 @@ try {
         $stmt = $pdo->prepare("
             INSERT INTO budgets (user_id, wallet_id, category_id, amount, month)
             VALUES (:uid, :walletId, :cid, :amt, :month)
-            ON DUPLICATE KEY UPDATE amount = VALUES(amount)
+            ON CONFLICT (wallet_id, category_id, month) DO UPDATE SET amount = EXCLUDED.amount
         ");
         $stmt->execute([
             'uid' => $userId,

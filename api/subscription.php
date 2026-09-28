@@ -105,7 +105,7 @@ function handleUpgrade($userId) {
     // Insert order to db as pending
     try {
         $db->exec("CREATE TABLE IF NOT EXISTS `subscription_orders` (
-            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `id` SERIAL PRIMARY KEY,
             `order_id` VARCHAR(100) NULL UNIQUE,
             `user_id` INT NOT NULL,
             `tier` VARCHAR(20) NOT NULL,
@@ -115,7 +115,7 @@ function handleUpgrade($userId) {
             `status` ENUM('pending','paid','cancelled') DEFAULT 'pending',
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-        ) ENGINE=InnoDB");
+        ) ");
 
         // Migration for existing table
         try { $db->exec("ALTER TABLE `subscription_orders` ADD COLUMN `order_id` VARCHAR(100) NULL UNIQUE"); } catch(Exception $e){}

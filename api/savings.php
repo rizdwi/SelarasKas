@@ -85,7 +85,7 @@ function createSaving($userId) {
     ");
     $stmt->execute([$userId, $walletId, $title, $emoji, $target, $current, $deadline, $color]);
 
-    jsonResponse(['success' => true, 'id' => (int)$db->lastInsertId()], 201);
+    jsonResponse(['success' => true, 'id' => (int)$db->lastInsertId('savings_goals_id_seq')], 201);
 }
 
 function updateSaving($userId) {

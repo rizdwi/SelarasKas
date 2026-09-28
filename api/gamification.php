@@ -58,7 +58,7 @@ function calculateHealthScore($userId, $walletId) {
     $stmt = $db->prepare("
         SELECT type, COALESCE(SUM(amount), 0) as total
         FROM transactions
-        WHERE wallet_id = ? AND DATE_FORMAT(transaction_date, '%Y-%m') = ?
+        WHERE wallet_id = ? AND TO_CHAR(transaction_date, 'YYYY-MM') = ?
         GROUP BY type
     ");
     $stmt->execute([$walletId, $month]);

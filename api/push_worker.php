@@ -141,13 +141,13 @@ function checkBudgetAlerts(PDO $db, array $vapid): void
     // Ensure budget_notifications tracking table exists
     try {
         $db->exec("CREATE TABLE IF NOT EXISTS budget_notifications (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             budget_id INT NOT NULL,
             threshold INT NOT NULL,
             month VARCHAR(7) NOT NULL,
             notified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE KEY unique_notif (budget_id, threshold, month)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        ) ");
     } catch (\Exception $e) {
         // Table already exists
     }
@@ -169,8 +169,8 @@ function checkBudgetAlerts(PDO $db, array $vapid): void
             )
             AND t.type = 'expense'
             AND (CASE WHEN DAY(t.transaction_date) >= 25 
-                 THEN DATE_FORMAT(DATE_ADD(t.transaction_date, INTERVAL 1 MONTH), '%Y-%m') 
-                 ELSE DATE_FORMAT(t.transaction_date, '%Y-%m') END) = b.month
+                 THEN TO_CHAR(DATE_ADD(t.transaction_date, INTERVAL 1 MONTH), 'YYYY-MM') 
+                 ELSE TO_CHAR(t.transaction_date, 'YYYY-MM') END) = b.month
         WHERE b.month = ?
         GROUP BY b.id, b.user_id, b.amount, b.month, c.name
     ");
