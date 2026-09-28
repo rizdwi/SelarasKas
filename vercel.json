@@ -5,61 +5,70 @@
       "runtime": "vercel-php@0.9.0"
     }
   },
-  "headers": [
+  "routes": [
     {
-      "source": "/(assets|css|icons|js)/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/assets/(.*)",
-      "destination": "/assets/$1"
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
     },
     {
-      "source": "/css/(.*)",
-      "destination": "/css/$1"
+      "src": "/css/(.*)",
+      "dest": "/css/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
     },
     {
-      "source": "/icons/(.*)",
-      "destination": "/icons/$1"
+      "src": "/icons/(.*)",
+      "dest": "/icons/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
     },
     {
-      "source": "/js/(.*)",
-      "destination": "/js/$1"
+      "src": "/js/(.*)",
+      "dest": "/js/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
     },
     {
-      "source": "/(.*\\.html)",
-      "destination": "/$1"
+      "src": "/manifest.json",
+      "dest": "/manifest.json"
     },
     {
-      "source": "/(.*\\.json)",
-      "destination": "/$1"
+      "src": "/sw.js",
+      "dest": "/sw.js"
     },
     {
-      "source": "/(.*\\.js)",
-      "destination": "/$1"
+      "src": "/index.css",
+      "dest": "/index.css"
     },
     {
-      "source": "/(.*\\.css)",
-      "destination": "/$1"
+      "src": "/admin.html",
+      "dest": "/admin.html"
     },
     {
-      "source": "/(.*\\.jpeg)",
-      "destination": "/$1"
+      "src": "/privacy.html",
+      "dest": "/privacy.html"
     },
     {
-      "source": "/api/(.*)",
-      "destination": "/api/index.php"
+      "src": "/data-deletion.html",
+      "dest": "/data-deletion.html"
     },
     {
-      "source": "/(.*)",
-      "destination": "/api/index.php"
+      "src": "/qris.jpeg",
+      "dest": "/qris.jpeg"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.php"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.php"
     }
   ]
 }
