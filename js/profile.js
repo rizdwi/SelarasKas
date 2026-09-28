@@ -17,6 +17,7 @@
                 try {
                     // Bypass API function because we need multipart/form-data
                     const res = await fetch(`${API}/profile.php?action=upload_photo`, {
+                        credentials: 'include',
                         method: 'POST',
                         headers: {
                             'X-CSRF-Token': csrfToken
