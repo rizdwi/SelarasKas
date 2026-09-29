@@ -683,20 +683,23 @@
     }
 
     function initGoogleAuth() {
-        const isDummy = false; // Disabled for security
         const btn1 = document.getElementById('googleAuthBtn');
         const btn2 = document.getElementById('googleAuthBtn2');
 
-        if (isDummy) {
-            const mockGoogleLogin = () => showMockOAuthDialog('google');
-            if (btn1) btn1.addEventListener('click', mockGoogleLogin);
-            if (btn2) btn2.addEventListener('click', mockGoogleLogin);
-        } else {
+        const triggerGoogleLogin = () => {
+            if (!authConfig.google_client_id || authConfig.google_client_id.includes('261568703120')) {
+                showToast('Fitur Login Google memerlukan GOOGLE_CLIENT_ID resmi di Vercel Env. Silakan gunakan daftar/login biasa.');
+                return;
+            }
+
             if (window.google && window.google.accounts && window.google.accounts.oauth2) {
                 try {
                     const tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: authConfig.google_client_id,
                         scope: 'openid profile email',
+                        error_callback: (err) => {
+                            showToast('Gagal memuat Google OAuth: ' + (err.message || 'Domain belum diizinkan di Google Cloud'));
+                        },
                         callback: async (tokenResponse) => {
                             if (tokenResponse && tokenResponse.access_token) {
                                 try {
@@ -724,82 +727,58 @@
                             }
                         }
                     });
-
-                    const triggerGoogleLogin = () => {
-                        tokenClient.requestAccessToken({ prompt: 'consent' });
-                    };
-
-                    if (btn1) btn1.addEventListener('click', triggerGoogleLogin);
-                    if (btn2) btn2.addEventListener('click', triggerGoogleLogin);
+                    tokenClient.requestAccessToken({ prompt: 'consent' });
                 } catch (e) {
-                    console.error('Failed to initialize Google token client:', e);
+                    showToast('Google OAuth Error: ' + e.message);
                 }
             } else {
-                setTimeout(initGoogleAuth, 500); // Retry if SDK not loaded
+                showToast('Google SDK belum siap, silakan coba beberapa saat lagi.');
             }
-        }
+        };
+
+        if (btn1) btn1.addEventListener('click', triggerGoogleLogin);
+        if (btn2) btn2.addEventListener('click', triggerGoogleLogin);
     }
 
     // ===== FACEBOOK AUTH =====
     function initFacebookAuth() {
-        const isDummy = false; // Disabled for security
         const fbBtn1 = document.getElementById('facebookAuthBtn');
         const fbBtn2 = document.getElementById('facebookAuthBtn2');
 
-        if (isDummy) {
-            const mockFBLogin = () => showMockOAuthDialog('facebook');
-            if (fbBtn1) fbBtn1.addEventListener('click', mockFBLogin);
-            if (fbBtn2) fbBtn2.addEventListener('click', mockFBLogin);
-        } else {
-            window.fbAsyncInit = function() {
-                FB.init({
-                    appId      : authConfig.facebook_app_id,
-                    cookie     : true,
-                    xfbml      : true,
-                    version    : 'v18.0'
-                });
-            };
-
-            // Load SDK dynamically
-            (function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "https://connect.facebook.net/en_US/sdk.js";
-                fjs.parentNode.insertBefore(js, fjs);
-            }(document, 'script', 'facebook-jssdk'));
-
-            const loginWithFB = () => {
-                if (!window.FB) {
-                    showToast('Facebook SDK sedang memuat, silakan coba lagi...');
-                    return;
+        const loginWithFB = () => {
+            if (!authConfig.facebook_app_id || authConfig.facebook_app_id.includes('1348574213882211')) {
+                showToast('Fitur Login Facebook memerlukan FACEBOOK_APP_ID resmi di Vercel Env. Silakan gunakan daftar/login biasa.');
+                return;
+            }
+            if (!window.FB) {
+                showToast('Facebook SDK sedang memuat, silakan coba lagi...');
+                return;
+            }
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    FB.api('/me', { fields: 'id,name,email,picture.type(large)' }, async function(userData) {
+                        try {
+                            const data = await api('auth.php?action=facebook_login', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    facebook_id: userData.id,
+                                    name: userData.name,
+                                    email: userData.email || (userData.id + '@facebook.com'),
+                                    avatar_url: userData.picture?.data?.url || null
+                                })
+                            });
+                            showApp(data.user);
+                            showToast('Berhasil login dengan Facebook! 🚀');
+                        } catch (err) {
+                            showToast(err.message);
+                        }
+                    });
+                } else {
+                    showToast('Login Facebook dibatalkan');
                 }
-                FB.login(function(response) {
-                    if (response.authResponse) {
-                        FB.api('/me', { fields: 'id,name,email,picture.type(large)' }, async function(userData) {
-                            try {
-                                const data = await api('auth.php?action=facebook_login', {
-                                    method: 'POST',
-                                    body: JSON.stringify({
-                                        facebook_id: userData.id,
-                                        name: userData.name,
-                                        email: userData.email || (userData.id + '@facebook.com'),
-                                        avatar_url: userData.picture?.data?.url || null
-                                    })
-                                });
-                                showApp(data.user);
-                                showToast('Berhasil login dengan Facebook! 🚀');
-                            } catch (err) {
-                                showToast(err.message);
-                            }
-                        });
-                    } else {
-                        showToast('Login Facebook dibatalkan');
-                    }
-                }, { scope: 'public_profile' });
-            };
+            }, { scope: 'public_profile' });
+        };
 
-            if (fbBtn1) fbBtn1.addEventListener('click', loginWithFB);
-            if (fbBtn2) fbBtn2.addEventListener('click', loginWithFB);
-        }
+        if (fbBtn1) fbBtn1.addEventListener('click', loginWithFB);
+        if (fbBtn2) fbBtn2.addEventListener('click', loginWithFB);
     }

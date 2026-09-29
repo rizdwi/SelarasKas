@@ -200,65 +200,50 @@ function handleRegister() {
         jsonResponse(['error' => 'Format email tidak valid'], 400);
     }
 
-    // Stricter email validation - block common fake domains
-    $blockedDomains = ['example.com', 'test.com', 'fake.com', 'mailinator.com', 'tempmail.com', 'throwaway.email', 'guerrillamail.com', 'yopmail.com', 'sharklasers.com', 'guerrillamailblock.com', 'grr.la', 'dispostable.com', 'temp-mail.org'];
-    $emailDomain = strtolower(substr($email, strrpos($email, '@') + 1));
-    if (in_array($emailDomain, $blockedDomains)) {
-        jsonResponse(['error' => 'Gunakan alamat email asli untuk mendaftar'], 400);
-    }
-
-    // Check DNS MX record for the email domain
-    if (!checkdnsrr($emailDomain, 'MX')) {
-        jsonResponse(['error' => 'Domain email tidak valid. Gunakan email asli.'], 400);
-    }
-
     $db = getDB();
 
     // Check if email exists
-    $stmt = $db->prepare("SELECT id, email_verified FROM users WHERE email = ?");
+    $stmt = $db->prepare("SELECT id, email_verified, avatar_initial, avatar_url, theme, subscription_tier FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $existing = $stmt->fetch();
 
     if ($existing) {
         if ($existing['email_verified']) {
-            jsonResponse(['error' => 'Email sudah terdaftar'], 409);
+            jsonResponse(['error' => 'Email sudah terdaftar. Silakan login.'], 409);
         } else {
-            // Account exists but not verified — resend code
-            $code = generateVerificationCode();
-            $expires = date('Y-m-d H:i:s', time() + 900); // 15 minutes
-
-            $stmt = $db->prepare("UPDATE users SET name = ?, password = ?, verification_code = ?, verification_expires = ? WHERE id = ?");
+            // Account exists but wasn't verified — verify it now & update password
             $hash = password_hash($password, PASSWORD_BCRYPT);
-            $stmt->execute([$name, $hash, $code, $expires, $existing['id']]);
-
-            sendVerificationEmail($email, $name, $code);
-
-            jsonResponse([
-                'needs_verification' => true,
-                'email' => $email,
-                'message' => 'Kode verifikasi telah dikirim ulang ke email kamu'
-            ]);
+            $initial = strtoupper(mb_substr($name, 0, 1));
+            $stmt = $db->prepare("UPDATE users SET name = ?, password = ?, avatar_initial = ?, email_verified = 1 WHERE id = ?");
+            $stmt->execute([$name, $hash, $initial, $existing['id']]);
+            $userId = (int)$existing['id'];
         }
+    } else {
+        // Create user with direct verification (Auto-verified)
+        $hash = password_hash($password, PASSWORD_BCRYPT);
+        $initial = strtoupper(mb_substr($name, 0, 1));
+
+        $stmt = $db->prepare("INSERT INTO users (name, email, password, avatar_initial, email_verified) VALUES (?, ?, ?, ?, 1)");
+        $stmt->execute([$name, $email, $hash, $initial]);
+        $userId = (int)$db->lastInsertId('users_id_seq');
     }
 
-    // Create user with verification
-    $hash = password_hash($password, PASSWORD_BCRYPT);
-    $initial = strtoupper(mb_substr($name, 0, 1));
-    $code = generateVerificationCode();
-    $expires = date('Y-m-d H:i:s', time() + 900); // 15 minutes
-
-    $stmt = $db->prepare("INSERT INTO users (name, email, password, avatar_initial, email_verified, verification_code, verification_expires) VALUES (?, ?, ?, ?, 0, ?, ?)");
-    $stmt->execute([$name, $email, $hash, $initial, $code, $expires]);
-
-    // Send verification email
-    $emailSent = sendVerificationEmail($email, $name, $code);
+    // Set session immediately
+    $_SESSION['user_id'] = $userId;
 
     jsonResponse([
-        'needs_verification' => true,
-        'email' => $email,
-        'message' => $emailSent 
-            ? 'Kode verifikasi telah dikirim ke ' . $email 
-            : 'Akun dibuat, tapi gagal mengirim email. Coba kirim ulang kode.'
+        'success' => true,
+        'message' => 'Akun berhasil dibuat! 🎉',
+        'csrf_token' => $_SESSION['csrf_token'] ?? null,
+        'user' => [
+            'id' => $userId,
+            'name' => $name,
+            'email' => $email,
+            'avatar_initial' => $initial,
+            'avatar_url' => null,
+            'theme' => 'dark',
+            'subscription_tier' => 'free',
+        ]
     ], 201);
 }
 
@@ -379,22 +364,10 @@ function handleLogin() {
         jsonResponse(['error' => 'Email atau password salah'], 401);
     }
 
-    // Check email verification status
-    if (!$user['email_verified'] && !$user['google_id'] && !$user['facebook_id']) {
-        // Resend verification code automatically
-        $code = generateVerificationCode();
-        $expires = date('Y-m-d H:i:s', time() + 900);
-
-        $stmt = $db->prepare("UPDATE users SET verification_code = ?, verification_expires = ? WHERE id = ?");
-        $stmt->execute([$code, $expires, $user['id']]);
-
-        sendVerificationEmail($email, $user['name'], $code);
-
-        jsonResponse([
-            'needs_verification' => true,
-            'email' => $email,
-            'message' => 'Akun belum diverifikasi. Kode verifikasi baru telah dikirim ke email kamu.'
-        ], 403);
+    // Auto verify account if not verified
+    if (!$user['email_verified']) {
+        $stmtV = $db->prepare("UPDATE users SET email_verified = 1 WHERE id = ?");
+        $stmtV->execute([$user['id']]);
     }
 
     // Set session
