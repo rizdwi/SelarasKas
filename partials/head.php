@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="light">
+<html lang="id" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Selaraskas — Personal Finance</title>
     <meta name="description" content="Selaraskas - Kelola keuangan pribadi, atur pemasukan, pengeluaran, dan target nabung.">
     
-    <link rel="stylesheet" href="index.css?v=52">
+    <link rel="stylesheet" href="index.css?v=53">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0a0e1a">
+    <meta name="theme-color" content="#09090b">
     <!-- iOS PWA Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">

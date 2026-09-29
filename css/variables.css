@@ -1,57 +1,33 @@
-/* ===== DARK THEME (DEFAULT) ===== */
-/* ===== LIGHT THEME (DEFAULT NOW) ===== */
-:root, [data-theme="light"] {
-    --bg-primary: #FAFAF7; /* Warm White */
-    --bg-secondary: #f0f2f5;
-    --bg-card: #E5EBF2; /* Light Pastel Blue */
-    --bg-card-hover: #D8E0EB;
-    --bg-elevated: #ffffff;
-    --bg-input: #ffffff;
-    --accent-coral: #FCA5A5; /* Soft Coral/Salmon */
-    --accent-coral-light: #fcd5d5;
-    --accent-gradient: linear-gradient(135deg, #FCA5A5, #f88b8b);
-    --color-success: #A7F3D0; /* Soft Teal/Mint */
-    --color-success-bg: rgba(167, 243, 208, 0.2);
-    --color-danger: #f87171;
-    --color-danger-bg: rgba(248,113,113,0.1);
-    --color-warning: #fbbf24;
-    --color-info: #818cf8;
-    --text-primary: #1a1d26;
-    --text-secondary: #5a6275;
-    --text-muted: #9ca3b4;
-    --border-subtle: rgba(0, 0, 0, 0.04);
-    --border-light: rgba(0, 0, 0, 0.08);
-    --shadow-sm: 0 4px 10px rgba(0,0,0,0.02);
-    --shadow-md: 0 10px 25px rgba(0,0,0,0.04);
-    --shadow-lg: 0 20px 40px rgba(0,0,0,0.06);
+/* ===== MONOCHROME DESIGN SYSTEM (FIGMA / DESIGN.MD) ===== */
+:root, [data-theme="dark"], [data-theme="light"] {
+    --bg-primary: #09090b;       /* Zinc-950 (Obsidian Dark) */
+    --bg-secondary: #121215;     /* Zinc-900 Dark Surface */
+    --bg-card: #18181b;          /* Zinc-900 Card */
+    --bg-card-hover: #27272a;    /* Zinc-800 Hover */
+    --bg-elevated: #1f1f23;      /* Elevated Modal Surface */
+    --bg-input: #121215;         /* Deep Input Surface */
+
+    --accent-coral: #ffffff;     /* Pure White Accent */
+    --accent-coral-light: #27272a;
+    --accent-gradient: #ffffff;  /* Solid White for Primary CTA */
+    --color-primary: #ffffff;
+
+    --color-success: #ffffff;    /* Monochrome Success */
+    --color-success-bg: #18181b;
+    --color-danger: #a1a1aa;     /* Monochrome Danger */
+    --color-danger-bg: #18181b;
+    --color-warning: #e4e4e7;
+    --color-info: #ffffff;
+
+    --text-primary: #ffffff;     /* Crisp High Contrast White */
+    --text-secondary: #a1a1aa;   /* Zinc-400 */
+    --text-muted: #71717a;       /* Zinc-500 */
+
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-light: #27272a;     /* Zinc-800 Border */
+    --border-strong: #3f3f46;    /* Zinc-700 Border */
+
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.7);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.9);
 }
-
-/* ===== DARK THEME (PASTEL) ===== */
-[data-theme="dark"] {
-    --bg-primary: #121418;
-    --bg-secondary: #1a1d24;
-    --bg-card: #20242d;
-    --bg-card-hover: #2a2f3a;
-    --bg-elevated: #20242d;
-    --bg-input: #1a1d24;
-    --accent-coral: #FCA5A5;
-    --accent-coral-light: #fcd5d5;
-    --accent-gradient: linear-gradient(135deg, #FCA5A5, #f88b8b);
-    --color-success: #A7F3D0;
-    --color-success-bg: rgba(167, 243, 208, 0.1);
-    --color-danger: #f87171;
-    --color-danger-bg: rgba(248,113,113,0.1);
-    --color-warning: #fbbf24;
-    --color-info: #818cf8;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --border-subtle: rgba(255, 255, 255, 0.03);
-    --border-light: rgba(255, 255, 255, 0.06);
-    --shadow-sm: 0 4px 10px rgba(0,0,0,0.2);
-    --shadow-md: 0 10px 25px rgba(0,0,0,0.3);
-    --shadow-lg: 0 20px 40px rgba(0,0,0,0.4);
-}
-
-
-
