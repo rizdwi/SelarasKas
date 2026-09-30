@@ -6,7 +6,7 @@
     <title>Selaraskas — Personal Finance</title>
     <meta name="description" content="Selaraskas - Kelola keuangan pribadi, atur pemasukan, pengeluaran, dan target nabung.">
     
-    <link rel="stylesheet" href="index.css?v=100">
+    <link rel="stylesheet" href="index.css?v=101">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#09090b">
     <!-- iOS PWA Support -->

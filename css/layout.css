@@ -10,11 +10,13 @@
 @media (min-width: 768px) {
     .app-container {
         flex-direction: row; /* Sidebar on left */
-        max-width: 1400px;
-        margin: 0 auto;
-        border-radius: 30px; border: 1px solid var(--border-subtle);
-        box-shadow: var(--shadow-lg), 0 0 80px rgba(0,0,0,0.1);
-        height: min(100vh - 40px, 932px);
+        width: 100%;
+        max-width: 100%;
+        height: 100vh;
+        margin: 0;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
     }
 }
 
@@ -31,9 +33,9 @@
 .auth-logo { text-align: center; margin-bottom: 40px; }
 .auth-logo-icon {
     width: 64px; height: 64px; border-radius: 20px; margin: 0 auto 16px;
-    background: var(--accent-gradient);
-    display: flex; align-items: center; justify-content: center; color: white;
-    box-shadow: 0 8px 24px rgba(255,107,107,0.3);
+    background: #ffffff;
+    display: flex; align-items: center; justify-content: center; color: #09090b;
+    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.15);
 }
 .auth-title { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
 .auth-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 4px; }

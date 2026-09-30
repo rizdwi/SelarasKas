@@ -1,33 +1,33 @@
-/* ===== MONOCHROME DESIGN SYSTEM (FIGMA / DESIGN.MD) ===== */
+/* ===== MONOCHROME DESIGN SYSTEM VARIABLES ===== */
 :root, [data-theme="dark"], [data-theme="light"] {
-    --bg-primary: #09090b;       /* Zinc-950 (Obsidian Dark) */
+    --bg-primary: #09090b;       /* Zinc-950 Obsidian */
     --bg-secondary: #121215;     /* Zinc-900 Dark Surface */
-    --bg-card: #18181b;          /* Zinc-900 Card */
-    --bg-card-hover: #27272a;    /* Zinc-800 Hover */
+    --bg-card: #18181b;          /* Zinc-900 Card Surface */
+    --bg-card-hover: #27272a;    /* Zinc-800 Hover Surface */
     --bg-elevated: #1f1f23;      /* Elevated Modal Surface */
-    --bg-input: #121215;         /* Deep Input Surface */
+    --bg-input: #121215;         /* Input Background */
 
-    --accent-coral: #ffffff;     /* Pure White Accent */
+    --accent-coral: #ffffff;     /* Crisp Solid White */
     --accent-coral-light: #27272a;
-    --accent-gradient: #ffffff;  /* Solid White for Primary CTA */
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #e4e4e7 100%);
     --color-primary: #ffffff;
 
-    --color-success: #ffffff;    /* Monochrome Success */
-    --color-success-bg: #18181b;
-    --color-danger: #a1a1aa;     /* Monochrome Danger */
-    --color-danger-bg: #18181b;
+    --color-success: #ffffff;
+    --color-success-bg: rgba(255, 255, 255, 0.08);
+    --color-danger: #a1a1aa;
+    --color-danger-bg: rgba(255, 255, 255, 0.05);
     --color-warning: #e4e4e7;
     --color-info: #ffffff;
 
-    --text-primary: #ffffff;     /* Crisp High Contrast White */
+    --text-primary: #ffffff;     /* High Contrast White */
     --text-secondary: #a1a1aa;   /* Zinc-400 */
     --text-muted: #71717a;       /* Zinc-500 */
 
-    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-subtle: rgba(255, 255, 255, 0.06);
     --border-light: #27272a;     /* Zinc-800 Border */
     --border-strong: #3f3f46;    /* Zinc-700 Border */
 
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.7);
-    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.9);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.8);
 }

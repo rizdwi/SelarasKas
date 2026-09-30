@@ -109,15 +109,15 @@
 
 .auth-submit-btn {
     width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
-    background: var(--accent-gradient); color: white; border-radius: 14px;
+    background: #ffffff; color: #09090b; border-radius: 14px;
     margin-top: 8px; transition: all 0.2s ease;
-    box-shadow: 0 4px 16px rgba(255,107,107,0.3);
+    box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
 }
-.auth-submit-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,107,107,0.4); }
+.auth-submit-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25); }
 .auth-submit-btn:active { transform: scale(0.98); }
 .auth-submit-btn:disabled { opacity: 0.6; pointer-events: none; }
 .auth-switch { text-align: center; font-size: 14px; color: var(--text-muted); margin-top: 8px; }
-.auth-switch button { color: var(--accent-coral); font-weight: 600; text-decoration: underline; font-size: 14px; }
+.auth-switch button { color: #ffffff; font-weight: 600; text-decoration: underline; font-size: 14px; }
 
 .password-input-container {
     position: relative;
